@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -61,8 +62,8 @@ export const AssignSnagModal: React.FC<AssignSnagModalProps> = ({
               {/* Header */}
               <div className="p-6 border-b border-gray-100 flex items-start justify-between shrink-0">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Assign to Complete Snag</h2>
-                  <p className="text-xs text-slate-500 mt-1">Select an authorized user to resolve this snag.</p>
+                  <h2 className="text-lg font-bold text-gray-900">{tr("Assign to Complete Snag")}</h2>
+                  <p className="text-xs text-slate-500 mt-1">{tr("Select an authorized user to resolve this snag.")}</p>
                 </div>
                 <button
                   onClick={onClose}
@@ -77,11 +78,11 @@ export const AssignSnagModal: React.FC<AssignSnagModalProps> = ({
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                    <span className="text-xs text-slate-500 mt-3 font-semibold">Loading team members...</span>
+                    <span className="text-xs text-slate-500 mt-3 font-semibold">{tr("Loading team members...")}</span>
                   </div>
                 ) : users.length === 0 ? (
                   <div className="text-center py-12 text-slate-400 text-xs italic">
-                    No users with completion permissions found.
+                    {tr("No users with completion permissions found.")}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -90,17 +91,17 @@ export const AssignSnagModal: React.FC<AssignSnagModalProps> = ({
                         key={member._id}
                         type="button"
                         onClick={() => onAssign(member)}
-                        className="w-full flex items-center space-x-3 p-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-2xl transition-all text-left group"
+                        className="w-full flex items-center space-x-3 p-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-2xl transition-all text-start group"
                       >
                         <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold shrink-0">
                           {member.name?.[0]?.toUpperCase() || 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
-                            {member.name}
+                            {tr(member.name)}
                           </p>
                           <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
-                            {member.role?.name || 'Team Member'}
+                            {member.role?.name || tr("Team Member")}
                           </p>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors shrink-0" />
@@ -117,7 +118,7 @@ export const AssignSnagModal: React.FC<AssignSnagModalProps> = ({
                   onClick={onClose}
                   className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-gray-100 transition-all"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
               </div>
             </div>

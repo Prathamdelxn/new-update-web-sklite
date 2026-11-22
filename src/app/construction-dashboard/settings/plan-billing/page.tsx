@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Bell } from 'lucide-react';
@@ -96,11 +97,11 @@ export default function PlanBillingPage() {
 
             <div>
               <h1 className="text-3xl font-bold text-slate-900">
-                Plan & Billing
+                {tr("Plan & Billing")}
               </h1>
 
               <p className="text-slate-500">
-                Manage your subscription and billing.
+                {tr("Manage your subscription and billing.")}
               </p>
             </div>
 
@@ -113,7 +114,7 @@ export default function PlanBillingPage() {
         </div>
 
         {loading ? (
-          <div className="text-slate-400">Loading subscription…</div>
+          <div className="text-slate-400">{tr("Loading subscription…")}</div>
         ) : (
           <>
             {/* Current Plan */}
@@ -145,7 +146,7 @@ export default function PlanBillingPage() {
             <div className="mt-10">
 
               <h2 className="uppercase tracking-[4px] text-blue-600 text-sm font-bold mb-6">
-                Choose a Plan
+                {tr("Choose a Plan")}
               </h2>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

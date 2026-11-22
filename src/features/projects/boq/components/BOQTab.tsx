@@ -1,14 +1,11 @@
 'use client';
+import { tr } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Plus, Search, Edit2, Trash2, History, Download, Upload, Eye, EyeOff,
-  CheckCircle2, Loader2, GitBranch, FileText,
-  DollarSign, ChevronLeft, Clock, Send, XCircle, RefreshCw,
-  TrendingUp, BarChart3, ChevronRight, Lock,
-} from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, History, Download, Upload, Eye, EyeOff, CheckCircle2, Loader2, GitBranch, FileText, ChevronLeft, Clock, Send, XCircle, RefreshCw, TrendingUp, BarChart3, ChevronRight, Lock, Banknote } from 'lucide-react';
 import { BOQItem } from '@/types';
 import api from '@/services/api.client';
 import { useToast } from '@/providers/ToastContext';
@@ -56,7 +53,7 @@ const StatusBadge = ({ status, size = 'sm' }: { status: string; size?: 'xs' | 's
       s.badge
     )}>
       <span className={cn('rounded-full flex-shrink-0', size === 'xs' ? 'w-1 h-1' : 'w-1.5 h-1.5', s.dot)} />
-      {status}
+      {tr(status)}
     </span>
   );
 };
@@ -70,12 +67,12 @@ const StatCard = ({
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">{label}</p>
+      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">{tr(label)}</p>
       <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-        <p className="min-w-0 flex-1 text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{value}</p>
-        {action}
+        <p className="min-w-0 flex-1 text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{tr(value)}</p>
+        {tr(action)}
       </div>
-      {sub && <p className="text-xs text-slate-400 mt-0.5 font-medium">{sub}</p>}
+      {sub && <p className="text-xs text-slate-400 mt-0.5 font-medium">{tr(sub)}</p>}
     </div>
   </div>
 );
@@ -133,7 +130,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
       const data: BOQItem[] = Array.isArray(res.data) ? res.data : res.data?.items ?? [];
       setItems(data);
     } catch {
-      toast.error('Failed to load BOQ items');
+      toast.error(tr("Failed to load BOQ items"));
     } finally {
       setLoading(false);
     }
@@ -174,33 +171,33 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
   const handleDeleteGroup = async (groupItems: BOQItem[], e: React.MouseEvent) => {
     e.stopPropagation();
     const ok = await confirm({
-      title: 'Delete BOQ Group',
-      message: `Delete all ${groupItems.length} items in "${groupItems[0]?.groupName}"?`,
-      confirmText: 'Delete Group',
+      title: tr("Delete BOQ Group"),
+      message: tr("Delete all {{groupItemsCount}} items in \"{{groupName}}\"?", { groupItemsCount: groupItems.length, groupName: groupItems[0]?.groupName }),
+      confirmText: tr("Delete Group"),
       type: 'danger',
     });
     if (!ok) return;
     try {
       await Promise.all(groupItems.map(i => api.delete(`/projects/${projectId}/boq/${i._id}`)));
-      toast.success('Group deleted');
+      toast.success(tr("Group deleted"));
       if (selectedGroupName === groupItems[0]?.groupName) setSelectedGroupName(null);
       fetchBOQ();
-    } catch { toast.error('Failed to delete group'); }
+    } catch { toast.error(tr("Failed to delete group")); }
   };
 
   const handleDeleteItem = async (item: BOQItem) => {
     const ok = await confirm({
-      title: 'Delete BOQ Item',
-      message: `Delete "${item.itemDescription}"?`,
-      confirmText: 'Delete Item',
+      title: tr("Delete BOQ Item"),
+      message: tr("Delete \"{{itemDescription}}\"?", { itemDescription: item.itemDescription }),
+      confirmText: tr("Delete Item"),
       type: 'danger',
     });
     if (!ok) return;
     try {
       await api.delete(`/projects/${projectId}/boq/${item._id}`);
-      toast.success('Item deleted');
+      toast.success(tr("Item deleted"));
       fetchBOQ();
-    } catch { toast.error('Failed to delete item'); }
+    } catch { toast.error(tr("Failed to delete item")); }
   };
 
   const bulkUpdateGroup = async (status: 'Approved' | 'Rejected') => {
@@ -209,10 +206,10 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
     setIsBulkUpdating(true);
     try {
       await api.patch(`/projects/${projectId}/boq/bulk-status`, { itemIds: ids, status });
-      toast.success(`All items ${status.toLowerCase()}`);
+      toast.success(tr("All items {{status}}", { status: status.toLowerCase() }));
       fetchBOQ();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Update failed');
+      toast.error(err.response?.data?.message || tr("Update failed"));
     } finally { setIsBulkUpdating(false); }
   };
 
@@ -246,12 +243,12 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
     setUpdatingItemId(item._id);
     try {
       await api.patch(`/projects/${projectId}/boq/${item._id}/status`, { status });
-      toast.success('Item approved');
+      toast.success(tr("Item approved"));
       setViewingItem(null);
       setBudgetImpactData(null);
       fetchBOQ();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to approve');
+      toast.error(err.response?.data?.message || tr("Failed to approve"));
     } finally {
       setUpdatingItemId(null);
     }
@@ -265,12 +262,12 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
         status: 'Rejected',
         rejectionReason: reason,
       });
-      toast.success('Item rejected');
+      toast.success(tr("Item rejected"));
       setRejectionItemId(null);
       setViewingItem(null);
       fetchBOQ();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to reject item');
+      toast.error(err.response?.data?.message || tr("Failed to reject item"));
     } finally {
       setUpdatingItemId(null);
     }
@@ -298,7 +295,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">You don't have permission to view the BOQ Management module.</p>
+        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view the BOQ Management module.")}</p>
       </div>
     );
   }
@@ -313,9 +310,9 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Approved Grand Total"
-            value={isApprovedTotalVisible ? formatCurrency(totalBOQAmount, project?.currency || '$') : '••••••'}
-            icon={DollarSign}
+            label={tr("Approved Grand Total")}
+            value={isApprovedTotalVisible ? formatCurrency(totalBOQAmount, projectCurrency(project)) : '••••••'}
+            icon={Banknote}
             accent="text-blue-600"
             bg="bg-blue-50 border-blue-100"
             sub={`${approvedCount} approved items`}
@@ -324,22 +321,22 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                 type="button"
                 onClick={() => setIsApprovedTotalVisible(visible => !visible)}
                 className="flex-shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                aria-label={isApprovedTotalVisible ? 'Hide approved total' : 'Show approved total'}
-                title={isApprovedTotalVisible ? 'Hide amount' : 'Show amount'}
+                aria-label={isApprovedTotalVisible ? tr("Hide approved total") : tr("Show approved total")}
+                title={isApprovedTotalVisible ? tr("Hide amount") : tr("Show amount")}
               >
                 {isApprovedTotalVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               </button>
             }
           />
           <StatCard
-            label="BOQ Groups"
+            label={tr("BOQ Groups")}
             value={Object.keys(groupedItems).length}
             icon={FileText}
             accent="text-purple-600"
             bg="bg-purple-50 border-purple-100"
           />
           <StatCard
-            label="Pending Approval"
+            label={tr("Pending Approval")}
             value={pendingCount}
             icon={Clock}
             accent="text-amber-600"
@@ -347,7 +344,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             sub={pendingCount > 0 ? 'requires action' : 'all clear'}
           />
           <StatCard
-            label="Approved Items"
+            label={tr("Approved Items")}
             value={approvedCount}
             icon={TrendingUp}
             accent="text-emerald-600"
@@ -363,10 +360,10 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search groups or items..."
+              placeholder={tr("Search groups or items...")}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all"
+              className="w-full bg-white border border-slate-200 rounded-xl py-2 ps-10 pe-3.5 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all"
             />
           </div>
 
@@ -377,7 +374,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             className="bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all cursor-pointer w-full sm:w-auto"
           >
             {['All', 'Draft', 'Pending', 'Approved', 'Rejected'].map(s => (
-              <option key={s} value={s}>{s === 'All' ? 'All Status' : s}</option>
+              <option key={s} value={s}>{s === 'All' ? tr("All Status") : s}</option>
             ))}
           </select>
 
@@ -386,7 +383,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             <button
               onClick={fetchBOQ}
               className="p-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
-              title="Refresh"
+              title={tr("Refresh")}
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -396,7 +393,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
               className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">Import</span>
+              <span className="hidden sm:inline">{tr("Import")}</span>
             </button>
             {canCreate && (
               <button
@@ -404,7 +401,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                 className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 border border-transparent rounded-xl text-xs font-semibold text-white transition-colors cursor-pointer shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>New BOQ</span>
+                <span>{tr("New BOQ")}</span>
               </button>
             )}
           </div>
@@ -417,14 +414,14 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
               <FileText className="w-7 h-7 text-blue-600" />
             </div>
             <h3 className="font-bold text-slate-900 text-base mb-1">
-              {searchQuery || statusFilter !== 'All' ? 'No results found' : 'No BOQ Groups Yet'}
+              {searchQuery || statusFilter !== 'All' ? tr("No results found") : tr("No BOQ Groups Yet")}
             </h3>
             <p className="text-slate-500 text-xs leading-relaxed text-center max-w-sm px-4">
               {searchQuery
-                ? `No groups match "${searchQuery}"`
+                ? tr("No groups match \"{{searchQuery}}\"", { searchQuery: searchQuery })
                 : statusFilter !== 'All'
-                  ? `No groups with status "${statusFilter}"`
-                  : 'Add your first Bill of Quantities group to get started'}
+                  ? tr("No groups with status \"{{statusFilter}}\"", { statusFilter: statusFilter })
+                  : tr("Add your first Bill of Quantities group to get started")}
             </p>
           </div>
         ) : (
@@ -434,18 +431,18 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
             ───────────────────────────────────────────────────────────────── */}
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[980px] table-fixed text-sm text-left">
+                <table className="w-full min-w-[980px] table-fixed text-sm text-start">
                   <thead>
                     <tr className="bg-slate-50/70 border-b border-slate-200">
                       <th className="w-[4%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">#</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Item No.</th>
-                      <th className="w-[29%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Item Description</th>
-                      <th className="w-[7%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Unit</th>
-                      <th className="w-[8%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Qty</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Rate</th>
-                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
-                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{tr("Item No.")}</th>
+                      <th className="w-[29%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{tr("Item Description")}</th>
+                      <th className="w-[7%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">{tr("Unit")}</th>
+                      <th className="w-[8%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Qty")}</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Rate")}</th>
+                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Total")}</th>
+                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">{tr("Status")}</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -464,11 +461,11 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                             <td colSpan={6} className="px-2 sm:px-3 py-3">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
-                                <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">{groupName}</span>
+                                <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">{tr(groupName)}</span>
                               </div>
                             </td>
-                            <td className="px-1 sm:px-2 py-3 text-right font-bold text-slate-900 whitespace-nowrap text-xs sm:text-sm">
-                              {formatCurrency(totalCost, project?.currency || '$')}
+                            <td className="px-1 sm:px-2 py-3 text-end font-bold text-slate-900 whitespace-nowrap text-xs sm:text-sm">
+                              {formatCurrency(totalCost, projectCurrency(project))}
                             </td>
                             <td className="px-2 sm:px-3 py-3 text-center">
                               <StatusBadge status={status} size="xs" />
@@ -478,7 +475,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                                 {canDelete && (
                                   <button
                                     onClick={e => handleDeleteGroup(groupItems, e)}
-                                    title="Delete Group"
+                                    title={tr("Delete Group")}
                                     className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -500,24 +497,24 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                                 <td className="px-2 sm:px-3 py-3 text-slate-500 text-xs font-mono">{idx + 1}</td>
                                 <td className="px-2 sm:px-3 py-3">
                                   {item.itemNumber
-                                    ? <span className="font-mono text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">{item.itemNumber}</span>
+                                    ? <span className="font-mono text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">{tr(item.itemNumber)}</span>
                                     : <span className="text-slate-300 text-xs">—</span>}
                                 </td>
                                 <td className="px-2 sm:px-3 py-3 min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <p className="font-medium text-gray-900 break-words [overflow-wrap:anywhere]">{item.itemDescription}</p>
+                                    <p className="font-medium text-gray-900 break-words [overflow-wrap:anywhere]">{tr(item.itemDescription)}</p>
                                     {(item as any).version > 1 && (
                                       <span className="text-[10px] font-medium bg-gray-100 border border-gray-200 text-gray-700 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
-                                        v{(item as any).version}
+                                        v{tr((item as any).version)}
                                       </span>
                                     )}
                                   </div>
                                   {item.remark && (
-                                    <p className="text-xs text-slate-500 mt-0.5 break-words [overflow-wrap:anywhere]">{item.remark}</p>
+                                    <p className="text-xs text-slate-500 mt-0.5 break-words [overflow-wrap:anywhere]">{tr(item.remark)}</p>
                                   )}
                                   {item.status === 'Pending' && (
                                     <p className="text-[11px] text-amber-700 font-medium mt-1">
-                                      Pending: {(() => {
+                                      {tr("Pending: ")}{(() => {
                                         const storedName = (item as any).requestedApproverName;
                                         const approverObj = (item as any).requestedApprover;
                                         const approverId = typeof approverObj === 'object' ? approverObj?._id : approverObj;
@@ -546,14 +543,14 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                                   )}
                                 </td>
                                 <td className="px-2 sm:px-3 py-3 text-center text-slate-500 text-xs">{item.unit || '—'}</td>
-                                <td className="px-2 sm:px-3 py-3 text-right font-medium text-gray-900">
+                                <td className="px-2 sm:px-3 py-3 text-end font-medium text-gray-900">
                                   {Number(item.quantity).toLocaleString('en-IN')}
                                 </td>
-                                <td className="px-2 sm:px-3 py-3 text-right text-slate-600">
-                                  {formatCurrency(Number(item.unitCost), project?.currency || '$')}
+                                <td className="px-2 sm:px-3 py-3 text-end text-slate-600">
+                                  {formatCurrency(Number(item.unitCost), projectCurrency(project))}
                                 </td>
-                                <td className="px-2 sm:px-3 py-3 text-right font-semibold text-gray-900">
-                                  {formatCurrency(Number(item.totalCost || 0), project?.currency || '$')}
+                                <td className="px-2 sm:px-3 py-3 text-end font-semibold text-gray-900">
+                                  {formatCurrency(Number(item.totalCost || 0), projectCurrency(project))}
                                 </td>
                                 <td className="px-2 sm:px-3 py-3 text-center">
                                   <StatusBadge status={item.status} />
@@ -567,39 +564,39 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                                         {canApproveThis && item.status === 'Pending' && (
                                           <>
                                             <button onClick={() => handleUpdateItemStatus(item, 'Approved')}
-                                              title="Approve" className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors">
+                                              title={tr("Approve")} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors">
                                               <CheckCircle2 className="w-4 h-4" />
                                             </button>
                                             <button onClick={() => handleUpdateItemStatus(item, 'Rejected')}
-                                              title="Reject" className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                                              title={tr("Reject")} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors">
                                               <XCircle className="w-4 h-4" />
                                             </button>
                                           </>
                                         )}
                                         {item.status === 'Draft' && canAssign && (
                                           <button onClick={() => setApproversItem(item)}
-                                            title="Send for Approval" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
+                                            title={tr("Send for Approval")} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
                                             <Send className="w-4 h-4" />
                                           </button>
                                         )}
                                         {item.status === 'Approved' ? (
                                           <button onClick={() => { setSelectedItem(item); setIsNewVersion(true); setIsModalOpen(true); }}
-                                            title="Create New Version" className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-md transition-colors">
+                                            title={tr("Create New Version")} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-md transition-colors">
                                             <GitBranch className="w-4 h-4" />
                                           </button>
                                         ) : canUpdate && (
                                           <button onClick={() => { setSelectedItem(item); setIsNewVersion(false); setIsModalOpen(true); }}
-                                            title="Edit" className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
+                                            title={tr("Edit")} className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
                                             <Edit2 className="w-4 h-4" />
                                           </button>
                                         )}
                                         <button onClick={() => setViewingItem(item)}
-                                          title="View Details" className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors">
+                                          title={tr("View Details")} className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors">
                                           <History className="w-4 h-4" />
                                         </button>
                                         {canDelete && (
                                           <button onClick={() => handleDeleteItem(item)}
-                                            title="Delete" className="p-1.5 text-transparent group-hover/item:text-slate-400 hover:!text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                                            title={tr("Delete")} className="p-1.5 text-transparent group-hover/item:text-slate-400 hover:!text-red-600 hover:bg-red-50 rounded-md transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                           </button>
                                         )}
@@ -660,6 +657,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
           isOpen={!!budgetImpactData}
           onClose={() => setBudgetImpactData(null)}
           impactData={budgetImpactData}
+          currency={projectCurrency(project)}
           onConfirm={async () => {
             const item = items.find(i => i._id === budgetImpactData?.itemId);
             if (item) await handleUpdateItemStatus(item, 'Approved', true);

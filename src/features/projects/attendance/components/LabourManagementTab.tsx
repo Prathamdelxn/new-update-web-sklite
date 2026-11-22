@@ -1,4 +1,5 @@
 'use client';
+import { tr, getLang } from '@/i18n';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -103,7 +104,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
       setAttendanceState(initialState);
       setSavedAttendanceState(initialState);
     } catch {
-      toast.error('Failed to load labour data');
+      toast.error(tr("Failed to load labour data"));
     } finally {
       setLoading(false);
     }
@@ -124,24 +125,24 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
   };
 
   const handleSaveLabour = async () => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     if (!form.name.trim() || !form.wageAmount) {
-      toast.error('Please fill name and wage amount');
+      toast.error(tr("Please fill name and wage amount"));
       return;
     }
     setSaving(true);
     try {
       if (editingId) {
         await api.put(`/labour/${editingId}`, form);
-        toast.success('Labourer updated');
+        toast.success(tr("Labourer updated"));
       } else {
         await api.post('/labour', { project: projectId, ...form });
-        toast.success('Labourer added successfully');
+        toast.success(tr("Labourer added successfully"));
       }
       closeModal();
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to save labourer');
+      toast.error(err.response?.data?.message || tr("Failed to save labourer"));
     } finally {
       setSaving(false);
     }
@@ -149,15 +150,15 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
 
   const handleDeleteLabour = async () => {
     if (!editingId) return;
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     setDeleting(true);
     try {
       await api.delete(`/labour/${editingId}`);
-      toast.success('Labourer deleted');
+      toast.success(tr("Labourer deleted"));
       closeModal();
       fetchData();
     } catch {
-      toast.error('Failed to delete labourer');
+      toast.error(tr("Failed to delete labourer"));
     } finally {
       setDeleting(false);
     }
@@ -172,7 +173,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
   };
 
   const handleSubmitBulk = async () => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     setSubmitting(true);
     try {
       const attendances = labourers.map(labour => {
@@ -180,10 +181,10 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
         return { labourId: labour._id, status: state.isChecked ? state.status : 'Absent' };
       });
       await api.post('/labour-attendance/bulk', { projectId, date: selectedDate, attendances });
-      toast.success('Attendance saved successfully');
+      toast.success(tr("Attendance saved successfully"));
       fetchData();
     } catch {
-      toast.error('Failed to save attendance');
+      toast.error(tr("Failed to save attendance"));
     } finally {
       setSubmitting(false);
     }
@@ -191,13 +192,13 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
 
   const handleExportPayroll = async () => {
     if (!exportStartDate || !exportEndDate) {
-      toast.error('Please select both start and end dates.');
+      toast.error(tr("Please select both start and end dates."));
       return;
     }
     setExporting(true);
     try {
       const response = await api.get(
-        `/labour/export?projectId=${projectId}&startDate=${exportStartDate}&endDate=${exportEndDate}`,
+        `/labour/export?projectId=${projectId}&startDate=${exportStartDate}&endDate=${exportEndDate}&lang=${getLang()}`,
         { responseType: 'blob' }
       );
       const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -209,10 +210,10 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('Payroll exported successfully!');
+      toast.success(tr("Payroll exported successfully!"));
       setExportOpen(false);
     } catch {
-      toast.error('Failed to export payroll');
+      toast.error(tr("Failed to export payroll"));
     } finally {
       setExporting(false);
     }
@@ -241,17 +242,17 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search labourer..."
+            placeholder={tr("Search labourer...")}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="w-full ps-9 pe-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
           />
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setExportOpen(true)}
             className="p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl transition-colors"
-            title="Export Payroll"
+            title={tr("Export Payroll")}
           >
             <Download className="w-4 h-4" />
           </button>
@@ -260,7 +261,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               onClick={() => { setEditingId(null); setModalOpen(true); }}
               className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-sm shrink-0"
             >
-              <Plus className="w-4 h-4" /> Add
+              <Plus className="w-4 h-4" />{tr(" Add")}
             </button>
           )}
         </div>
@@ -273,7 +274,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
       ) : labourers.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
           <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-xs font-semibold text-slate-400">No labourers added yet.</p>
+          <p className="text-xs font-semibold text-slate-400">{tr("No labourers added yet.")}</p>
         </div>
       ) : (
         <>
@@ -291,14 +292,14 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                       className="w-4 h-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shrink-0"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className={cn('font-bold text-sm', state.isChecked ? 'text-gray-900' : 'text-slate-400')}>{labour.name}</p>
-                      <p className="text-[10px] text-slate-400">{labour.type} · {labour.paymentCycle} · Wage {labour.wageAmount}</p>
+                      <p className={cn('font-bold text-sm', state.isChecked ? 'text-gray-900' : 'text-slate-400')}>{tr(labour.name)}</p>
+                      <p className="text-[10px] text-slate-400">{tr(labour.type)} · {tr(labour.paymentCycle)}{tr(" · Wage ")}{tr(labour.wageAmount)}</p>
                     </div>
                     <button onClick={() => openEdit(labour)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors shrink-0">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="pl-7">
+                  <div className="ps-7">
                     {state.isChecked ? (
                       <button
                         onClick={() => toggleHalfDay(labour._id, state.status)}
@@ -309,10 +310,10 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                             : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         )}
                       >
-                        {state.status === 'Half Day' ? 'Half' : 'Full'}
+                        {state.status === 'Half Day' ? tr("Half") : tr("Full")}
                       </button>
                     ) : (
-                      <span className="text-[10px] font-bold text-red-500">Absent</span>
+                      <span className="text-[10px] font-bold text-red-500">{tr("Absent")}</span>
                     )}
                   </div>
                 </div>
@@ -322,13 +323,13 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
 
           {/* Desktop: table */}
           <div className="hidden sm:block overflow-x-auto rounded-xl border border-gray-200">
-            <table className="w-full border-collapse text-left text-xs">
+            <table className="w-full border-collapse text-start text-xs">
               <thead>
                 <tr className="bg-slate-50 border-b border-gray-200 font-bold text-slate-600">
-                  <th className="py-3 px-4 w-12">Mark</th>
-                  <th className="py-3 px-4">Name</th>
-                  <th className="py-3 px-4 text-center">Day Type</th>
-                  <th className="py-3 px-4 text-right">Wage</th>
+                  <th className="py-3 px-4 w-12">{tr("Mark")}</th>
+                  <th className="py-3 px-4">{tr("Name")}</th>
+                  <th className="py-3 px-4 text-center">{tr("Day Type")}</th>
+                  <th className="py-3 px-4 text-end">{tr("Wage")}</th>
                   <th className="py-3 px-4 text-center w-12"></th>
                 </tr>
               </thead>
@@ -346,8 +347,8 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                         />
                       </td>
                       <td className="py-3 px-4">
-                        <p className={cn('font-bold', state.isChecked ? 'text-gray-900' : 'text-slate-400')}>{labour.name}</p>
-                        <p className="text-[10px] text-slate-400">{labour.type} · {labour.paymentCycle}</p>
+                        <p className={cn('font-bold', state.isChecked ? 'text-gray-900' : 'text-slate-400')}>{tr(labour.name)}</p>
+                        <p className="text-[10px] text-slate-400">{tr(labour.type)} · {tr(labour.paymentCycle)}</p>
                       </td>
                       <td className="py-3 px-4 text-center">
                         {state.isChecked ? (
@@ -360,13 +361,13 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                                 : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             )}
                           >
-                            {state.status === 'Half Day' ? 'Half' : 'Full'}
+                            {state.status === 'Half Day' ? tr("Half") : tr("Full")}
                           </button>
                         ) : (
-                          <span className="text-[10px] font-bold text-red-500">Absent</span>
+                          <span className="text-[10px] font-bold text-red-500">{tr("Absent")}</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right font-semibold text-slate-700">{labour.wageAmount}</td>
+                      <td className="py-3 px-4 text-end font-semibold text-slate-700">{tr(labour.wageAmount)}</td>
                       <td className="py-3 px-4 text-center">
                         <button onClick={() => openEdit(labour)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                           <Pencil className="w-3.5 h-3.5" />
@@ -385,7 +386,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-bold text-sm transition-all shadow-sm"
           >
             {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-            Save Attendance
+            {tr("Save Attendance")}
           </button>
         </>
       )}
@@ -406,7 +407,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               className="w-full max-w-sm relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-black text-gray-900 text-base">{editingId ? 'Edit Labourer' : 'Add New Labourer'}</h3>
+                <h3 className="font-black text-gray-900 text-base">{editingId ? tr("Edit Labourer") : tr("Add New Labourer")}</h3>
                 <div className="flex items-center gap-1">
                   {editingId && (
                     <button onClick={handleDeleteLabour} disabled={deleting} className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
@@ -420,17 +421,17 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Full Name</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Full Name")}</label>
                 <input
                   type="text" value={form.name}
                   onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-500 transition-all"
-                  placeholder="e.g. John Doe"
+                  placeholder={tr("e.g. John Doe")}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Type</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Type")}</label>
                 <div className="flex p-1 bg-gray-100 border border-gray-200 rounded-xl">
                   {(['Skilled', 'Unskilled'] as const).map(t => (
                     <button
@@ -439,14 +440,14 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                       onClick={() => setForm(p => ({ ...p, type: t }))}
                       className={cn('flex-1 py-2 rounded-lg text-xs font-bold transition-all', form.type === t ? 'bg-white shadow text-gray-900' : 'text-slate-500')}
                     >
-                      {t}
+                      {tr(t)}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Wage Amount</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Wage Amount")}</label>
                 <input
                   type="number" value={form.wageAmount}
                   onChange={e => setForm(p => ({ ...p, wageAmount: e.target.value }))}
@@ -457,7 +458,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
 
               <div className="flex gap-3 pt-1">
                 <button onClick={closeModal} className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-xs">
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   onClick={handleSaveLabour}
@@ -465,7 +466,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                   className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold transition-all text-xs flex items-center justify-center gap-2"
                 >
                   {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
-                  {editingId ? 'Save Changes' : 'Save Labourer'}
+                  {editingId ? tr("Save Changes") : tr("Save Labourer")}
                 </button>
               </div>
             </motion.div>
@@ -489,7 +490,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               className="w-full max-w-sm relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-black text-gray-900 text-base">Export Payroll</h3>
+                <h3 className="font-black text-gray-900 text-base">{tr("Export Payroll")}</h3>
                 <button onClick={() => setExportOpen(false)} className="p-1.5 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-lg transition-colors">
                   <X className="w-4 h-4" />
                 </button>
@@ -497,7 +498,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Start Date</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{tr("Start Date")}</label>
                   <input
                     type="date" value={exportStartDate}
                     onChange={e => setExportStartDate(e.target.value)}
@@ -505,7 +506,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">End Date</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{tr("End Date")}</label>
                   <input
                     type="date" value={exportEndDate}
                     onChange={e => setExportEndDate(e.target.value)}
@@ -516,7 +517,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
 
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setExportOpen(false)} className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-xs">
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   onClick={handleExportPayroll}
@@ -524,7 +525,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                   className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold transition-all text-xs flex items-center justify-center gap-2"
                 >
                   {exporting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                  Download
+                  {tr("Download")}
                 </button>
               </div>
             </motion.div>

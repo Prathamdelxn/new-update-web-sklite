@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import Link from 'next/link';
@@ -113,12 +114,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             {/* Title & Category Subtitle */}
             <div className="min-w-0 flex-1">
               <h3 className="text-[13.5px] font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors truncate">
-                {project.name}
+                {tr(project.name)}
               </h3>
               <div className="flex items-center gap-1 mt-0.5">
                 <Layers className="w-3 h-3 text-indigo-500 shrink-0" />
                 <span className="text-[11px] font-semibold text-slate-500 truncate">
-                  {categoryName}
+                  {tr(categoryName)}
                 </span>
               </div>
             </div>
@@ -134,14 +135,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             }}
           >
             <StatusIcon className="w-3 h-3 shrink-0" />
-            <span className="truncate max-w-[85px]">{project.status}</span>
+            <span className="truncate max-w-[85px]">{tr(project.status)}</span>
           </div>
         </div>
 
         {/* ── Location Row ── */}
         <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50/80 rounded-lg px-2.5 py-1.5 border border-slate-100 mb-2.5 font-medium">
           <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="truncate text-[11.5px]" title={locationText}>{locationText}</span>
+          <span className="truncate text-[11.5px]" title={locationText}>{tr(locationText)}</span>
         </div>
 
         {/* ── Meta Badges Row ── */}
@@ -149,33 +150,33 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           {(project as any).projectCode && (
             <span className="inline-flex items-center gap-1 bg-slate-100/90 text-slate-600 px-2 py-0.5 rounded text-[9.5px] font-bold tracking-wide border border-slate-200/70">
               <FolderOpen className="w-2.5 h-2.5 text-slate-400" />
-              {(project as any).projectCode}
+              {tr((project as any).projectCode)}
             </span>
           )}
 
           {project.clientName && (
             <span className="inline-flex items-center bg-slate-100/80 text-slate-600 px-2 py-0.5 rounded text-[9.5px] font-bold tracking-wide border border-slate-200/60 truncate max-w-[120px]" title={project.clientName}>
-              Client: {project.clientName}
+              {tr("Client: ")}{tr(project.clientName)}
             </span>
           )}
 
           {!isAdmin && project.hasPendingPlans && (
             <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-600 px-2 py-0.5 rounded text-[9.5px] font-extrabold tracking-wide border border-rose-200/80 animate-pulse">
               <AlertCircle className="w-2.5 h-2.5" />
-              ACTION REQ
+              {tr("ACTION REQ")}
             </span>
           )}
 
           {(project as any).projectType === 'Interior' && (
             <span className="bg-purple-50 border border-purple-200/80 text-purple-600 px-2 py-0.5 rounded text-[9.5px] font-extrabold tracking-wide">
-              INTERIOR
+              {tr("INTERIOR")}
             </span>
           )}
 
           {isFinished && (
             <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[9.5px] font-bold border border-emerald-200/80">
               <CheckCircle2 className="w-2.5 h-2.5" />
-              Done
+              {tr("Done")}
             </span>
           )}
         </div>
@@ -183,7 +184,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* ── Progress Section ── */}
         <div className="mt-auto pt-2.5 border-t border-slate-100 space-y-1.5">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Progress</span>
+            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{tr("Progress")}</span>
             <span className={cn(
               "font-extrabold tabular-nums text-xs",
               isFinished ? "text-emerald-600" : "text-blue-600"
@@ -211,13 +212,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             {(project as any).surveyStatus === 'Needs Attention' && (
               <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200/80 p-1.5 rounded-lg text-[10.5px] font-bold text-rose-700">
                 <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                <span className="truncate">Survey Rejected — Attention needed</span>
+                <span className="truncate">{tr("Survey Rejected — Attention needed")}</span>
               </div>
             )}
             {(project as any).surveyStatus === 'Submitted' && (project as any).surveyRejectionReason && (
               <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 p-1.5 rounded-lg text-[10.5px] font-bold text-emerald-700">
                 <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="truncate">Survey Resolved — Under review</span>
+                <span className="truncate">{tr("Survey Resolved — Under review")}</span>
               </div>
             )}
           </div>
@@ -243,7 +244,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSendForSurvey(project); }}
               className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 border border-sky-200/80 transition-all active:scale-95 cursor-pointer shadow-2xs"
-              title="Send for Survey"
+              title={tr("Send for Survey")}
             >
               <Send className="w-3.5 h-3.5" />
             </button>
@@ -253,7 +254,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCompleteSurvey(project); }}
               className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 border border-teal-200/80 transition-all active:scale-95 cursor-pointer shadow-2xs"
-              title={(project as any).surveyStatus ? 'Edit Survey' : 'Start Survey'}
+              title={(project as any).surveyStatus ? tr("Edit Survey") : tr("Start Survey")}
             >
               <ClipboardCheck className="w-3.5 h-3.5" />
             </button>
@@ -263,7 +264,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             href={`${basePath}/${project._id}/chat`}
             onClick={(e) => e.stopPropagation()}
             className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200/90 hover:border-emerald-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
-            title="Team Chat"
+            title={tr("Team Chat")}
           >
             <MessageCircle className="w-3.5 h-3.5" />
           </Link>
@@ -272,7 +273,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(project); }}
               className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/90 hover:border-indigo-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
-              title="Edit Project"
+              title={tr("Edit Project")}
             >
               <Pencil className="w-3.5 h-3.5" />
             </button>
@@ -282,7 +283,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(project); }}
               className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200/90 hover:border-rose-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
-              title="Delete Project"
+              title={tr("Delete Project")}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

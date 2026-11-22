@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -124,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <item.icon className="w-4 h-4 shrink-0" />
         {!isCollapsed && (
           <>
-            <span className="flex-1 truncate">{item.name}</span>
+            <span className="flex-1 truncate">{tr(item.name)}</span>
             {item.badge ? (
               <span
                 className={cn(
@@ -132,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   active ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'
                 )}
               >
-                {item.badge}
+                {tr(item.badge)}
               </span>
             ) : null}
           </>
@@ -163,8 +164,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }}
         transition={isMounted ? SIDEBAR_TRANSITION : { duration: 0 }}
         className={cn(
-          'fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-white border-r border-slate-200/80 shadow-[2px_0_16px_rgba(0,0,0,0.02)] transition-transform duration-200',
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          'fixed top-0 start-0 bottom-0 z-50 flex flex-col bg-white border-e border-slate-200/80 shadow-[2px_0_16px_rgba(0,0,0,0.02)] transition-transform duration-200',
+          isOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0'
         )}
       >
         {/* Header Logo */}
@@ -178,12 +179,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             href={dashboardHome}
             onClick={onClose}
             className="flex items-center gap-2.5 min-w-0 outline-none group flex-1"
-            title={isCollapsed ? (organizationName || 'SkyStruct Lite Construction') : undefined}
+            title={isCollapsed ? (organizationName || tr("SkyStruct Lite Construction")) : undefined}
           >
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
               <img
                 src="/SS-Logo-2025-Colour.svg"
-                alt="SkyStruct Lite"
+                alt={tr("SkyStruct Lite")}
                 className="w-4 h-4 object-contain brightness-0 invert"
               />
             </div>
@@ -191,10 +192,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
                 <h2 className="text-sm font-bold tracking-tight text-slate-900 truncate">
-                  SkyStruct-Lite
+                  {tr("SkyStruct-Lite")}
                 </h2>
-                <p className="text-[10px] text-slate-500 truncate" title={organizationName || 'Workspace'}>
-                  {organizationName || 'Workspace'}
+                <p className="text-[10px] text-slate-500 truncate" title={organizationName || tr("Workspace")}>
+                  {organizationName || tr("Workspace")}
                 </p>
               </div>
             )}
@@ -202,7 +203,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors ml-2"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors ms-2"
           >
             <X className="w-4 h-4" />
           </button>
@@ -227,14 +228,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 'text-slate-500 hover:text-slate-900 hover:bg-slate-100',
                 isCollapsed && 'justify-center px-2'
               )}
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={isCollapsed ? tr("Expand sidebar") : tr("Collapse sidebar")}
             >
               {isCollapsed ? (
                 <ChevronRight className="w-4 h-4 shrink-0" />
               ) : (
                 <>
                   <ChevronLeft className="w-4 h-4 shrink-0" />
-                  <span className="truncate">Collapse</span>
+                  <span className="truncate">{tr("Collapse")}</span>
                 </>
               )}
             </button>

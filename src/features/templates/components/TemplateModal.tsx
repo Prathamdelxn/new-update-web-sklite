@@ -1,12 +1,9 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X, Loader2, FileText, Upload, Image as ImageIcon, Trash2, Plus,
-  Layers, DollarSign, Ruler, Clock, FolderOpen, CheckCircle2,
-  AlertCircle, Sparkles, Check
-} from 'lucide-react';
+import { X, Loader2, FileText, Upload, Image as ImageIcon, Trash2, Plus, Layers, Ruler, Clock, FolderOpen, CheckCircle2, AlertCircle, Sparkles, Check, Banknote } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { uploadToCloudinary } from '@/lib/upload';
@@ -75,7 +72,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
         }
       })
       .catch(() => {
-        toast.error('Failed to load categories');
+        toast.error(tr("Failed to load categories"));
       });
   }, [isOpen, initialData]);
 
@@ -101,9 +98,9 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
     try {
       const urls = await Promise.all(picked.map((f) => uploadToCloudinary(f)));
       setImages((prev) => [...prev, ...urls]);
-      toast.success(`${picked.length} visual${picked.length > 1 ? 's' : ''} uploaded`);
+      toast.success(tr("{{pickedCount}} visual{{value}} uploaded", { pickedCount: picked.length, value: picked.length > 1 ? 's' : '' }));
     } catch {
-      toast.error('Image upload failed');
+      toast.error(tr("Image upload failed"));
     } finally {
       setUploadingImage(false);
       e.target.value = '';
@@ -122,9 +119,9 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
         })
       );
       setFiles((prev) => [...prev, ...uploaded]);
-      toast.success(`${picked.length} plan file${picked.length > 1 ? 's' : ''} uploaded`);
+      toast.success(tr("{{pickedCount}} plan file{{value}} uploaded", { pickedCount: picked.length, value: picked.length > 1 ? 's' : '' }));
     } catch {
-      toast.error('File upload failed');
+      toast.error(tr("File upload failed"));
     } finally {
       setUploadingFile(false);
       e.target.value = '';
@@ -134,11 +131,11 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      toast.error('Template name is required');
+      toast.error(tr("Template name is required"));
       return;
     }
     if (!formData.category) {
-      toast.error('Please select a category classification');
+      toast.error(tr("Please select a category classification"));
       return;
     }
     setIsLoading(true);
@@ -157,16 +154,16 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
 
       if (isEditing) {
         await api.patch(`/templates/${templateId}`, payload);
-        toast.success('Template updated successfully');
+        toast.success(tr("Template updated successfully"));
       } else {
         await api.post('/templates', payload);
-        toast.success('Project template created successfully');
+        toast.success(tr("Project template created successfully"));
       }
       onSuccess();
       onClose();
       if (!isEditing) reset();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || (isEditing ? 'Failed to update template' : 'Failed to create template'));
+      toast.error(error.response?.data?.message || (isEditing ? tr("Failed to update template") : tr("Failed to create template")));
     } finally {
       setIsLoading(false);
     }
@@ -215,11 +212,11 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-150">
-                        {isEditing ? 'Modify Template' : 'Template Management'}
+                        {isEditing ? tr("Modify Template") : tr("Template Management")}
                       </span>
                     </div>
                     <h2 className="text-base font-extrabold text-slate-900 tracking-tight mt-0.5">
-                      {isEditing ? 'Edit Project Template' : 'Create New Project Template'}
+                      {isEditing ? tr("Edit Project Template") : tr("Create New Project Template")}
                     </h2>
                   </div>
                 </div>
@@ -227,7 +224,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                   type="button"
                   onClick={() => { onClose(); reset(); }}
                   className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                  title="Close modal"
+                  title={tr("Close modal")}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -243,18 +240,18 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       <div className="flex items-center gap-2">
                         <FileText className="w-4 h-4 text-blue-600" />
                         <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-                          General Information
+                          {tr("General Information")}
                         </h3>
                       </div>
                       <span className="text-[10.5px] font-semibold text-slate-400">
-                        Core Identity & Classification
+                        {tr("Core Identity & Classification")}
                       </span>
                     </div>
 
                     {/* Template Name */}
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Template Name <span className="text-rose-500">*</span>
+                        {tr("Template Name ")}<span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <Layers className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -263,8 +260,8 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                           required
                           value={formData.name}
                           onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
-                          placeholder="e.g. 3BHK Luxury Villa Template, Commercial Retail Shell..."
-                          className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300 shadow-2xs"
+                          placeholder={tr("e.g. 3BHK Luxury Villa Template, Commercial Retail Shell...")}
+                          className="w-full ps-10 pe-4 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300 shadow-2xs"
                         />
                       </div>
                     </div>
@@ -273,10 +270,10 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="block text-xs font-bold text-slate-700">
-                          Classification Category <span className="text-rose-500">*</span>
+                          {tr("Classification Category ")}<span className="text-rose-500">*</span>
                         </label>
                         <span className="text-[10px] font-semibold text-slate-400">
-                          {categories.length} categories available
+                          {categories.length}{tr(" categories available")}
                         </span>
                       </div>
 
@@ -290,7 +287,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 type="button"
                                 onClick={() => setFormData((f) => ({ ...f, category: cat._id }))}
                                 className={cn(
-                                  "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all text-left cursor-pointer",
+                                  "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all text-start cursor-pointer",
                                   isSelected
                                     ? "bg-blue-50/90 text-blue-700 border-blue-400 shadow-2xs ring-1 ring-blue-500/20"
                                     : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50/80"
@@ -302,7 +299,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 )}>
                                   {isSelected ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <FolderOpen className="w-3.5 h-3.5" />}
                                 </div>
-                                <span className="truncate">{cat.name}</span>
+                                <span className="truncate">{tr(cat.name)}</span>
                               </button>
                             );
                           })}
@@ -310,7 +307,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       ) : (
                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-700 flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 shrink-0" />
-                          <span>No categories found. Please create a category first under the Categories tab.</span>
+                          <span>{tr("No categories found. Please create a category first under the Categories tab.")}</span>
                         </div>
                       )}
                     </div>
@@ -319,17 +316,17 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="block text-xs font-bold text-slate-700">
-                          Standard Scope & Description
+                          {tr("Standard Scope & Description")}
                         </label>
                         <span className="text-[10px] font-semibold text-slate-400">
-                          {formData.description.length} characters
+                          {formData.description.length}{tr(" characters")}
                         </span>
                       </div>
                       <textarea
                         rows={3}
                         value={formData.description}
                         onChange={(e) => setFormData((f) => ({ ...f, description: e.target.value }))}
-                        placeholder="Detail standard site delivery milestones, turnkey materials, quality checks, and architectural scope..."
+                        placeholder={tr("Detail standard site delivery milestones, turnkey materials, quality checks, and architectural scope...")}
                         className="w-full p-3 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300 shadow-2xs resize-none"
                       />
                     </div>
@@ -341,11 +338,11 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       <div className="flex items-center gap-2">
                         <Ruler className="w-4 h-4 text-blue-600" />
                         <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-                          Estimates & Technical Specifications
+                          {tr("Estimates & Technical Specifications")}
                         </h3>
                       </div>
                       <span className="text-[10.5px] font-semibold text-slate-400">
-                        Financial Thresholds & Physical Footprint
+                        {tr("Financial Thresholds & Physical Footprint")}
                       </span>
                     </div>
 
@@ -354,14 +351,14 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
                         <div className="flex items-center justify-between">
                           <label className="block text-xs font-bold text-slate-700">
-                            Estimated Budget Range
+                            {tr("Estimated Budget Range")}
                           </label>
-                          <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                          <Banknote className="w-3.5 h-3.5 text-emerald-600" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Min Budget</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">{tr("Min Budget")}</span>
                             <div className="relative flex items-center">
                               <span className="absolute left-2.5 text-xs font-bold text-slate-400">₹</span>
                               <input
@@ -370,12 +367,12 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 value={formData.minBudget}
                                 onChange={(e) => setFormData((f) => ({ ...f, minBudget: e.target.value }))}
                                 placeholder="0"
-                                className="w-full pl-6 pr-2.5 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full ps-6 pe-2.5 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                               />
                             </div>
                           </div>
                           <div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Max Budget</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">{tr("Max Budget")}</span>
                             <div className="relative flex items-center">
                               <span className="absolute left-2.5 text-xs font-bold text-slate-400">₹</span>
                               <input
@@ -384,7 +381,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 value={formData.maxBudget}
                                 onChange={(e) => setFormData((f) => ({ ...f, maxBudget: e.target.value }))}
                                 placeholder="50,00,000"
-                                className="w-full pl-6 pr-2.5 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full ps-6 pe-2.5 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                               />
                             </div>
                           </div>
@@ -393,7 +390,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                         {(minNum > 0 || maxNum > 0) && (
                           <div className="pt-1 flex items-center gap-1.5 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">
                             <Sparkles className="w-3 h-3 text-emerald-600" />
-                            <span>Preview: {formatCurrency(minNum, '₹')} – {formatCurrency(maxNum, '₹')}</span>
+                            <span>{tr("Preview: ")}{formatCurrency(minNum, '₹')} – {formatCurrency(maxNum, '₹')}</span>
                           </div>
                         )}
                       </div>
@@ -402,14 +399,14 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
                         <div className="flex items-center justify-between">
                           <label className="block text-xs font-bold text-slate-700">
-                            Footprint & Execution Target
+                            {tr("Footprint & Execution Target")}
                           </label>
                           <Clock className="w-3.5 h-3.5 text-blue-600" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Built-Up Area</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">{tr("Built-Up Area")}</span>
                             <div className="relative flex items-center">
                               <input
                                 type="number"
@@ -417,13 +414,13 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 value={formData.area}
                                 onChange={(e) => setFormData((f) => ({ ...f, area: e.target.value }))}
                                 placeholder="e.g. 2400"
-                                className="w-full pl-3 pr-10 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full ps-3 pe-10 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                               />
-                              <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none">ft²</span>
+                              <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none">{tr("ft²")}</span>
                             </div>
                           </div>
                           <div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Estimated Days</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">{tr("Estimated Days")}</span>
                             <div className="relative flex items-center">
                               <input
                                 type="number"
@@ -431,15 +428,15 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 value={formData.estimatedDays}
                                 onChange={(e) => setFormData((f) => ({ ...f, estimatedDays: e.target.value }))}
                                 placeholder="e.g. 60"
-                                className="w-full pl-3 pr-12 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full ps-3 pe-12 py-1.5 bg-slate-50 border border-slate-200/90 rounded-lg text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                               />
-                              <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none">Days</span>
+                              <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none">{tr("Days")}</span>
                             </div>
                           </div>
                         </div>
 
                         <p className="text-[10px] font-semibold text-slate-400 pt-0.5">
-                          Used to benchmark project schedules and automated Gantt chart timelines.
+                          {tr("Used to benchmark project schedules and automated Gantt chart timelines.")}
                         </p>
                       </div>
                     </div>
@@ -451,7 +448,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       <div className="flex items-center gap-2">
                         <ImageIcon className="w-4 h-4 text-blue-600" />
                         <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-                          Documentation & Visual Assets
+                          {tr("Documentation & Visual Assets")}
                         </h3>
                       </div>
                       
@@ -467,7 +464,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                               : "text-slate-600 hover:text-slate-900"
                           )}
                         >
-                          Images ({images.length})
+                          {tr("Images (")}{images.length})
                         </button>
                         <button
                           type="button"
@@ -479,7 +476,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                               : "text-slate-600 hover:text-slate-900"
                           )}
                         >
-                          Drawings ({files.length})
+                          {tr("Drawings (")}{files.length})
                         </button>
                       </div>
                     </div>
@@ -512,10 +509,10 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                             </div>
                           )}
                           <p className="text-xs font-bold text-slate-800">
-                            {uploadingImage ? 'Uploading reference visuals...' : 'Upload Reference Images & Renders'}
+                            {uploadingImage ? tr("Uploading reference visuals...") : tr("Upload Reference Images & Renders")}
                           </p>
                           <p className="text-[10px] font-semibold text-slate-400">
-                            PNG, JPG, WEBP up to 10MB each · First image becomes card cover
+                            {tr("PNG, JPG, WEBP up to 10MB each · First image becomes card cover")}
                           </p>
                         </div>
 
@@ -530,7 +527,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover" />
                                 {i === 0 && (
                                   <span className="absolute top-1.5 left-1.5 bg-blue-600/90 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded shadow-sm">
-                                    Cover
+                                    {tr("Cover")}
                                   </span>
                                 )}
                                 <div className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -538,7 +535,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                     type="button"
                                     onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
                                     className="p-1.5 rounded-lg bg-white/90 text-rose-600 hover:bg-white hover:scale-105 transition-all shadow-sm cursor-pointer"
-                                    title="Delete image"
+                                    title={tr("Delete image")}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -577,10 +574,10 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                             </div>
                           )}
                           <p className="text-xs font-bold text-slate-800">
-                            {uploadingFile ? 'Uploading architectural drawings...' : 'Upload Plan Files & Specifications'}
+                            {uploadingFile ? tr("Uploading architectural drawings...") : tr("Upload Plan Files & Specifications")}
                           </p>
                           <p className="text-[10px] font-semibold text-slate-400">
-                            PDF, DWG, DXF, or ZIP files · Downloadable during site survey & estimation
+                            {tr("PDF, DWG, DXF, or ZIP files · Downloadable during site survey & estimation")}
                           </p>
                         </div>
 
@@ -598,10 +595,10 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                   </div>
                                   <div className="min-w-0">
                                     <p className="text-xs font-bold text-slate-900 truncate">
-                                      {file.name}
+                                      {tr(file.name)}
                                     </p>
                                     <p className="text-[10px] font-semibold text-slate-400">
-                                      {formatFileSize(file.size)} · Architectural Document
+                                      {formatFileSize(file.size)}{tr(" · Architectural Document")}
                                     </p>
                                   </div>
                                 </div>
@@ -609,7 +606,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                   type="button"
                                   onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
                                   className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                  title="Remove plan file"
+                                  title={tr("Remove plan file")}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -625,7 +622,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                 {/* ── Sticky Modal Footer ── */}
                 <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-150 flex items-center justify-between shrink-0 mt-auto">
                   <span className="text-[11px] font-semibold text-slate-400">
-                    <span className="text-rose-500 font-bold">*</span> Required fields marked
+                    <span className="text-rose-500 font-bold">*</span>{tr(" Required fields marked")}
                   </span>
 
                   <div className="flex items-center gap-2.5">
@@ -634,7 +631,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       onClick={() => { onClose(); reset(); }}
                       className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs"
                     >
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     
                     <button
@@ -645,12 +642,12 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       {isLoading ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>{isEditing ? 'Saving Template...' : 'Creating Template...'}</span>
+                          <span>{isEditing ? tr("Saving Template...") : tr("Creating Template...")}</span>
                         </>
                       ) : (
                         <>
                           <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
-                          <span>{isEditing ? 'Save Changes' : 'Create Template'}</span>
+                          <span>{isEditing ? tr("Save Changes") : tr("Create Template")}</span>
                         </>
                       )}
                     </button>

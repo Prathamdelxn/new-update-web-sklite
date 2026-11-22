@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/providers/AuthContext';
@@ -120,7 +121,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
         scrollToBottom('instant');
       }
     } catch {
-      toast.error('Failed to load messages');
+      toast.error(tr("Failed to load messages"));
     } finally {
       setIsLoading(false);
       if (isManualRefresh) setIsRefreshing(false);
@@ -213,7 +214,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 50 * 1024 * 1024) {
-      toast.error('File size must be less than 50MB');
+      toast.error(tr("File size must be less than 50MB"));
       return;
     }
     setSelectedFile(file);
@@ -268,7 +269,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
         setReplyingTo(null);
       }
     } catch {
-      toast.error(editingMsg ? 'Failed to edit message' : 'Failed to send message');
+      toast.error(editingMsg ? tr("Failed to edit message") : tr("Failed to send message"));
     } finally {
       setIsSending(false);
     }
@@ -276,9 +277,9 @@ export function ChatTab({ projectId }: ChatTabProps) {
 
   const deleteMessage = async (messageId: string) => {
     const ok = await confirm({
-      title: 'Delete Message',
-      message: 'Are you sure you want to delete this message? This action cannot be undone.',
-      confirmText: 'Delete Message',
+      title: tr("Delete Message"),
+      message: tr("Are you sure you want to delete this message? This action cannot be undone."),
+      confirmText: tr("Delete Message"),
       type: 'danger',
     });
     if (!ok) return;
@@ -287,7 +288,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
       setMessages(prev => prev.filter(m => m._id !== messageId));
       setActiveMenuId(null);
     } catch {
-      toast.error('Failed to delete message');
+      toast.error(tr("Failed to delete message"));
     }
   };
 
@@ -297,7 +298,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
       setMessages(prev => prev.map(m => (m._id === messageId ? res.data : m)));
       setActiveMenuId(null);
     } catch {
-      toast.error('Failed to add reaction');
+      toast.error(tr("Failed to add reaction"));
     }
   };
 
@@ -331,7 +332,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-2xl shadow-none">
         <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-        <p className="text-slate-500 mt-2 text-xs font-medium">Connecting to project discussion...</p>
+        <p className="text-slate-500 mt-2 text-xs font-medium">{tr("Connecting to project discussion...")}</p>
       </div>
     );
   }
@@ -353,7 +354,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                Project Discussion
+                {tr("Project Discussion")}
               </h3>
               <div
                 className={cn(
@@ -362,7 +363,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
                     : 'bg-amber-50 text-amber-700 border-amber-200/80'
                 )}
-                title={isConnected ? 'Real-time WebSocket connected' : 'Connecting to live chat...'}
+                title={isConnected ? tr("Real-time WebSocket connected") : tr("Connecting to live chat...")}
               >
                 <span
                   className={cn(
@@ -370,12 +371,12 @@ export function ChatTab({ projectId }: ChatTabProps) {
                     isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
                   )}
                 />
-                <span className="hidden sm:inline">{isConnected ? 'Live' : 'Syncing'}</span>
+                <span className="hidden sm:inline">{isConnected ? tr("Live") : tr("Syncing")}</span>
               </div>
             </div>
             <p className="text-[11px] text-slate-500 truncate mt-0.5">
-              {project?.name ? `#${project.name}` : 'General team thread'} • {messages.length}{' '}
-              {messages.length === 1 ? 'message' : 'messages'}
+              {project?.name ? `#${project.name}` : tr("General team thread")} • {messages.length}{' '}
+              {messages.length === 1 ? tr("message") : tr("messages")}
             </p>
           </div>
         </div>
@@ -391,7 +392,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                 autoFocus
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search chat..."
+                placeholder={tr("Search chat...")}
                 className="w-28 sm:w-44 text-xs bg-transparent border-none focus:outline-none text-slate-800 placeholder:text-slate-400"
               />
               <button
@@ -408,7 +409,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
             <button
               onClick={() => setIsSearchOpen(true)}
               className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Search messages"
+              title={tr("Search messages")}
             >
               <Search className="w-4 h-4" />
             </button>
@@ -419,7 +420,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
             onClick={() => fetchMessages(true)}
             disabled={isRefreshing}
             className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-            title="Refresh messages"
+            title={tr("Refresh messages")}
           >
             <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin text-blue-600')} />
           </button>
@@ -430,14 +431,14 @@ export function ChatTab({ projectId }: ChatTabProps) {
       {searchQuery.trim() && (
         <div className="px-4 py-2 bg-blue-50/70 border-b border-blue-100 flex items-center justify-between text-xs text-blue-800 shrink-0">
           <span>
-            Found <strong>{filteredMessages.length}</strong> matching{' '}
-            {filteredMessages.length === 1 ? 'message' : 'messages'} for &ldquo;{searchQuery}&rdquo;
+            {tr("Found ")}<strong>{filteredMessages.length}</strong>{tr(" matching")}{' '}
+            {filteredMessages.length === 1 ? tr("message") : tr("messages")}{tr(" for “")}{tr(searchQuery)}&rdquo;
           </span>
           <button
             onClick={() => setSearchQuery('')}
             className="text-[11px] font-semibold text-blue-700 hover:underline cursor-pointer"
           >
-            Clear filter
+            {tr("Clear filter")}
           </button>
         </div>
       )}
@@ -450,9 +451,9 @@ export function ChatTab({ projectId }: ChatTabProps) {
               <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center mb-3">
                 <Search className="w-5 h-5" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800">No matching messages</h4>
+              <h4 className="text-sm font-bold text-slate-800">{tr("No matching messages")}</h4>
               <p className="text-xs text-slate-500 mt-1 max-w-xs">
-                No messages found matching &ldquo;{searchQuery}&rdquo;. Try another search term.
+                {tr("No messages found matching “")}{tr(searchQuery)}{tr("”. Try another search term.")}
               </p>
             </div>
           ) : (
@@ -461,9 +462,9 @@ export function ChatTab({ projectId }: ChatTabProps) {
               <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center mb-4">
                 <MessageSquare className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-1">Project Discussion Channel</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-1">{tr("Project Discussion Channel")}</h3>
               <p className="text-xs text-slate-500 leading-relaxed mb-6">
-                Keep site updates, daily progress logs, material requests, and team conversations in one unified timeline.
+                {tr("Keep site updates, daily progress logs, material requests, and team conversations in one unified timeline.")}
               </p>
 
              
@@ -498,14 +499,14 @@ export function ChatTab({ projectId }: ChatTabProps) {
                 {showDateGroup && (
                   <div className="flex items-center justify-center my-3">
                     <span className="px-3 py-1 rounded-full text-[10.5px] font-semibold bg-white text-slate-500 border border-slate-200/80 shadow-none">
-                      {currentDateGroup}
+                      {tr(currentDateGroup)}
                     </span>
                   </div>
                 )}
 
                 <div className={cn('flex w-full group relative', isMe ? 'justify-end' : 'justify-start')}>
                   {!isMe && (
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center shrink-0 mr-2.5 mt-0.5 font-bold text-xs select-none">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center shrink-0 me-2.5 mt-0.5 font-bold text-xs select-none">
                       {msg.senderName?.charAt(0).toUpperCase() || 'U'}
                     </div>
                   )}
@@ -517,8 +518,8 @@ export function ChatTab({ projectId }: ChatTabProps) {
                     )}
                   >
                     {!isMe && (
-                      <span className="text-[11px] font-semibold text-slate-600 mb-1 ml-1">
-                        {msg.senderName || 'Team Member'}
+                      <span className="text-[11px] font-semibold text-slate-600 mb-1 ms-1">
+                        {msg.senderName || tr("Team Member")}
                       </span>
                     )}
 
@@ -527,15 +528,15 @@ export function ChatTab({ projectId }: ChatTabProps) {
                         className={cn(
                           'px-4 py-2.5 rounded-2xl border text-xs sm:text-sm relative z-10 transition-all shadow-none',
                           isMe
-                            ? 'bg-blue-600 text-white border-blue-600 rounded-br-xs'
-                            : 'bg-white text-slate-800 border-slate-200/90 rounded-bl-xs'
+                            ? 'bg-blue-600 text-white border-blue-600 rounded-ee-xs'
+                            : 'bg-white text-slate-800 border-slate-200/90 rounded-es-xs'
                         )}
                       >
                         {/* Reply reference */}
                         {msg.replyTo && (
                           <div
                             className={cn(
-                              'mb-2 p-2 rounded-lg border-l-2 text-xs',
+                              'mb-2 p-2 rounded-lg border-s-2 text-xs',
                               isMe
                                 ? 'bg-blue-700/60 border-white text-blue-100'
                                 : 'bg-slate-50 border-blue-500 text-slate-600'
@@ -547,10 +548,10 @@ export function ChatTab({ projectId }: ChatTabProps) {
                                 isMe ? 'text-white' : 'text-blue-600'
                               )}
                             >
-                              {msg.replyTo.senderName || 'Replying to message'}
+                              {msg.replyTo.senderName || tr("Replying to message")}
                             </span>
                             <span className="truncate block opacity-90">
-                              {msg.replyTo.content || 'Attachment'}
+                              {msg.replyTo.content || tr("Attachment")}
                             </span>
                           </div>
                         )}
@@ -570,7 +571,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                               >
                                 <img loading="lazy" decoding="async"
                                   src={att.url}
-                                  alt="attachment"
+                                  alt={tr("attachment")}
                                   className="max-w-full h-auto max-h-60 rounded-lg object-cover"
                                 />
                               </a>
@@ -605,7 +606,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                                 isMe ? 'text-blue-200' : 'text-slate-400'
                               )}
                             >
-                              (edited)
+                              {tr("(edited)")}
                             </span>
                           )}
                           <span
@@ -614,7 +615,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                               isMe ? 'text-blue-100' : 'text-slate-400'
                             )}
                           >
-                            {time}
+                            {tr(time)}
                           </span>
                         </div>
                       </div>
@@ -649,7 +650,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                                     : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
                                 )}
                               >
-                                <span>{emoji}</span>
+                                <span>{tr(emoji)}</span>
                                 <span className="font-semibold text-[11px]">{count as number}</span>
                               </button>
                             );
@@ -667,7 +668,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                             ? 'opacity-100'
                             : 'opacity-0 group-hover/bubble:opacity-100 focus:opacity-100'
                         )}
-                        title="Message actions"
+                        title={tr("Message actions")}
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
                       </button>
@@ -678,7 +679,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                           data-chat-menu
                           className={cn(
                             'absolute top-0 bg-white rounded-xl border border-slate-200/90 shadow-none w-56 z-50 overflow-hidden',
-                            isMe ? 'right-full mr-2' : 'left-full ml-2'
+                            isMe ? 'right-full me-2' : 'left-full ms-2'
                           )}
                         >
                           {/* Quick Emoji Reaction bar */}
@@ -689,7 +690,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                                 onClick={() => reactToMessage(msg._id, emoji)}
                                 className="text-base hover:scale-125 transition-transform p-0.5 cursor-pointer"
                               >
-                                {emoji}
+                                {tr(emoji)}
                               </button>
                             ))}
                           </div>
@@ -699,14 +700,14 @@ export function ChatTab({ projectId }: ChatTabProps) {
                               onClick={() => startReply(msg)}
                               className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                             >
-                              <Reply className="w-3.5 h-3.5 text-blue-600" /> Reply
+                              <Reply className="w-3.5 h-3.5 text-blue-600" />{tr(" Reply")}
                             </button>
                             {isMe && (
                               <button
                                 onClick={() => startEdit(msg)}
                                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                               >
-                                <Edit2 className="w-3.5 h-3.5 text-amber-600" /> Edit
+                                <Edit2 className="w-3.5 h-3.5 text-amber-600" />{tr(" Edit")}
                               </button>
                             )}
                             {(isMe || canManageChat) && (
@@ -714,7 +715,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                                 onClick={() => deleteMessage(msg._id)}
                                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                               >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                                <Trash2 className="w-3.5 h-3.5" />{tr(" Delete")}
                               </button>
                             )}
                           </div>
@@ -741,10 +742,10 @@ export function ChatTab({ projectId }: ChatTabProps) {
               </div>
               <div className="min-w-0">
                 <span className="text-xs font-bold text-blue-800 block">
-                  {replyingTo ? `Replying to ${replyingTo.senderName || 'message'}` : 'Editing message'}
+                  {replyingTo ? tr("Replying to {{value}}", { value: replyingTo.senderName || 'message' }) : tr("Editing message")}
                 </span>
                 <span className="text-[11px] text-slate-500 truncate block">
-                  {(replyingTo || editingMsg).content || 'Media attachment'}
+                  {(replyingTo || editingMsg).content || tr("Media attachment")}
                 </span>
               </div>
             </div>
@@ -755,7 +756,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                 setInputText('');
               }}
               className="p-1 text-slate-400 hover:text-slate-700 hover:bg-white rounded-lg transition-colors cursor-pointer shrink-0"
-              title="Cancel"
+              title={tr("Cancel")}
             >
               <X className="w-4 h-4" />
             </button>
@@ -768,7 +769,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
             {fileType === 'image' ? (
               <img loading="lazy" decoding="async"
                 src={filePreview}
-                alt="Upload preview"
+                alt={tr("Upload preview")}
                 className="h-16 w-auto rounded-lg object-cover"
               />
             ) : (
@@ -783,7 +784,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
             <button
               onClick={clearFile}
               className="absolute -top-2 -right-2 bg-white rounded-full p-1 border border-slate-200 text-slate-500 hover:text-red-600 transition-colors cursor-pointer"
-              title="Remove file"
+              title={tr("Remove file")}
             >
               <X className="w-3 h-3" />
             </button>
@@ -806,7 +807,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                  title="Attach image or video"
+                  title={tr("Attach image or video")}
                 >
                   <ImageIcon className="w-4 h-4" />
                 </button>
@@ -817,13 +818,13 @@ export function ChatTab({ projectId }: ChatTabProps) {
                     type="button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                     className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                    title="Insert emoji"
+                    title={tr("Insert emoji")}
                   >
                     <Smile className="w-4 h-4" />
                   </button>
 
                   {showEmojiPicker && (
-                    <div className="absolute bottom-full mb-2 left-0 bg-white border border-slate-200 rounded-xl p-2 flex gap-1 z-50 shadow-none">
+                    <div className="absolute bottom-full mb-2 start-0 bg-white border border-slate-200 rounded-xl p-2 flex gap-1 z-50 shadow-none">
                       {QUICK_REACTIONS.map(emoji => (
                         <button
                           key={emoji}
@@ -835,7 +836,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
                           }}
                           className="text-lg hover:scale-125 transition-transform p-1 cursor-pointer"
                         >
-                          {emoji}
+                          {tr(emoji)}
                         </button>
                       ))}
                     </div>
@@ -850,8 +851,8 @@ export function ChatTab({ projectId }: ChatTabProps) {
               onChange={e => setInputText(e.target.value)}
               placeholder={
                 editingMsg
-                  ? 'Edit your message...'
-                  : 'Type a message... (Press Enter to send)'
+                  ? tr("Edit your message...")
+                  : tr("Type a message... (Press Enter to send)")
               }
               className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none resize-none py-2 px-2.5 max-h-28 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400"
               rows={1}
@@ -869,7 +870,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
             onClick={sendMessage}
             disabled={(!inputText.trim() && !selectedFile) || isSending}
             className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-white flex items-center justify-center shrink-0 transition-colors shadow-none cursor-pointer"
-            title="Send Message"
+            title={tr("Send Message")}
           >
             {isSending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -881,8 +882,8 @@ export function ChatTab({ projectId }: ChatTabProps) {
 
         {/* Subtle keyboard shortcut hint */}
         <div className="hidden sm:flex items-center justify-between text-[10px] text-slate-400 mt-1 px-1">
-          <span>Press <strong>Enter</strong> to send, <strong>Shift + Enter</strong> for a new line</span>
-          <span>Max file size: 50MB</span>
+          <span>{tr("Press ")}<strong>{tr("Enter")}</strong>{tr(" to send, ")}<strong>{tr("Shift + Enter")}</strong>{tr(" for a new line")}</span>
+          <span>{tr("Max file size: 50MB")}</span>
         </div>
       </div>
     </div>

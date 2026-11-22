@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
@@ -222,7 +223,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
       if (type === 'image') setImageUri(url);
       else setVideoUri(url);
     } catch (err) {
-      toast.error('Upload failed');
+      toast.error(tr("Upload failed"));
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -254,7 +255,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
       setRecordingTime(0);
       timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
     } catch (err) {
-      toast.error('Microphone access denied or unavailable');
+      toast.error(tr("Microphone access denied or unavailable"));
     }
   };
 
@@ -278,7 +279,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
         setAudioUri(finalAudioUri);
         setAudioBlob(null);
       } catch (err) {
-        toast.error('Audio upload failed');
+        toast.error(tr("Audio upload failed"));
         setIsUploading(false);
         return;
       }
@@ -309,10 +310,10 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
       });
       persistedIdsRef.current = new Set(annotations.map((a: any) => a.clientId));
       setHasUnsaved(false);
-      toast.success('Annotations saved');
+      toast.success(tr("Annotations saved"));
       if (onUpdate) onUpdate();
     } catch (err) {
-      toast.error('Failed to save annotations');
+      toast.error(tr("Failed to save annotations"));
     } finally {
       setIsSaving(false);
     }
@@ -335,8 +336,8 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
             <X className="w-5 h-5 text-slate-500 hover:text-slate-800" />
           </button>
           <div>
-            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Plan Annotator</p>
-            <h2 className="text-base font-bold text-slate-900 truncate max-w-sm">{document?.name || 'Document'}</h2>
+            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{tr("Plan Annotator")}</p>
+            <h2 className="text-base font-bold text-slate-900 truncate max-w-sm">{document?.name || tr("Document")}</h2>
           </div>
         </div>
 
@@ -368,7 +369,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
 
           {!canViewAnnotations && (
             <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
-              You don't have permission to view annotations
+              {tr("You don't have permission to view annotations")}
             </span>
           )}
 
@@ -383,7 +384,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
               )}
             >
               <MapPin className="w-4 h-4" />
-              {isAddingPin ? 'Cancel Pin' : 'Add Pin'}
+              {isAddingPin ? tr("Cancel Pin") : tr("Add Pin")}
             </button>
           )}
 
@@ -394,7 +395,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
               className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Changes
+              {tr("Save Changes")}
             </button>
           )}
         </div>
@@ -452,8 +453,8 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                       'absolute -top-10 px-2 py-1 rounded-lg bg-white text-slate-700 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-slate-200 pointer-events-none z-10',
                       isSelected && 'opacity-100 bg-blue-50 text-blue-700 border-blue-200'
                     )}>
-                      Pin #{idx + 1}
-                      {(ann.text || ann.imageUri || ann.audioUri || ann.videoUri) && ' • Has Notes'}
+                      {tr("Pin #")}{idx + 1}
+                      {(ann.text || ann.imageUri || ann.audioUri || ann.videoUri) && tr(" • Has Notes")}
                     </div>
                     <MapPin className={cn(
                       'w-8 h-8 transition-all',
@@ -479,7 +480,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
                 <div className="flex items-center gap-2 text-blue-600 font-bold">
                   <MapPin className="w-5 h-5" />
-                  <span>Pin #{editingAnn._index + 1}</span>
+                  <span>{tr("Pin #")}{editingAnn._index + 1}</span>
                 </div>
                 <button onClick={closeSidebar} className="p-2 rounded-lg hover:bg-gray-200 text-gray-500 transition-colors">
                   <X className="w-4 h-4" />
@@ -490,14 +491,14 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                 {/* Note */}
                 <div>
                   <label className="flex items-center gap-2 text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
-                    <MessageSquare className="w-3.5 h-3.5" /> Text Note
+                    <MessageSquare className="w-3.5 h-3.5" />{tr(" Text Note")}
                   </label>
                   <textarea
                     rows={4}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     disabled={!canAnnotate}
-                    placeholder="Describe the issue or instruction here..."
+                    placeholder={tr("Describe the issue or instruction here...")}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none disabled:opacity-70"
                   />
                 </div>
@@ -505,7 +506,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                 {/* Voice Memo */}
                 <div>
                   <label className="flex items-center gap-2 text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
-                    <Mic className="w-3.5 h-3.5" /> Voice Memo
+                    <Mic className="w-3.5 h-3.5" />{tr(" Voice Memo")}
                   </label>
                   
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
@@ -514,7 +515,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                         <audio controls src={audioUrl} className="w-full h-10" />
                         {canAnnotate && (
                           <button onClick={() => { setAudioUrl(''); setAudioUri(''); setAudioBlob(null); }} className="text-[11px] font-bold text-red-500 hover:text-red-600">
-                            Remove Audio
+                            {tr("Remove Audio")}
                           </button>
                         )}
                       </div>
@@ -537,7 +538,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                             <div className="p-3 rounded-full bg-gray-100 group-hover:bg-blue-50 border border-gray-200 group-hover:border-blue-200 transition-all">
                               <Mic className="w-6 h-6" />
                             </div>
-                            <span className="text-xs font-semibold">Click to Record Voice Note</span>
+                            <span className="text-xs font-semibold">{tr("Click to Record Voice Note")}</span>
                           </button>
                         )}
                       </div>
@@ -548,17 +549,17 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                 {/* Photo Attach */}
                 <div>
                   <label className="flex items-center justify-between text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
-                    <div className="flex items-center gap-2"><ImageIcon className="w-3.5 h-3.5" /> Photo</div>
+                    <div className="flex items-center gap-2"><ImageIcon className="w-3.5 h-3.5" />{tr(" Photo")}</div>
                     {canAnnotate && !imageUri && (
                       <label className="text-[10px] text-blue-600 cursor-pointer hover:underline">
-                        Upload
+                        {tr("Upload")}
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'image')} />
                       </label>
                     )}
                   </label>
                   {imageUri ? (
                     <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
-                      <img src={imageUri} alt="Annotation" className="w-full h-40 object-cover" />
+                      <img src={imageUri} alt={tr("Annotation")} className="w-full h-40 object-cover" />
                       {canAnnotate && (
                         <button onClick={() => setImageUri('')} className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-4 h-4" />
@@ -567,7 +568,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                     </div>
                   ) : (
                     <div className="h-20 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-xs text-gray-400 font-medium">
-                      {isUploading ? 'Uploading...' : 'No photo attached'}
+                      {isUploading ? tr("Uploading...") : tr("No photo attached")}
                     </div>
                   )}
                 </div>
@@ -583,7 +584,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                       className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Delete Pin
+                      {tr("Delete Pin")}
                     </button>
                   )}
                   {canAnnotate && (
@@ -593,7 +594,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                     className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors disabled:opacity-50"
                   >
                     {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Save Note
+                    {tr("Save Note")}
                   </button>
                   )}
                 </div>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -44,7 +45,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
         setApprovers(Array.isArray(approversRes.data) ? approversRes.data : []);
         setProjectMembers(projectRes.data?.members || []);
       })
-      .catch(() => toast.error('Failed to load approvers'))
+      .catch(() => toast.error(tr("Failed to load approvers")))
       .finally(() => setLoading(false));
   }, [isOpen, item, projectId]);
 
@@ -60,7 +61,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
   //   - Matches exact mobile behavior ✅
   const handleSendForApproval = async () => {
     if (!selectedApproverId) {
-      toast.error('Please select an approver');
+      toast.error(tr("Please select an approver"));
       return;
     }
     setSaving(true);
@@ -87,11 +88,11 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
         requestedApproverId: selectedApproverId,
         requestedApproverName: displayName,
       });
-      toast.success('Item sent for approval');
+      toast.success(tr("Item sent for approval"));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to send for approval');
+      toast.error(error.response?.data?.message || tr("Failed to send for approval"));
     } finally {
       setSaving(false);
     }
@@ -126,8 +127,8 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                     <UserCheck className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-gray-900">Send for Approval</h2>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[240px]">{item.itemDescription}</p>
+                    <h2 className="text-base font-bold text-gray-900">{tr("Send for Approval")}</h2>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[240px]">{tr(item.itemDescription)}</p>
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -140,7 +141,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                 <div className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-100 rounded-xl">
                   <Send className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
                   <p className="text-xs text-purple-700 leading-relaxed">
-                    Select an approver. The item status will change to <span className="font-bold">Pending</span> and the selected person will be notified.
+                    {tr("Select an approver. The item status will change to ")}<span className="font-bold">{tr("Pending")}</span>{tr(" and the selected person will be notified.")}
                   </p>
                 </div>
 
@@ -148,10 +149,10 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Search approvers..."
+                    placeholder={tr("Search approvers...")}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 ps-10 pe-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                   />
                 </div>
 
@@ -160,8 +161,8 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                     {filtered.length === 0 && !loading && (
                       <p className="text-sm text-slate-400 text-center py-6">
                         {approvers.length === 0
-                          ? 'No users have BOQ approve permission.'
-                          : 'No approvers match your search.'}
+                          ? tr("No users have BOQ approve permission.")
+                          : tr("No approvers match your search.")}
                       </p>
                     )}
                     {filtered.map(user => {
@@ -187,7 +188,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                           type="button"
                           onClick={() => setSelectedApproverId(isSelected ? null : user._id)}
                           className={cn(
-                            'w-full flex items-center space-x-3 p-3 rounded-xl border transition-all text-left',
+                            'w-full flex items-center space-x-3 p-3 rounded-xl border transition-all text-start',
                             isSelected
                               ? 'bg-purple-50 border-purple-300'
                               : 'bg-gray-50 border-gray-200 hover:border-gray-300'
@@ -200,12 +201,12 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                             {isSelected ? <Check className="w-4 h-4" /> : displayName?.[0]?.toUpperCase() || 'U'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">{tr(displayName)}</p>
                             <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                           </div>
                           {user.roleName && (
                             <span className="text-[10px] font-bold text-slate-400 bg-gray-100 px-2 py-0.5 rounded-md shrink-0">
-                              {user.roleName}
+                              {tr(user.roleName)}
                             </span>
                           )}
 
@@ -217,7 +218,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
 
                 {selectedApproverId && (
                   <p className="text-xs text-purple-600 font-semibold text-center">
-                    1 approver selected — item will be set to Pending
+                    {tr("1 approver selected — item will be set to Pending")}
                   </p>
                 )}
               </div>
@@ -227,7 +228,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                   onClick={onClose}
                   className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-gray-100 transition-all"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   onClick={handleSendForApproval}
@@ -235,7 +236,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                   className="flex items-center space-x-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-sm shadow-purple-600/20"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  <span>Send for Approval</span>
+                  <span>{tr("Send for Approval")}</span>
                 </button>
               </div>
             </div>

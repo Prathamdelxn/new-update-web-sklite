@@ -1,4 +1,5 @@
 'use client';
+import { tr, getLang } from '@/i18n';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -108,7 +109,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
       }
       setGeoRadius(res.data?.attendanceRadius ?? 100);
     } catch (err) {
-      toast.error('Failed to load project details');
+      toast.error(tr("Failed to load project details"));
     } finally {
       setLoadingProject(false);
     }
@@ -243,7 +244,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
     } catch (err) {
       console.error('Camera access failed', err);
       setCameraPermission('denied');
-      toast.error('Could not access camera. Please upload a photo manually or grant permission.');
+      toast.error(tr("Could not access camera. Please upload a photo manually or grant permission."));
     }
   };
 
@@ -323,9 +324,9 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
   // ── Actions ──
   const handleCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     if (!capturedPhoto) {
-      toast.error('Selfie photo is required for attendance validation.');
+      toast.error(tr("Selfie photo is required for attendance validation."));
       return;
     }
 
@@ -350,7 +351,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
       };
 
       const res = await api.post('/attendance/check-in', payload);
-      toast.success(res.data?.message || 'Checked in successfully!');
+      toast.success(res.data?.message || tr("Checked in successfully!"));
       setIsCheckInOpen(false);
       setCheckNote('');
       setCapturedPhoto(null);
@@ -358,14 +359,14 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
       fetchLogs();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.message || 'Check-in failed. Please verify your geofence radius.');
+      toast.error(err.response?.data?.message || tr("Check-in failed. Please verify your geofence radius."));
     } finally {
       setSubmittingCheck(false);
     }
   };
 
   const handleCheckOut = async () => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     setSubmittingCheck(true);
     try {
       const location = await getCoordinates();
@@ -381,13 +382,13 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
       };
 
       const res = await api.put('/attendance/check-out', payload);
-      toast.success(res.data?.message || 'Checked out successfully!');
+      toast.success(res.data?.message || tr("Checked out successfully!"));
       setIsCheckOutOpen(false);
       fetchTodayStatus();
       fetchLogs();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.message || 'Check-out failed.');
+      toast.error(err.response?.data?.message || tr("Check-out failed."));
     } finally {
       setSubmittingCheck(false);
     }
@@ -395,23 +396,23 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
 
   const handleManualMark = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     if (!manualUserId || !manualDate) {
-      toast.error('Please select a member and a date');
+      toast.error(tr("Please select a member and a date"));
       return;
     }
 
     setSubmittingManual(true);
     try {
       await api.post('/attendance/manual', { projectId, userId: manualUserId, date: manualDate });
-      toast.success('Attendance marked successfully');
+      toast.success(tr("Attendance marked successfully"));
       setIsManualOpen(false);
       setManualUserId('');
       fetchTodayStatus();
       fetchLogs();
       fetchMonthlyHistory();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to mark attendance');
+      toast.error(err.response?.data?.message || tr("Failed to mark attendance"));
     } finally {
       setSubmittingManual(false);
     }
@@ -419,9 +420,9 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
 
   const saveGeofenceSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     if (!geoLat || !geoLng) {
-      toast.error('Geofence coordinates are required');
+      toast.error(tr("Geofence coordinates are required"));
       return;
     }
 
@@ -435,10 +436,10 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
         },
         attendanceRadius: Number(geoRadius)
       });
-      toast.success('Geofencing settings updated successfully!');
+      toast.success(tr("Geofencing settings updated successfully!"));
       fetchProjectDetails();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to update geofence');
+      toast.error(err.response?.data?.message || tr("Failed to update geofence"));
     } finally {
       setSavingGeofence(false);
     }
@@ -447,17 +448,17 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
   const handleExport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!exportStartDate || !exportEndDate) {
-      toast.error('Please select both start and end dates.');
+      toast.error(tr("Please select both start and end dates."));
       return;
     }
     if (new Date(exportStartDate) > new Date(exportEndDate)) {
-      toast.error('Start date cannot be after end date.');
+      toast.error(tr("Start date cannot be after end date."));
       return;
     }
 
     setExporting(true);
     try {
-      let url = `/attendance/export?projectId=${projectId}&startDate=${exportStartDate}&endDate=${exportEndDate}`;
+      let url = `/attendance/export?projectId=${projectId}&startDate=${exportStartDate}&endDate=${exportEndDate}&lang=${getLang()}`;
       if (exportUser !== 'all') {
         url += `&userId=${exportUser}`;
       }
@@ -479,11 +480,11 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
 
-      toast.success('Attendance exported successfully!');
+      toast.success(tr("Attendance exported successfully!"));
       setIsExportOpen(false);
     } catch (err: any) {
       console.error('Export failed', err);
-      toast.error('Failed to export attendance. Please try again.');
+      toast.error(tr("Failed to export attendance. Please try again."));
     } finally {
       setExporting(false);
     }
@@ -518,9 +519,9 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-6 py-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900">
-              {activeSection === 'Labour' ? 'Labour Management' : 'Attendance Logs & Reports'}
+              {activeSection === 'Labour' ? tr("Labour Management") : tr("Attendance Logs & Reports")}
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Real-time attendance logs, geofencing verification, and workforce tracking.</p>
+            <p className="text-xs text-slate-500 mt-0.5">{tr("Real-time attendance logs, geofencing verification, and workforce tracking.")}</p>
           </div>
           {isManagerOrAdmin && (
             <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl shadow-2xs">
@@ -533,7 +534,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     activeSection === s ? 'bg-white shadow-2xs text-blue-700 border border-slate-200/60' : 'text-slate-500 hover:text-slate-900'
                   )}
                 >
-                  {s}
+                  {tr(s)}
                 </button>
               ))}
             </div>
@@ -551,7 +552,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">On-Site Log (Today)</h4>
+                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">{tr("On-Site Log (Today)")}</h4>
               </div>
               {isAdmin && !isLocked && (
                 <button
@@ -560,7 +561,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                   className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 rounded-xl py-1.5 px-3 text-xs font-bold transition-all shadow-2xs"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>Mark Attendance</span>
+                  <span>{tr("Mark Attendance")}</span>
                 </button>
               )}
             </div>
@@ -572,34 +573,34 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             ) : dailyLogs.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                 <User className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs font-semibold text-slate-400">No one has checked in today yet.</p>
+                <p className="text-xs font-semibold text-slate-400">{tr("No one has checked in today yet.")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-slate-200/80 shadow-2xs">
-                <table className="w-full border-collapse text-left text-xs">
+                <table className="w-full border-collapse text-start text-xs">
                   <thead>
                     <tr className="bg-slate-50 border-b border-gray-200 font-bold text-slate-600">
-                      <th className="py-3 px-4">Employee</th>
-                      <th className="py-3 px-4">Check-In</th>
-                      <th className="py-3 px-4">Check-Out</th>
-                      <th className="py-3 px-4">Working Hours</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Geofence Verified</th>
-                      <th className="py-3 px-4 text-center">Selfie</th>
-                      <th className="py-3 px-4">Notes</th>
+                      <th className="py-3 px-4">{tr("Employee")}</th>
+                      <th className="py-3 px-4">{tr("Check-In")}</th>
+                      <th className="py-3 px-4">{tr("Check-Out")}</th>
+                      <th className="py-3 px-4">{tr("Working Hours")}</th>
+                      <th className="py-3 px-4">{tr("Status")}</th>
+                      <th className="py-3 px-4">{tr("Geofence Verified")}</th>
+                      <th className="py-3 px-4 text-center">{tr("Selfie")}</th>
+                      <th className="py-3 px-4">{tr("Notes")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {dailyLogs.map((log) => (
                       <tr key={log._id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="py-3 px-4 font-bold text-gray-950">
-                          {log.user?.name || 'Unknown User'}
+                          {log.user?.name || tr("Unknown User")}
                           <span className="block text-[10px] text-slate-400 font-semibold">{log.user?.email}</span>
                         </td>
                         <td className="py-3 px-4 font-semibold text-slate-700">{formatTime(log.checkInTime)}</td>
                         <td className="py-3 px-4 font-semibold text-slate-700">{formatTime(log.checkOutTime)}</td>
                         <td className="py-3 px-4 font-mono font-bold text-slate-800">
-                          {log.totalWorkHours ? `${log.totalWorkHours.toFixed(2)}h` : 'Active'}
+                          {log.totalWorkHours ? `${log.totalWorkHours.toFixed(2)}h` : tr("Active")}
                         </td>
                         <td className="py-3 px-4">
                           <span className={cn(
@@ -612,26 +613,26 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                                   ? "bg-red-50 text-red-700 border-red-200"
                                   : "bg-emerald-50 text-emerald-700 border-emerald-200"
                           )}>
-                            {log.status}
+                            {tr(log.status)}
                           </span>
                         </td>
                         <td className="py-3 px-4">
                           {log.withinAllowedRadius ? (
                             <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Yes ({Math.round(log.siteDistanceInMeters || 0)}m)</span>
+                              <span>{tr("Yes (")}{Math.round(log.siteDistanceInMeters || 0)}m)</span>
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-red-600 font-bold">
                               <AlertTriangle className="w-3.5 h-3.5" />
-                              <span>No ({Math.round(log.siteDistanceInMeters || 0)}m away)</span>
+                              <span>{tr("No (")}{Math.round(log.siteDistanceInMeters || 0)}{tr("m away)")}</span>
                             </span>
                           )}
                         </td>
                         <td className="py-3 px-4 text-center">
                           {log.checkInPhoto && (
                             <button onClick={() => setLightboxPhoto(log.checkInPhoto)} className="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 inline-block relative hover:opacity-85 transition-opacity">
-                              <img loading="lazy" decoding="async" src={log.checkInPhoto} alt="Selfie" className="w-full h-full object-cover" />
+                              <img loading="lazy" decoding="async" src={log.checkInPhoto} alt={tr("Selfie")} className="w-full h-full object-cover" />
                             </button>
                           )}
                         </td>
@@ -650,7 +651,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             {/* Monthly History filtering */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <div>
-                <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">Monthly Records History</h4>
+                <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">{tr("Monthly Records History")}</h4>
               </div>
 
               <div className="flex items-center gap-3">
@@ -669,9 +670,9 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     onChange={e => setReportUser(e.target.value)}
                     className="bg-gray-50 border border-gray-200 rounded-xl py-1.5 px-3 text-xs font-bold focus:outline-none transition-all"
                   >
-                    <option value="all">All Employees</option>
+                    <option value="all">{tr("All Employees")}</option>
                     {projectUsers.map((u: any) => (
-                      <option key={u._id} value={u._id}>{u.name}</option>
+                      <option key={u._id} value={u._id}>{tr(u.name)}</option>
                     ))}
                   </select>
                 )}
@@ -683,7 +684,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                   className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl py-1.5 px-3 text-xs font-bold transition-all shadow-sm"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Export</span>
+                  <span>{tr("Export")}</span>
                 </button>
               </div>
             </div>
@@ -691,32 +692,32 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             {monthlyLogs.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
                 <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs font-semibold text-slate-400">No records found for this period.</p>
+                <p className="text-xs font-semibold text-slate-400">{tr("No records found for this period.")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-gray-200">
-                <table className="w-full border-collapse text-left text-xs">
+                <table className="w-full border-collapse text-start text-xs">
                   <thead>
                     <tr className="bg-slate-50 border-b border-gray-200 font-bold text-slate-600">
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Employee</th>
-                      <th className="py-3 px-4">In Time</th>
-                      <th className="py-3 px-4">Out Time</th>
-                      <th className="py-3 px-4">Hours</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Geofence</th>
-                      <th className="py-3 px-4">Notes</th>
+                      <th className="py-3 px-4">{tr("Date")}</th>
+                      <th className="py-3 px-4">{tr("Employee")}</th>
+                      <th className="py-3 px-4">{tr("In Time")}</th>
+                      <th className="py-3 px-4">{tr("Out Time")}</th>
+                      <th className="py-3 px-4">{tr("Hours")}</th>
+                      <th className="py-3 px-4">{tr("Status")}</th>
+                      <th className="py-3 px-4">{tr("Geofence")}</th>
+                      <th className="py-3 px-4">{tr("Notes")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {monthlyLogs.map((log) => (
                       <tr key={log._id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="py-3 px-4 font-bold text-gray-900">{formatDate(log.attendanceDate)}</td>
-                        <td className="py-3 px-4 font-bold text-slate-700">{log.user?.name || 'Unknown User'}</td>
+                        <td className="py-3 px-4 font-bold text-slate-700">{log.user?.name || tr("Unknown User")}</td>
                         <td className="py-3 px-4 text-slate-600">{formatTime(log.checkInTime)}</td>
                         <td className="py-3 px-4 text-slate-600">{formatTime(log.checkOutTime)}</td>
                         <td className="py-3 px-4 font-mono font-bold text-slate-800">
-                          {log.totalWorkHours ? `${log.totalWorkHours.toFixed(2)}h` : 'Active'}
+                          {log.totalWorkHours ? `${log.totalWorkHours.toFixed(2)}h` : tr("Active")}
                         </td>
                         <td className="py-3 px-4">
                           <span className={cn(
@@ -729,14 +730,14 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                                   ? "bg-red-50 text-red-700 border-red-200"
                                   : "bg-emerald-50 text-emerald-700 border-emerald-200"
                           )}>
-                            {log.status}
+                            {tr(log.status)}
                           </span>
                         </td>
                         <td className="py-3 px-4">
                           {log.withinAllowedRadius ? (
-                            <span className="text-emerald-600 font-semibold">Verified ({Math.round(log.siteDistanceInMeters || 0)}m)</span>
+                            <span className="text-emerald-600 font-semibold">{tr("Verified (")}{Math.round(log.siteDistanceInMeters || 0)}m)</span>
                           ) : (
-                            <span className="text-red-600 font-semibold">Outside ({Math.round(log.siteDistanceInMeters || 0)}m)</span>
+                            <span className="text-red-600 font-semibold">{tr("Outside (")}{Math.round(log.siteDistanceInMeters || 0)}m)</span>
                           )}
                         </td>
                         <td className="py-3 px-4 text-slate-500 italic max-w-[120px] truncate" title={log.notes}>
@@ -775,7 +776,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               >
                 <X className="w-5 h-5" />
               </button>
-              <img loading="lazy" decoding="async" src={lightboxPhoto} alt="Expanded Selfie" className="w-full aspect-square object-cover rounded-2xl" />
+              <img loading="lazy" decoding="async" src={lightboxPhoto} alt={tr("Expanded Selfie")} className="w-full aspect-square object-cover rounded-2xl" />
             </motion.div>
           </div>
         )}
@@ -798,8 +799,8 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <h3 className="font-black text-gray-900 text-base">Check-In Verification</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Location & Photo Verification Required</p>
+                  <h3 className="font-black text-gray-900 text-base">{tr("Check-In Verification")}</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Location & Photo Verification Required")}</p>
                 </div>
                 <button
                   onClick={() => { setIsCheckInOpen(false); stopCamera(); }}
@@ -816,7 +817,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5" />
-                      <span>Developer Simulation Mode</span>
+                      <span>{tr("Developer Simulation Mode")}</span>
                     </span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -832,7 +833,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                   {simulateLocation ? (
                     <div className="space-y-2">
                       <p className="text-[10px] text-amber-700 leading-tight">
-                        Since browser geolocations require HTTPS/real GPS coordinate calibration, you can choose if the check-in occurs within the geofenced circle or outside.
+                        {tr("Since browser geolocations require HTTPS/real GPS coordinate calibration, you can choose if the check-in occurs within the geofenced circle or outside.")}
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         <button
@@ -845,7 +846,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                               : "bg-white border-amber-200 text-amber-700 hover:bg-amber-100/30"
                           )}
                         >
-                          On Site (Within Radius)
+                          {tr("On Site (Within Radius)")}
                         </button>
                         <button
                           type="button"
@@ -857,23 +858,23 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                               : "bg-white border-amber-200 text-amber-700 hover:bg-amber-100/30"
                           )}
                         >
-                          Off Site (Outside Radius)
+                          {tr("Off Site (Outside Radius)")}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <p className="text-[10px] text-slate-500 leading-tight">
-                      Will request actual device geolocation (`navigator.geolocation`) upon submission.
+                      {tr("Will request actual device geolocation (`navigator.geolocation`) upon submission.")}
                     </p>
                   )}
                 </div>
 
                 {/* Webcam viewport / Captured selfie preview */}
                 <div className="flex flex-col items-center">
-                  <span className="block text-[10px] font-bold text-slate-600 self-start mb-1.5">Verify Identity Selfie *</span>
+                  <span className="block text-[10px] font-bold text-slate-600 self-start mb-1.5">{tr("Verify Identity Selfie *")}</span>
                   <div className="w-full aspect-square rounded-2xl overflow-hidden bg-slate-900 border border-gray-200 relative flex items-center justify-center">
                     {capturedPhoto ? (
-                      <img loading="lazy" decoding="async" src={capturedPhoto} alt="Captured Selfie" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={capturedPhoto} alt={tr("Captured Selfie")} className="w-full h-full object-cover" />
                     ) : cameraActive ? (
                       <video
                         ref={videoRef}
@@ -885,14 +886,14 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                       <div className="text-center p-6 space-y-3">
                         <Camera className="w-10 h-10 text-slate-500 mx-auto" />
                         <p className="text-xs text-slate-400 font-semibold max-w-[200px]">
-                          Camera permission requested to verify presence
+                          {tr("Camera permission requested to verify presence")}
                         </p>
                         <button
                           type="button"
                           onClick={startCamera}
                           className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-[0.98]"
                         >
-                          Start Camera
+                          {tr("Start Camera")}
                         </button>
                       </div>
                     )}
@@ -914,20 +915,20 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                       className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
                     >
                       <RefreshCw className="w-3 h-3" />
-                      <span>Retake Snapshot</span>
+                      <span>{tr("Retake Snapshot")}</span>
                     </button>
                   )}
                 </div>
 
                 {/* Note Field */}
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-1">Notes (Optional)</label>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1">{tr("Notes (Optional)")}</label>
                   <input
                     type="text"
                     value={checkNote}
                     onChange={e => setCheckNote(e.target.value)}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder:text-slate-400"
-                    placeholder="e.g. Sheikh Zayed Road traffic delay"
+                    placeholder={tr("e.g. Sheikh Zayed Road traffic delay")}
                   />
                 </div>
 
@@ -938,7 +939,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     onClick={() => { setIsCheckInOpen(false); stopCamera(); }}
                     className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-xs"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -946,7 +947,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all text-xs disabled:opacity-50 shadow-lg shadow-blue-600/10 flex items-center justify-center gap-1.5"
                   >
                     {submittingCheck ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
-                    <span>Verify & Check In</span>
+                    <span>{tr("Verify & Check In")}</span>
                   </button>
                 </div>
 
@@ -976,16 +977,16 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               </div>
 
               <div className="space-y-1">
-                <h3 className="font-black text-gray-900 text-lg">Check Out of Site</h3>
+                <h3 className="font-black text-gray-900 text-lg">{tr("Check Out of Site")}</h3>
                 <p className="text-xs text-slate-500">
-                  Are you ready to submit your work hours and checkout of the project site?
+                  {tr("Are you ready to submit your work hours and checkout of the project site?")}
                 </p>
               </div>
 
               {/* Developer simulation check for Checkout */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left space-y-1">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-start space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-amber-800">Developer Simulation Mode</span>
+                  <span className="text-[10px] font-bold text-amber-800">{tr("Developer Simulation Mode")}</span>
                   <input
                     type="checkbox"
                     checked={simulateLocation}
@@ -995,7 +996,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                 </div>
                 {simulateLocation && (
                   <p className="text-[9px] text-amber-700 leading-tight">
-                    Check-out coordinates will be simulated.
+                    {tr("Check-out coordinates will be simulated.")}
                   </p>
                 )}
               </div>
@@ -1006,7 +1007,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                   onClick={() => setIsCheckOutOpen(false)}
                   className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-xs"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="button"
@@ -1015,7 +1016,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                   className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition-all text-xs disabled:opacity-50 shadow-lg shadow-red-600/10 flex items-center justify-center gap-1"
                 >
                   {submittingCheck ? <RefreshCw className="w-3 h-3 animate-spin" /> : null}
-                  <span>Confirm Checkout</span>
+                  <span>{tr("Confirm Checkout")}</span>
                 </button>
               </div>
             </motion.div>
@@ -1040,8 +1041,8 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
                 <div>
-                  <h3 className="font-black text-gray-900 text-base">Export Attendance Report</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Excel / XLSX Format</p>
+                  <h3 className="font-black text-gray-900 text-base">{tr("Export Attendance Report")}</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Excel / XLSX Format")}</p>
                 </div>
                 <button
                   onClick={() => setIsExportOpen(false)}
@@ -1054,7 +1055,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               <form onSubmit={handleExport} className="p-6 space-y-4 overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Start Date</label>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Start Date")}</label>
                     <input
                       type="date"
                       value={exportStartDate}
@@ -1064,7 +1065,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">End Date</label>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("End Date")}</label>
                     <input
                       type="date"
                       value={exportEndDate}
@@ -1077,15 +1078,15 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
 
                 {isManagerOrAdmin && (
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Employee Filter</label>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Employee Filter")}</label>
                     <select
                       value={exportUser}
                       onChange={e => setExportUser(e.target.value)}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-blue-500 transition-all"
                     >
-                      <option value="all">All Employees</option>
+                      <option value="all">{tr("All Employees")}</option>
                       {projectUsers.map((u: any) => (
-                        <option key={u._id} value={u._id}>{u.name}</option>
+                        <option key={u._id} value={u._id}>{tr(u.name)}</option>
                       ))}
                     </select>
                   </div>
@@ -1094,7 +1095,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                 <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 flex items-start gap-2.5">
                   <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-slate-500 leading-normal font-medium">
-                    This will export attendance records for the selected period. The resulting Excel document will contain date, employee name, check-in time, check-out time, status, and total work hours.
+                    {tr("This will export attendance records for the selected period. The resulting Excel document will contain date, employee name, check-in time, check-out time, status, and total work hours.")}
                   </p>
                 </div>
 
@@ -1104,7 +1105,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     onClick={() => setIsExportOpen(false)}
                     className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-xs"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -1112,7 +1113,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all text-xs disabled:opacity-50 shadow-lg shadow-blue-600/10 flex items-center justify-center gap-1.5"
                   >
                     {exporting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                    <span>{exporting ? 'Exporting...' : 'Export File'}</span>
+                    <span>{exporting ? tr("Exporting...") : tr("Export File")}</span>
                   </button>
                 </div>
               </form>
@@ -1138,8 +1139,8 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
                 <div>
-                  <h3 className="font-black text-gray-900 text-base">Mark Attendance Manually</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Admin Override</p>
+                  <h3 className="font-black text-gray-900 text-base">{tr("Mark Attendance Manually")}</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Admin Override")}</p>
                 </div>
                 <button
                   onClick={() => setIsManualOpen(false)}
@@ -1151,22 +1152,22 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
 
               <form onSubmit={handleManualMark} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Member</label>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Member")}</label>
                   <select
                     value={manualUserId}
                     onChange={e => setManualUserId(e.target.value)}
                     required
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-blue-500 transition-all"
                   >
-                    <option value="">Select a member</option>
+                    <option value="">{tr("Select a member")}</option>
                     {memberOptions.map((m: any) => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
+                      <option key={m.id} value={m.id}>{tr(m.name)}</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Date</label>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Date")}</label>
                   <input
                     type="date"
                     value={manualDate}
@@ -1180,7 +1181,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                 <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 flex items-start gap-2.5">
                   <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-slate-500 leading-normal font-medium">
-                    Marks the selected member as Present for this date. Only works if they don&apos;t already have an attendance record for it.
+                    {tr("Marks the selected member as Present for this date. Only works if they don't already have an attendance record for it.")}
                   </p>
                 </div>
 
@@ -1190,7 +1191,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     onClick={() => setIsManualOpen(false)}
                     className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all text-xs"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -1198,7 +1199,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all text-xs disabled:opacity-50 shadow-lg shadow-blue-600/10 flex items-center justify-center gap-1.5"
                   >
                     {submittingManual ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                    <span>{submittingManual ? 'Marking...' : 'Mark Present'}</span>
+                    <span>{submittingManual ? tr("Marking...") : tr("Mark Present")}</span>
                   </button>
                 </div>
               </form>

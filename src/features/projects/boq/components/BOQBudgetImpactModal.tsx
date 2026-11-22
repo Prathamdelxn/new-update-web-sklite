@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 import React from 'react';
 import { X, TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,6 +17,8 @@ interface BOQBudgetImpactModalProps {
   onConfirm: () => Promise<void>;
   isLoading: boolean;
   impactData: BudgetImpactData | null;
+  /** Project currency (code or symbol) for the amounts */
+  currency?: string;
 }
 
 export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
@@ -23,7 +26,8 @@ export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
   onClose,
   onConfirm,
   isLoading,
-  impactData
+  impactData,
+  currency = 'AED',
 }) => {
   if (!isOpen || !impactData) return null;
 
@@ -38,7 +42,7 @@ export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
         <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-indigo-700">
             <Info className="w-5 h-5" />
-            <h3 className="text-lg font-bold">Budget Impact Warning</h3>
+            <h3 className="text-lg font-bold">{tr("Budget Impact Warning")}</h3>
           </div>
           <button 
             onClick={onClose}
@@ -51,18 +55,18 @@ export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
 
         <div className="px-6 py-6 space-y-6">
           <p className="text-sm text-slate-600">
-            Approving this revised BOQ item will update the project's overall budget. Please review the financial impact before confirming.
+            {tr("Approving this revised BOQ item will update the project's overall budget. Please review the financial impact before confirming.")}
           </p>
 
           <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Previous Cost</p>
-              <p className="text-lg font-bold text-slate-500">${impactData.oldAmount.toLocaleString('en-IN')}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{tr("Previous Cost")}</p>
+              <p className="text-lg font-bold text-slate-500">{currency} {impactData.oldAmount.toLocaleString('en-IN')}</p>
             </div>
             <div className="w-8 border-t-2 border-dashed border-gray-200" />
-            <div className="space-y-1 text-right">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">New Cost</p>
-              <p className="text-lg font-bold text-gray-900">${impactData.newAmount.toLocaleString('en-IN')}</p>
+            <div className="space-y-1 text-end">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{tr("New Cost")}</p>
+              <p className="text-lg font-bold text-gray-900">{currency} {impactData.newAmount.toLocaleString('en-IN')}</p>
             </div>
           </div>
 
@@ -78,10 +82,10 @@ export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
             </div>
             <div>
               <p className="font-bold">
-                Budget {isIncrease ? 'Increase' : 'Decrease'} of ${Math.abs(impactData.difference).toLocaleString('en-IN')}
+                {tr("Budget ")}{isIncrease ? tr("Increase") : tr("Decrease")}{tr(" of ")}{currency} {Math.abs(impactData.difference).toLocaleString('en-IN')}
               </p>
               <p className="text-xs opacity-80 mt-1 italic leading-snug">
-                "{impactData.reason}"
+                "{tr(impactData.reason)}"
               </p>
             </div>
           </div>
@@ -93,7 +97,7 @@ export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
             disabled={isLoading}
             className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors disabled:opacity-50"
           >
-            Cancel
+            {tr("Cancel")}
           </button>
           <button
             onClick={onConfirm}
@@ -101,7 +105,7 @@ export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
             className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-500 transition-all disabled:opacity-50 shadow-sm shadow-indigo-600/20"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            Approve & Update Budget
+            {tr("Approve & Update Budget")}
           </button>
         </div>
       </div>

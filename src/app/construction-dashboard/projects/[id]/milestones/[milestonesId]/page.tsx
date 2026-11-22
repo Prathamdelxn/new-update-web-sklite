@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -131,7 +132,7 @@ export default function MilestoneDetailPage() {
 
         const all = Array.isArray(msRes?.data) ? msRes.data : msRes?.data?.milestones ?? [];
         const found = all.find((m: any) => m._id === milestoneId);
-        if (!found) { toast.error('Milestone not found'); router.push(`/construction-dashboard/projects/${projectId}/milestones`); return; }
+        if (!found) { toast.error(tr("Milestone not found")); router.push(`/construction-dashboard/projects/${projectId}/milestones`); return; }
         setMilestone(found);
 
         const loadedMembers = extractUsers([
@@ -148,7 +149,7 @@ export default function MilestoneDetailPage() {
         const usageList = Array.isArray(usageRes?.data) ? usageRes.data : [];
         setMaterialUsages(usageList);
       } catch {
-        toast.error('Failed to load milestone');
+        toast.error(tr("Failed to load milestone"));
       } finally {
         setLoading(false);
       }
@@ -212,14 +213,14 @@ export default function MilestoneDetailPage() {
     try {
       const res = await api.patch(`/projects/${projectId}/milestones/${milestoneId}`, { status });
       setMilestone(res.data);
-      toast.success('Status updated');
-    } catch { toast.error('Failed to update status'); }
+      toast.success(tr("Status updated"));
+    } catch { toast.error(tr("Failed to update status")); }
     finally { setSavingStatus(false); }
   };
 
   // ── Submit task ──────────────────────────────────────────────────────────────
   const handleSubmitTask = async (taskIndex: number) => {
-    if (!canComplete) { toast.error("You don't have permission to complete tasks."); return; }
+    if (!canComplete) { toast.error(tr("You don't have permission to complete tasks.")); return; }
     const form = submitForms[taskIndex] ?? emptySubmitForm();
     setSubmitting(taskIndex);
     const tasks: any[] = milestone.tasks || [];
@@ -240,12 +241,12 @@ export default function MilestoneDetailPage() {
         if (mat) {
           const avail = mat.balance ?? 0;
           if (avail <= 0) {
-            toast.error(`"${mat.name}" is out of stock`);
+            toast.error(tr("\"{{name}}\" is out of stock", { name: mat.name }));
             setSubmitting(null);
             return;
           }
           if (Number(r.quantity) > avail) {
-            toast.error(`Insufficient stock for "${mat.name}" — only ${avail} ${mat.unit} available`);
+            toast.error(tr("Insufficient stock for \"{{name}}\" — only {{avail}} {{unit}} available", { name: mat.name, avail: avail, unit: mat.unit }));
             setSubmitting(null);
             return;
           }
@@ -303,16 +304,16 @@ export default function MilestoneDetailPage() {
         setMaterialUsages(list);
       }).catch(() => {});
 
-      if (payload.status === 'Completed') toast.success('All tasks done — milestone Completed!');
-      else toast.success('Task submitted');
+      if (payload.status === 'Completed') toast.success(tr("All tasks done — milestone Completed!"));
+      else toast.success(tr("Task submitted"));
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to submit task');
+      toast.error(err?.response?.data?.message || err?.message || tr("Failed to submit task"));
     } finally { setSubmitting(null); }
   };
 
   // ── Uncheck task ─────────────────────────────────────────────────────────────
   const handleUncheck = async (taskIndex: number) => {
-    if (!canComplete) { toast.error("You don't have permission to complete tasks."); return; }
+    if (!canComplete) { toast.error(tr("You don't have permission to complete tasks.")); return; }
     setSubmitting(taskIndex);
     const tasks: any[] = milestone.tasks || [];
     const updatedTasks = tasks.map((t: any, i: number) =>
@@ -323,13 +324,13 @@ export default function MilestoneDetailPage() {
     try {
       const res = await api.patch(`/projects/${projectId}/milestones/${milestoneId}`, payload);
       setMilestone(res.data);
-    } catch { toast.error('Failed to update task'); }
+    } catch { toast.error(tr("Failed to update task")); }
     finally { setSubmitting(null); }
   };
 
   // ── Edit task ────────────────────────────────────────────────────────────────
   const openEdit = (taskIndex: number) => {
-    if (!canUpdate && !canAssign) { toast.error("You don't have permission to edit tasks."); return; }
+    if (!canUpdate && !canAssign) { toast.error(tr("You don't have permission to edit tasks.")); return; }
     const t = milestone.tasks[taskIndex];
     setEditingTask({
       taskIndex,
@@ -344,10 +345,10 @@ export default function MilestoneDetailPage() {
 
   const handleSaveEdit = async () => {
     if (!editingTask) return;
-    if (!canUpdate && !canAssign) { toast.error("You don't have permission to edit tasks."); return; }
+    if (!canUpdate && !canAssign) { toast.error(tr("You don't have permission to edit tasks.")); return; }
     const { startDate, endDate } = editingTask.form;
     if (startDate && endDate && endDate < startDate) {
-      toast.error('End date cannot be before start date');
+      toast.error(tr("End date cannot be before start date"));
       return;
     }
     setIsSavingEdit(true);
@@ -367,18 +368,18 @@ export default function MilestoneDetailPage() {
       const res = await api.patch(`/projects/${projectId}/milestones/${milestoneId}`, { tasks: updatedTasks });
       setMilestone(res.data);
       setEditingTask(null);
-      toast.success('Task updated');
-    } catch { toast.error('Failed to update task'); }
+      toast.success(tr("Task updated"));
+    } catch { toast.error(tr("Failed to update task")); }
     finally { setIsSavingEdit(false); }
   };
 
   // ── Add task ─────────────────────────────────────────────────────────────────
   const handleAddTask = async () => {
     if (!addTaskForm.title.trim()) return;
-    if (!canCreate) { toast.error("You don't have permission to create tasks."); return; }
-    if (addTaskForm.assignedTo && !canAssign) { toast.error("You don't have permission to assign tasks."); return; }
+    if (!canCreate) { toast.error(tr("You don't have permission to create tasks.")); return; }
+    if (addTaskForm.assignedTo && !canAssign) { toast.error(tr("You don't have permission to assign tasks.")); return; }
     if (addTaskForm.startDate && addTaskForm.endDate && addTaskForm.endDate < addTaskForm.startDate) {
-      toast.error('End date cannot be before start date');
+      toast.error(tr("End date cannot be before start date"));
       return;
     }
     setIsSavingAdd(true);
@@ -396,8 +397,8 @@ export default function MilestoneDetailPage() {
       setMilestone(res.data);
       setAddTaskForm({ title: '', description: '', startDate: '', endDate: '', assignedTo: '' });
       setShowAddTask(false);
-      toast.success('Task added');
-    } catch { toast.error('Failed to add task'); }
+      toast.success(tr("Task added"));
+    } catch { toast.error(tr("Failed to add task")); }
     finally { setIsSavingAdd(false); }
   };
 
@@ -423,7 +424,7 @@ export default function MilestoneDetailPage() {
           onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones`)}
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" /> Back to Milestones
+          <ChevronLeft className="w-4 h-4" />{tr(" Back to Milestones")}
         </button>
 
         {/* ── Milestone header ── */}
@@ -434,9 +435,9 @@ export default function MilestoneDetailPage() {
                 <Flag className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-semibold text-gray-900 leading-tight truncate">{milestone.name}</h1>
+                <h1 className="text-xl font-semibold text-gray-900 leading-tight truncate">{tr(milestone.name)}</h1>
                 {milestone.description && (
-                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{milestone.description}</p>
+                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">{tr(milestone.description)}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-3 mt-4">
                   <div className="flex items-center gap-2">
@@ -446,19 +447,19 @@ export default function MilestoneDetailPage() {
                       onChange={e => handleStatusChange(e.target.value as MilestoneStatus)}
                       className={cn('px-2.5 py-1 rounded-md text-[10px] font-medium border cursor-pointer focus:outline-none appearance-none', getStatusStyle(milestone.status))}
                     >
-                      {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      {STATUS_OPTIONS.map(s => <option key={s} value={s}>{tr(s)}</option>)}
                     </select>
                   </div>
                   {milestone.dueDate && (
                     <span className="flex items-center gap-1.5 text-xs text-slate-500">
                       <Calendar className="w-3.5 h-3.5" />
-                      Due {new Date(milestone.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {tr("Due ")}{new Date(milestone.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   )}
                   {milestone.completedAt && (
                     <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Completed {new Date(milestone.completedAt).toLocaleDateString()}
+                      {tr("Completed ")}{new Date(milestone.completedAt).toLocaleDateString()}
                     </span>
                   )}
                 </div>
@@ -479,9 +480,9 @@ export default function MilestoneDetailPage() {
                     className="transition-all duration-500"
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-gray-900">{progress}%</span>
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-gray-900">{tr(progress)}%</span>
               </div>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{completedCount}/{tasks.length} Tasks</p>
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr(completedCount)}/{tasks.length}{tr(" Tasks")}</p>
             </div>
           </div>
         </div>
@@ -489,14 +490,14 @@ export default function MilestoneDetailPage() {
         {/* ── Task list ── */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900">Tasks</h2>
+            <h2 className="text-lg font-bold text-gray-900">{tr("Tasks")}</h2>
             {canCreate && (
             <button
               onClick={() => setShowAddTask(v => !v)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-all shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              Add Task
+              {tr("Add Task")}
             </button>
             )}
           </div>
@@ -506,26 +507,26 @@ export default function MilestoneDetailPage() {
             {showAddTask && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 <div className="p-5 border border-blue-100 bg-blue-50/30 rounded-xl shadow-sm">
-                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-4">New Task</p>
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-4">{tr("New Task")}</p>
                   <div className="space-y-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Title *</label>
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Title *")}</label>
                       <input
                         autoFocus type="text" value={addTaskForm.title}
                         onChange={e => setAddTaskForm(p => ({ ...p, title: e.target.value }))}
                         onKeyDown={e => { if (e.key === 'Enter') handleAddTask(); }}
-                        className={inputCls} placeholder="e.g. Pour concrete slab"
+                        className={inputCls} placeholder={tr("e.g. Pour concrete slab")}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</label>
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Description")}</label>
                       <input type="text" value={addTaskForm.description}
                         onChange={e => setAddTaskForm(p => ({ ...p, description: e.target.value }))}
-                        className={inputCls} placeholder="Optional details..." />
+                        className={inputCls} placeholder={tr("Optional details...")} />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Start Date</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Start Date")}</label>
                         <input type="date" value={addTaskForm.startDate}
                           onChange={e => {
                             const s = e.target.value;
@@ -538,7 +539,7 @@ export default function MilestoneDetailPage() {
                           className={inputCls} />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">End Date</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("End Date")}</label>
                         <input type="date" value={addTaskForm.endDate}
                           min={addTaskForm.startDate || undefined}
                           onChange={e => setAddTaskForm(p => ({ ...p, endDate: e.target.value }))}
@@ -546,12 +547,12 @@ export default function MilestoneDetailPage() {
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Assign To</label>
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Assign To")}</label>
                       <select value={addTaskForm.assignedTo}
                         onChange={e => setAddTaskForm(p => ({ ...p, assignedTo: e.target.value }))}
                         className={inputCls}>
-                        <option value="">— Unassigned —</option>
-                        {members.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
+                        <option value="">{tr("— Unassigned —")}</option>
+                        {members.map(m => <option key={m._id} value={m._id}>{tr(m.name)}</option>)}
                       </select>
                     </div>
                     <div className="flex gap-3 pt-1">
@@ -560,14 +561,14 @@ export default function MilestoneDetailPage() {
                         onClick={() => { setShowAddTask(false); setAddTaskForm({ title: '', description: '', startDate: '', endDate: '', assignedTo: '' }); }}
                         className="flex-1 py-2.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-slate-600 transition-all"
                       >
-                        Cancel
+                        {tr("Cancel")}
                       </button>
                       <button
                         type="button" onClick={handleAddTask}
                         disabled={isSavingAdd || !addTaskForm.title.trim()}
                         className="flex-1 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-sm font-medium text-white transition-all flex items-center justify-center gap-2"
                       >
-                        {isSavingAdd ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" />Add Task</>}
+                        {isSavingAdd ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" />{tr("Add Task")}</>}
                       </button>
                     </div>
                   </div>
@@ -579,13 +580,13 @@ export default function MilestoneDetailPage() {
           {tasks.length === 0 && !showAddTask && (
             <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-gray-200 rounded-xl">
               <AlertCircle className="w-12 h-12 text-gray-300 mb-4" />
-              <p className="text-slate-500 font-medium">No tasks yet.</p>
+              <p className="text-slate-500 font-medium">{tr("No tasks yet.")}</p>
               {canCreate && (
                 <button
                   onClick={() => setShowAddTask(true)}
                   className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
                 >
-                  + Add the first task
+                  {tr("+ Add the first task")}
                 </button>
               )}
             </div>
@@ -641,7 +642,7 @@ export default function MilestoneDetailPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
                       <p className={cn('text-base font-semibold', task.isCompleted ? 'line-through text-slate-400' : 'text-gray-900')}>
-                        {task.title}
+                        {tr(task.title)}
                       </p>
                       <div className="flex items-center gap-1 shrink-0">
                         {/* Edit — only if not completed */}
@@ -649,7 +650,7 @@ export default function MilestoneDetailPage() {
                           <button
                             onClick={e => { e.stopPropagation(); openEdit(i); }}
                             className="p-1.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
-                            title="Edit task"
+                            title={tr("Edit task")}
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -661,7 +662,7 @@ export default function MilestoneDetailPage() {
                     </div>
 
                     {task.description && (
-                      <p className="text-sm text-slate-500 mt-0.5">{task.description}</p>
+                      <p className="text-sm text-slate-500 mt-0.5">{tr(task.description)}</p>
                     )}
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2">
@@ -674,7 +675,7 @@ export default function MilestoneDetailPage() {
                       )}
                       {assignee ? (
                         <span className="flex items-center gap-1.5 text-xs text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
-                          <User className="w-3.5 h-3.5 text-blue-600" />{assignee}
+                          <User className="w-3.5 h-3.5 text-blue-600" />{tr(assignee)}
                         </span>
                       ) : (
                         !task.isCompleted && (canUpdate || canAssign) && (
@@ -683,14 +684,14 @@ export default function MilestoneDetailPage() {
                             onClick={e => { e.stopPropagation(); openEdit(i); }}
                             className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-md font-semibold transition-colors"
                           >
-                            <User className="w-3.5 h-3.5" />Assign Member
+                            <User className="w-3.5 h-3.5" />{tr("Assign Member")}
                           </button>
                         )
                       )}
                       {task.isCompleted && task.completedAt && (
                         <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          Done {new Date(task.completedAt).toLocaleDateString()}
+                          {tr("Done ")}{new Date(task.completedAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
@@ -704,9 +705,9 @@ export default function MilestoneDetailPage() {
                       <div className="px-5 pb-5 border-t border-dashed border-gray-200 pt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
                         {task.completionNote && (
                           <div className="col-span-2 md:col-span-3">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Completion Note</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{tr("Completion Note")}</p>
                             <p className="text-sm text-gray-700 italic flex items-start gap-2">
-                              <MessageSquare className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400" />{task.completionNote}
+                              <MessageSquare className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400" />{tr(task.completionNote)}
                             </p>
                           </div>
                         )}
@@ -717,7 +718,7 @@ export default function MilestoneDetailPage() {
                           return (
                             <div className="col-span-2 md:col-span-3">
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <Package className="w-3.5 h-3.5 text-blue-500" /> Materials Used
+                                <Package className="w-3.5 h-3.5 text-blue-500" />{tr(" Materials Used")}
                               </p>
                               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                 {taskMats.map((mat: any, mi: number) => (
@@ -729,10 +730,10 @@ export default function MilestoneDetailPage() {
                                       <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
                                         <Package className="w-3.5 h-3.5" />
                                       </div>
-                                      <span className="font-semibold text-slate-800 truncate">{mat.name}</span>
+                                      <span className="font-semibold text-slate-800 truncate">{tr(mat.name)}</span>
                                     </div>
-                                    <span className="font-bold text-blue-700 shrink-0 ml-2">
-                                      {mat.quantity} <span className="font-normal text-slate-500">{mat.unit}</span>
+                                    <span className="font-bold text-blue-700 shrink-0 ms-2">
+                                      {mat.quantity} <span className="font-normal text-slate-500">{tr(mat.unit)}</span>
                                     </span>
                                   </div>
                                 ))}
@@ -742,9 +743,9 @@ export default function MilestoneDetailPage() {
                         })()}
                         {task.proofImage?.url && (
                           <div className="col-span-2 md:col-span-3">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Proof Photo</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{tr("Proof Photo")}</p>
                             <a href={task.proofImage.url} target="_blank" rel="noopener noreferrer">
-                              <img loading="lazy" decoding="async" src={task.proofImage.url} alt="Proof" className="h-40 w-auto object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
+                              <img loading="lazy" decoding="async" src={task.proofImage.url} alt={tr("Proof")} className="h-40 w-auto object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
                             </a>
                             {task.proofImage.uploadedAt && (
                               <p className="text-[10px] text-slate-400 mt-1">{new Date(task.proofImage.uploadedAt).toLocaleString()}</p>
@@ -761,21 +762,21 @@ export default function MilestoneDetailPage() {
                   {!task.isCompleted && form.open && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                       <div className="px-5 pb-5 pt-4 border-t border-blue-100 bg-blue-50/30 space-y-5">
-                        <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Submit Task Completion</p>
+                        <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">{tr("Submit Task Completion")}</p>
 
                         <div className="grid md:grid-cols-2 gap-5">
                           {/* Left col — note + photo */}
                           <div className="space-y-4">
                             <div className="space-y-1.5">
                               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Completion Note <span className="font-normal text-slate-400">(optional)</span>
+                                {tr("Completion Note ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span>
                               </label>
                               <textarea
                                 rows={3}
                                 value={form.note}
                                 onChange={e => setForm(i, { note: e.target.value })}
                                 className={inputCls + ' resize-none'}
-                                placeholder="How was it completed? Any notes..."
+                                placeholder={tr("How was it completed? Any notes...")}
                                 autoFocus
                               />
                             </div>
@@ -783,11 +784,11 @@ export default function MilestoneDetailPage() {
                             <div className="space-y-2">
                               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                 <Camera className="w-3.5 h-3.5" />
-                                Proof Photo <span className="font-normal text-slate-400">(optional)</span>
+                                {tr("Proof Photo ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span>
                               </label>
                               {form.photoPreview ? (
                                 <div className="relative rounded-xl overflow-hidden border border-gray-200 w-fit">
-                                  <img loading="lazy" decoding="async" src={form.photoPreview} alt="Preview" className="h-32 w-auto object-cover" />
+                                  <img loading="lazy" decoding="async" src={form.photoPreview} alt={tr("Preview")} className="h-32 w-auto object-cover" />
                                   <button
                                     type="button"
                                     onClick={() => setForm(i, { photoFile: null, photoPreview: null })}
@@ -807,7 +808,7 @@ export default function MilestoneDetailPage() {
                                     }}
                                   />
                                   <ImageIcon className="w-5 h-5 text-slate-400" />
-                                  <span className="text-sm text-slate-400">Click to attach a proof photo</span>
+                                  <span className="text-sm text-slate-400">{tr("Click to attach a proof photo")}</span>
                                 </label>
                               )}
                             </div>
@@ -818,7 +819,7 @@ export default function MilestoneDetailPage() {
                             <div className="flex items-center justify-between">
                               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                 <Package className="w-3.5 h-3.5" />
-                                Materials Used <span className="font-normal text-slate-400">(optional)</span>
+                                {tr("Materials Used ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span>
                               </label>
                               <button
                                 type="button"
@@ -826,12 +827,12 @@ export default function MilestoneDetailPage() {
                                 disabled={materials.length === 0}
                                 className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-500 disabled:text-slate-300 transition-colors"
                               >
-                                <Plus className="w-3.5 h-3.5" /> Add
+                                <Plus className="w-3.5 h-3.5" />{tr(" Add")}
                               </button>
                             </div>
 
                             {materials.length === 0 && (
-                              <p className="text-xs text-slate-400 italic">No materials set up for this project.</p>
+                              <p className="text-xs text-slate-400 italic">{tr("No materials set up for this project.")}</p>
                             )}
 
                             <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -848,10 +849,10 @@ export default function MilestoneDetailPage() {
                                       onChange={e => updateMaterialRow(i, ri, 'materialId', e.target.value)}
                                       className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     >
-                                      <option value="">— Select —</option>
+                                      <option value="">{tr("— Select —")}</option>
                                       {materials.map(m => (
                                         <option key={m._id} value={m._id}>
-                                          {m.name} ({m.unit}) — {Math.max(0, m.balance ?? 0)} avail.
+                                          {tr(m.name)} ({tr(m.unit)}) — {Math.max(0, m.balance ?? 0)}{tr(" avail.")}
                                         </option>
                                       ))}
                                     </select>
@@ -862,15 +863,15 @@ export default function MilestoneDetailPage() {
                                         value={row.quantity}
                                         disabled={outOfStock}
                                         onChange={e => updateMaterialRow(i, ri, 'quantity', e.target.value)}
-                                        placeholder={outOfStock ? '—' : 'Qty'}
-                                        className={`w-20 bg-white border rounded-xl px-3 py-2 text-sm text-right text-gray-900 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        placeholder={outOfStock ? '—' : tr("Qty")}
+                                        className={`w-20 bg-white border rounded-xl px-3 py-2 text-sm text-end text-gray-900 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                                           inputBad
                                             ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500'
                                             : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
                                         }`}
                                       />
-                                      {outOfStock && <span className="text-[10px] text-red-500 font-medium">Out of stock</span>}
-                                      {exceeded && <span className="text-[10px] text-red-500 font-medium">Max {balance}</span>}
+                                      {outOfStock && <span className="text-[10px] text-red-500 font-medium">{tr("Out of stock")}</span>}
+                                      {exceeded && <span className="text-[10px] text-red-500 font-medium">{tr("Max ")}{tr(balance)}</span>}
                                     </div>
                                     <button type="button" onClick={() => removeMaterialRow(i, ri)} className="p-2 mt-0.5 text-slate-300 hover:text-red-500 transition-colors">
                                       <Trash2 className="w-4 h-4" />
@@ -888,7 +889,7 @@ export default function MilestoneDetailPage() {
                             onClick={() => setForm(i, { open: false })}
                             className="px-6 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-slate-600 transition-all"
                           >
-                            Cancel
+                            {tr("Cancel")}
                           </button>
                           <button
                             onClick={() => handleSubmitTask(i)}
@@ -896,8 +897,8 @@ export default function MilestoneDetailPage() {
                             className="flex-1 md:flex-none md:px-8 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-sm font-bold text-white transition-all shadow-sm flex items-center justify-center gap-2"
                           >
                             {isSubmitting || form.uploadingPhoto
-                              ? <><Loader2 className="w-4 h-4 animate-spin" />{form.uploadingPhoto ? 'Uploading…' : 'Submitting…'}</>
-                              : <><CheckCircle2 className="w-4 h-4" />Mark Complete</>
+                              ? <><Loader2 className="w-4 h-4 animate-spin" />{form.uploadingPhoto ? tr("Uploading…") : tr("Submitting…")}</>
+                              : <><CheckCircle2 className="w-4 h-4" />{tr("Mark Complete")}</>
                             }
                           </button>
                         </div>
@@ -923,7 +924,7 @@ export default function MilestoneDetailPage() {
                     <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
                       <Pencil className="w-4 h-4 text-blue-600" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900">Edit Task</p>
+                    <p className="text-sm font-bold text-gray-900">{tr("Edit Task")}</p>
                   </div>
                   <button onClick={() => setEditingTask(null)} className="p-1.5 text-slate-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                     <X className="w-4 h-4" />
@@ -931,20 +932,20 @@ export default function MilestoneDetailPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Title *</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Title *")}</label>
                   <input autoFocus type="text" value={editingTask.form.title}
                     onChange={e => setEditingTask(p => p ? { ...p, form: { ...p.form, title: e.target.value } } : null)}
-                    className={inputCls} placeholder="Task title" />
+                    className={inputCls} placeholder={tr("Task title")} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Description</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Description")}</label>
                   <input type="text" value={editingTask.form.description}
                     onChange={e => setEditingTask(p => p ? { ...p, form: { ...p.form, description: e.target.value } } : null)}
-                    className={inputCls} placeholder="Optional details..." />
+                    className={inputCls} placeholder={tr("Optional details...")} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Start</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Start")}</label>
                     <input type="date" value={editingTask.form.startDate}
                       onChange={e => {
                         const s = e.target.value;
@@ -960,7 +961,7 @@ export default function MilestoneDetailPage() {
                       className={inputCls} />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">End</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("End")}</label>
                     <input type="date" value={editingTask.form.endDate}
                       min={editingTask.form.startDate || undefined}
                       onChange={e => setEditingTask(p => p ? { ...p, form: { ...p.form, endDate: e.target.value } } : null)}
@@ -968,19 +969,19 @@ export default function MilestoneDetailPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Assign To</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Assign To")}</label>
                   <select value={editingTask.form.assignedTo}
                     onChange={e => setEditingTask(p => p ? { ...p, form: { ...p.form, assignedTo: e.target.value } } : null)}
                     className={inputCls}>
-                    <option value="">— Unassigned —</option>
-                    {members.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
+                    <option value="">{tr("— Unassigned —")}</option>
+                    {members.map(m => <option key={m._id} value={m._id}>{tr(m.name)}</option>)}
                   </select>
                 </div>
                 <div className="flex gap-3 pt-1">
-                  <button onClick={() => setEditingTask(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-slate-600 transition-all">Cancel</button>
+                  <button onClick={() => setEditingTask(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-slate-600 transition-all">{tr("Cancel")}</button>
                   <button onClick={handleSaveEdit} disabled={isSavingEdit || !editingTask.form.title.trim()}
                     className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-sm font-bold text-white transition-all flex items-center justify-center gap-2">
-                    {isSavingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" />Save</>}
+                    {isSavingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" />{tr("Save")}</>}
                   </button>
                 </div>
               </div>

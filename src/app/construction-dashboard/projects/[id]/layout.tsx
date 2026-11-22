@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
@@ -9,7 +10,7 @@ import { useIsAdmin } from '@/hooks/usePermission';
 import { cn } from '@/lib/utils';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import {
-  Info, FileText, DollarSign, Package, Files, Map,
+  Info, FileText, Banknote, Package, Files, Map,
   AlertCircle, ShieldAlert, Calendar,
   TrendingUp, GanttChart, ClipboardList, CreditCard,
   ChevronLeft, Pencil, MessageSquare,
@@ -52,7 +53,7 @@ type TabGroup = {
 const TAB_GROUPS: TabGroup[] = [
   { id: 'overview',  label: 'Overview',  icon: LayoutDashboard, tabIds: [ 'details'] },
   { id: 'work',      label: 'Work',      icon: Calendar,        tabIds: ['boq', 'milestones', 'reports'] },
-  { id: 'finance',   label: 'Finance',   icon: DollarSign,      tabIds: ['transactions'] },
+  { id: 'finance',   label: 'Finance',   icon: Banknote,      tabIds: ['transactions'] },
   { id: 'site',      label: 'Site',      icon: Map,             tabIds: ['plans', 'documents', 'materials', 'site-survey' /* , 'attendance' */] },
   { id: 'quality',   label: 'Quality',   icon: ShieldAlert,     tabIds: ['issues', 'risks', 'handover', 'audit'] },
   { id: 'chat',      label: 'Chat',      icon: MessageSquare,   tabIds: ['chat'] },
@@ -188,34 +189,34 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const canEditProject = !isProjectLocked(project) && hasProjectPermission(user, project, 'projects:update');
 
   const headerContent = project ? (
-    <div className="flex items-center justify-between w-full pr-4">
+    <div className="flex items-center justify-between w-full pe-4">
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={() => router.push(projectsListRoute)}
           className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-2xs active:scale-95 transition-all duration-200 shrink-0 cursor-pointer"
-          title="Back to Projects"
+          title={tr("Back to Projects")}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <h1 className="text-sm md:text-base font-black text-slate-900 tracking-tight truncate max-w-[150px] sm:max-w-xs md:max-w-md">
-          {project.name}
+          {tr(project.name)}
         </h1>
         <span className={cn(
           'hidden sm:inline-block shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border',
           statusBadgeColor[project.status] || 'bg-blue-50/80 text-blue-700 border-blue-200/60'
         )}>
-          {project.status}
+          {tr(project.status)}
         </span>
         {project.projectType && (
           <span className="hidden md:inline shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border bg-slate-50 text-slate-600 border-slate-200/80">
-            {project.projectType}
+            {tr(project.projectType)}
           </span>
         )}
       </div>
       {canEditProject && (
         <button
           onClick={() => setIsEditModalOpen(true)}
-          title="Edit project"
+          title={tr("Edit project")}
           className="hidden sm:inline-flex shrink-0 p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-2xs active:scale-95 transition-all duration-200 cursor-pointer"
         >
           <Pencil className="w-4 h-4" />
@@ -228,17 +229,17 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     <SkeletonLoader loading={loading} preset="detail">
       {!project && !loading ? (
         <div className="text-center py-20 bg-white border border-slate-200 rounded-3xl p-8 shadow-card">
-          <h2 className="text-2xl font-bold text-slate-900">{accessDenied ? 'Access denied' : 'Project not found'}</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{accessDenied ? tr("Access denied") : tr("Project not found")}</h2>
           <p className="text-slate-500 text-sm mt-1">
             {accessDenied
-              ? "You don't have permission to view this project."
-              : 'This project does not exist or has been removed.'}
+              ? tr("You don't have permission to view this project.")
+              : tr("This project does not exist or has been removed.")}
           </p>
           <button
             onClick={() => router.push(projectsListRoute)}
             className="mt-5 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-sm hover:bg-blue-500 transition-colors"
           >
-            Back to Projects
+            {tr("Back to Projects")}
           </button>
         </div>
       ) : project ? (
@@ -249,24 +250,24 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => router.push(projectsListRoute)}
                 className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors shrink-0 cursor-pointer"
-                title="Back to Projects"
+                title={tr("Back to Projects")}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate max-w-xs sm:max-w-md">
-                    {project.name}
+                    {tr(project.name)}
                   </h1>
                   <span className={cn(
                     'shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border',
                     statusBadgeColor[project.status] || 'bg-blue-50 text-blue-700 border-blue-200/80'
                   )}>
-                    {project.status}
+                    {tr(project.status)}
                   </span>
                   {project.projectType && (
                     <span className="hidden sm:inline shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border bg-slate-50 text-slate-600 border-slate-200/80">
-                      {project.projectType}
+                      {tr(project.projectType)}
                     </span>
                   )}
                 </div>
@@ -275,11 +276,11 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
             {canEditProject && (
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                title="Edit project"
+                title={tr("Edit project")}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer text-xs font-medium shrink-0 self-start sm:self-auto"
               >
                 <Pencil className="w-3.5 h-3.5 text-slate-500" />
-                <span>Edit Details</span>
+                <span>{tr("Edit Details")}</span>
               </button>
             )}
           </div>
@@ -313,7 +314,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                     )}
                   >
                     <TabIcon className={cn("w-4 h-4 shrink-0 transition-colors", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600")} />
-                    <span>{tab.name}</span>
+                    <span>{tr(tab.name)}</span>
                   </button>
                 );
               })}
@@ -325,16 +326,16 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                 <Lock className="w-8 h-8 text-slate-400" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Section Locked</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">{tr("Section Locked")}</h2>
               <p className="text-slate-500 text-sm max-w-sm text-center mb-6">
-                Please complete and approve the Site Survey to unlock this section.
+                {tr("Please complete and approve the Site Survey to unlock this section.")}
               </p>
               {visibleTabs.find(t => t.id === 'site-survey') && (
                 <button
                   onClick={() => router.push(`/construction-dashboard/projects/${projectId}/site-survey`)}
                   className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-sm"
                 >
-                  <span>Go to Survey</span>
+                  <span>{tr("Go to Survey")}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}

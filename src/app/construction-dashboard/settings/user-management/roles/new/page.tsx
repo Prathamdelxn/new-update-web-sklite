@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -34,11 +35,11 @@ export default function NewRolePage() {
         description,
       });
 
-      toast.success('Role Created Successfully');
+      toast.success(tr("Role Created Successfully"));
       router.push('/settings/user-management/roles');
     } catch (error) {
       console.error(error);
-      toast.error('Unable to create role');
+      toast.error(tr("Unable to create role"));
     } finally {
       setLoading(false);
     }
@@ -57,10 +58,10 @@ export default function NewRolePage() {
 
         <div>
           <h1 className="text-3xl font-bold">
-            Create New Role
+            {tr("Create New Role")}
           </h1>
           <p className="text-gray-500 mt-1">
-            Add a new role to your organization.
+            {tr("Add a new role to your organization.")}
           </p>
         </div>
       </div>
@@ -72,10 +73,10 @@ export default function NewRolePage() {
           </div>
           <div>
             <h2 className="text-xl font-semibold">
-              Role Details
+              {tr("Role Details")}
             </h2>
             <p className="text-gray-500">
-              Enter the information below.
+              {tr("Enter the information below.")}
             </p>
           </div>
         </div>
@@ -83,12 +84,12 @@ export default function NewRolePage() {
         {/* Role Name */}
         <div className="mb-6">
           <label className="block font-semibold mb-2">
-            Role Identity Name
-            <span className="text-red-500 ml-1">*</span>
+            {tr("Role Identity Name")}
+            <span className="text-red-500 ms-1">*</span>
           </label>
           <input
             type="text"
-            placeholder="Example: Project Manager"
+            placeholder={tr("Example: Project Manager")}
             value={roleName}
             onChange={(e) => setRoleName(e.target.value)}
             className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
@@ -98,14 +99,14 @@ export default function NewRolePage() {
         {/* Description */}
         <div>
           <label className="block font-semibold mb-2">
-            Role Description
-            <span className="text-gray-400 ml-2 text-sm">
-              (Optional)
+            {tr("Role Description")}
+            <span className="text-gray-400 ms-2 text-sm">
+              {tr("(Optional)")}
             </span>
           </label>
           <textarea
             rows={5}
-            placeholder="Describe this role..."
+            placeholder={tr("Describe this role...")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full border rounded-xl px-4 py-3 outline-none resize-none focus:ring-2 focus:ring-blue-500"
@@ -118,7 +119,7 @@ export default function NewRolePage() {
             onClick={() => router.back()}
             className="px-6 py-3 rounded-xl border border-gray-300 hover:bg-gray-100"
           >
-            Cancel
+            {tr("Cancel")}
           </button>
           <button
             onClick={handleCreateRole}
@@ -126,7 +127,7 @@ export default function NewRolePage() {
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-3 flex items-center gap-2 disabled:opacity-60"
           >
             <Save className="w-5 h-5" />
-            {loading ? 'Creating...' : 'Create Role'}
+            {loading ? tr("Creating...") : tr("Create Role")}
           </button>
         </div>
       </GlassCard>

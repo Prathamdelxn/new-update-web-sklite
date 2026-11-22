@@ -2,10 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X, Map, Zap, Droplets, DollarSign, User, Calendar,
-  Mountain, CheckCircle2, XCircle, AlertCircle, FileText,
-} from 'lucide-react';
+import { X, Map, Zap, Droplets, User, Calendar, Mountain, CheckCircle2, XCircle, AlertCircle, FileText, Banknote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SurveyDetailModalProps {
@@ -112,7 +109,7 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
                     {[
                       { label: 'Power Supply', value: survey.powerAvailable, icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
                       { label: 'Water Supply', value: survey.waterAvailable, icon: Droplets, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
-                      { label: 'Budget Impact', value: survey.affectsBudget, icon: DollarSign, color: 'text-red-600', bg: 'bg-red-50 border-red-200' },
+                      { label: 'Budget Impact', value: survey.affectsBudget, icon: Banknote, color: 'text-red-600', bg: 'bg-red-50 border-red-200' },
                       { label: 'Structural Mod', value: survey.structuralModification, icon: Mountain, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200' },
                     ].map(({ label, value, icon: Icon, color, bg }) => (
                       <div key={label} className={cn('p-4 rounded-2xl border flex items-center space-x-3', value ? bg : 'bg-gray-50 border-gray-200')}>

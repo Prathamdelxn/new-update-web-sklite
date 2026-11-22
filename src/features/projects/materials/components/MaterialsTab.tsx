@@ -1,4 +1,6 @@
 'use client';
+import { tr, getLang } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
@@ -131,7 +133,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
       setMaterials(response.data);
     } catch (error) {
       console.error('Error fetching materials:', error);
-      toast.error('Failed to load materials');
+      toast.error(tr("Failed to load materials"));
     }
   };
 
@@ -141,7 +143,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching requests:', error);
-      toast.error('Failed to load material requests');
+      toast.error(tr("Failed to load material requests"));
     }
   };
 
@@ -151,7 +153,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
       setReceipts(response.data);
     } catch (error) {
       console.error('Error fetching receipts:', error);
-      toast.error('Failed to load material receipts');
+      toast.error(tr("Failed to load material receipts"));
     }
   };
 
@@ -161,7 +163,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
       setPurchases(response.data);
     } catch (error) {
       console.error('Error fetching purchases:', error);
-      toast.error('Failed to load purchase orders');
+      toast.error(tr("Failed to load purchase orders"));
     }
   };
 
@@ -171,7 +173,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
       setUsageLogs(response.data);
     } catch (error) {
       console.error('Error fetching usage:', error);
-      toast.error('Failed to load usage logs');
+      toast.error(tr("Failed to load usage logs"));
     }
   };
 
@@ -192,7 +194,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
       ];
       entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setActivityFeed(entries);
-    } catch { toast.error('Failed to load activity log'); }
+    } catch { toast.error(tr("Failed to load activity log")); }
     finally { setActivityLoading(false); }
   };
 
@@ -213,7 +215,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleUpdateRequestStatus = async (requestId: string, status: 'Approved' | 'Rejected' | 'Fulfilled') => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     setUpdatingRequestId(requestId);
     try {
       await api.patch(`/material-requests/${requestId}`, { status });
@@ -223,36 +225,36 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
       }
       fetchRequests();
     } catch {
-      toast.error(`Failed to ${status.toLowerCase()} request`);
+      toast.error(tr("Failed to {{status}} request", { status: status.toLowerCase() }));
     } finally {
       setUpdatingRequestId(null);
     }
   };
 
   const handleVerifyReceipt = async (receiptId: string) => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     try {
       await api.patch(`/projects/${projectId}/material-receipts/${receiptId}`, { status: 'Verified' });
-      toast.success('Receipt marked as verified');
+      toast.success(tr("Receipt marked as verified"));
       fetchReceipts();
     } catch {
-      toast.error('Failed to verify receipt');
+      toast.error(tr("Failed to verify receipt"));
     }
   };
 
   const bulkUpdateRequests = async (status: 'Approved' | 'Rejected') => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     setIsBulkUpdating(true);
     try {
       const ids = Array.from(checkedRequestIds);
       await Promise.all(
         ids.map((id) => api.patch(`/material-requests/${id}`, { status }))
       );
-      toast.success(`${checkedRequestIds.size} request(s) ${status.toLowerCase()}`);
+      toast.success(tr("{{size}} request(s) {{status}}", { size: checkedRequestIds.size, status: status.toLowerCase() }));
       setCheckedRequestIds(new Set());
       fetchRequests();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Bulk update failed');
+      toast.error(error.response?.data?.message || tr("Bulk update failed"));
     } finally {
       setIsBulkUpdating(false);
     }
@@ -267,65 +269,65 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   };
 
   const handleDeleteMaterial = async (materialId: string) => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
-    if (!window.confirm('Delete this material? This cannot be undone.')) return;
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
+    if (!window.confirm(tr("Delete this material? This cannot be undone."))) return;
     setDeletingId(materialId);
     try {
       await api.delete(`/materials/${materialId}`);
-      toast.success('Material deleted');
+      toast.success(tr("Material deleted"));
       fetchMaterials();
-    } catch { toast.error('Failed to delete material'); }
+    } catch { toast.error(tr("Failed to delete material")); }
     finally { setDeletingId(null); }
   };
 
   const handleDeleteRequest = async (requestId: string) => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
-    if (!window.confirm('Delete this request?')) return;
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
+    if (!window.confirm(tr("Delete this request?"))) return;
     setDeletingId(requestId);
     try {
       await api.delete(`/material-requests/${requestId}`);
-      toast.success('Request deleted');
+      toast.success(tr("Request deleted"));
       if (selectedRequest?._id === requestId) setSelectedRequest(null);
       fetchRequests();
-    } catch { toast.error('Failed to delete request'); }
+    } catch { toast.error(tr("Failed to delete request")); }
     finally { setDeletingId(null); }
   };
 
   const handleDeleteUsageLog = async (logId: string) => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
-    if (!window.confirm('Delete this usage log? Consumed quantities will be restored to stock.')) return;
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
+    if (!window.confirm(tr("Delete this usage log? Consumed quantities will be restored to stock."))) return;
     setDeletingId(logId);
     try {
       await api.delete(`/projects/${projectId}/material-usage/${logId}`);
-      toast.success('Usage log deleted and stock restored');
+      toast.success(tr("Usage log deleted and stock restored"));
       await Promise.all([fetchUsage(), fetchMaterials()]);
-    } catch { toast.error('Failed to delete usage log'); }
+    } catch { toast.error(tr("Failed to delete usage log")); }
     finally { setDeletingId(null); }
   };
 
   const handleDeletePO = async (purchaseId: string) => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
-    if (!window.confirm('Delete this material purchase?')) return;
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
+    if (!window.confirm(tr("Delete this material purchase?"))) return;
     setDeletingId(purchaseId);
     try {
       await api.delete(`/projects/${projectId}/material-purchase/${purchaseId}`);
-      toast.success('Material purchase deleted');
+      toast.success(tr("Material purchase deleted"));
       setSelectedPO(null);
       fetchPurchases();
-    } catch { toast.error('Failed to delete material purchase'); }
+    } catch { toast.error(tr("Failed to delete material purchase")); }
     finally { setDeletingId(null); }
   };
 
   const handleUpdatePOStatus = async (purchaseId: string, status: 'Approved' | 'Rejected') => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     setUpdatingPOId(purchaseId);
     try {
       await api.patch(`/projects/${projectId}/material-purchase/${purchaseId}`, { status });
-      toast.success(`Material purchase ${status.toLowerCase()}`);
+      toast.success(tr("Material purchase {{status}}", { status: status.toLowerCase() }));
       setSelectedPO((po: any) => po ? { ...po, status } : po);
       fetchPurchases();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || `Failed to ${status.toLowerCase()} material purchase`);
+      toast.error(error?.response?.data?.message || tr("Failed to {{status}} material purchase", { status: status.toLowerCase() }));
     }
     finally { setUpdatingPOId(null); }
   };
@@ -333,18 +335,19 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
   const printReceipt = (receipt: any) => {
     const win = window.open('', '_blank');
     if (!win) return;
+    const rtl = getLang() === 'ar';
     const rows = receipt.items.map((item: any) =>
-      `<tr><td style="border:1px solid #ccc;padding:8px">${item.materialId?.name || 'Item'}</td><td style="border:1px solid #ccc;padding:8px">${item.quantity} ${item.unit}</td></tr>`
+      `<tr><td style="border:1px solid #ccc;padding:8px">${item.materialId?.name || tr('Item')}</td><td style="border:1px solid #ccc;padding:8px">${item.quantity} ${tr(item.unit)}</td></tr>`
     ).join('');
-    win.document.write(`<!DOCTYPE html><html><head><title>GRN-${receipt._id.slice(-6).toUpperCase()}</title>
-<style>body{font-family:sans-serif;padding:24px;color:#111}h2{margin:0 0 4px}p{margin:4px 0}table{border-collapse:collapse;width:100%;margin-top:12px}th{background:#f3f4f6;border:1px solid #ccc;padding:8px;text-align:left}</style>
+    win.document.write(`<!DOCTYPE html><html lang="${rtl ? 'ar' : 'en'}" dir="${rtl ? 'rtl' : 'ltr'}"><head><title>GRN-${receipt._id.slice(-6).toUpperCase()}</title>
+<style>body{font-family:${rtl ? "'Segoe UI',Tahoma,'Noto Sans Arabic',Arial,sans-serif" : 'sans-serif'};padding:24px;color:#111}h2{margin:0 0 4px}p{margin:4px 0}table{border-collapse:collapse;width:100%;margin-top:12px}th{background:#f3f4f6;border:1px solid #ccc;padding:8px;text-align:start}</style>
 </head><body>
-<h2>Goods Receipt Note — GRN-${receipt._id.slice(-6).toUpperCase()}</h2>
-<p>Date: ${new Date(receipt.createdAt).toLocaleDateString()}</p>
-<p>Vendor: ${receipt.vendorName}</p>
-<p>Challan: ${receipt.challanNumber}${receipt.invoiceNumber ? ` &nbsp;|&nbsp; Invoice: ${receipt.invoiceNumber}` : ''}</p>
-<p>Status: ${receipt.status}</p>
-<table><thead><tr><th style="border:1px solid #ccc;padding:8px">Material</th><th style="border:1px solid #ccc;padding:8px">Quantity</th></tr></thead><tbody>${rows}</tbody></table>
+<h2>${tr('Goods Receipt Note')} — GRN-${receipt._id.slice(-6).toUpperCase()}</h2>
+<p>${tr('Date:')} ${new Date(receipt.createdAt).toLocaleDateString()}</p>
+<p>${tr('Vendor:')} ${receipt.vendorName}</p>
+<p>${tr('Challan:')} ${receipt.challanNumber}${receipt.invoiceNumber ? ` &nbsp;|&nbsp; ${tr('Invoice:')} ${receipt.invoiceNumber}` : ''}</p>
+<p>${tr('Status:')} ${tr(receipt.status)}</p>
+<table><thead><tr><th style="border:1px solid #ccc;padding:8px">${tr('Material')}</th><th style="border:1px solid #ccc;padding:8px">${tr('Quantity')}</th></tr></thead><tbody>${rows}</tbody></table>
 </body></html>`);
     win.document.close();
     win.print();
@@ -377,7 +380,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">You don't have permission to view the Materials & Inventory module.</p>
+        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view the Materials & Inventory module.")}</p>
       </div>
     );
   }
@@ -398,7 +401,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
             )}
           >
             <tab.icon className="w-3.5 h-3.5" />
-            <span>{tab.name}</span>
+            <span>{tr(tab.name)}</span>
           </button>
         ))}
       </div>
@@ -408,11 +411,11 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           {/* Inventory Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Materials</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Materials")}</p>
               <p className="text-2xl font-extrabold text-slate-900 mt-1">{materials.length}</p>
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Low Stock Items</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Low Stock Items")}</p>
               <p className="text-2xl font-extrabold text-red-600 mt-1">
                 {materials.filter(m => {
                   const stock = m.currentStock ?? ((m.totalReceived || 0) - (m.totalConsumed || 0));
@@ -422,13 +425,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </p>
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Received</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Received")}</p>
               <p className="text-2xl font-extrabold text-emerald-600 mt-1 break-all">
                 {formatCompact(materials.reduce((sum, m) => sum + (m.totalReceived || 0), 0))}
               </p>
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Consumed</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Consumed")}</p>
               <p className="text-2xl font-extrabold text-blue-600 mt-1 break-all">
                 {formatCompact(materials.reduce((sum, m) => sum + (m.totalConsumed || 0), 0))}
               </p>
@@ -442,10 +445,10 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
-                  placeholder="Search materials..."
+                  placeholder={tr("Search materials...")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200/80 rounded-xl py-2 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
+                  className="w-full bg-slate-50 border border-slate-200/80 rounded-xl py-2 ps-10 pe-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
                 />
               </div>
 
@@ -460,7 +463,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   className="flex items-center space-x-1.5 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-xs font-bold text-white hover:bg-blue-500 transition-all shadow-xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>New Material</span>
+                  <span>{tr("New Material")}</span>
                 </button>
                 )}
               </div>
@@ -489,19 +492,19 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             <Package className="w-5 h-5 text-blue-600" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-gray-900 leading-tight truncate" title={material.name}>{material.name}</p>
+                            <p className="text-sm font-bold text-gray-900 leading-tight truncate" title={material.name}>{tr(material.name)}</p>
                             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-1">
-                              Unit: <span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] font-black text-slate-500 ml-1">{material.unit}</span>
+                              {tr("Unit: ")}<span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] font-black text-slate-500 ms-1">{tr(material.unit)}</span>
                             </p>
                           </div>
                         </div>
 
                         <div className="flex flex-col items-end shrink-0 min-w-0 max-w-[45%]">
                           {overConsumed ? (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">Over-consumed</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
                           ) : (
                             <>
-                              <span className={cn('text-sm font-black break-all text-right', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)} In Stock</span>
+                              <span className={cn('text-sm font-black break-all text-end', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}{tr(" In Stock")}</span>
                               <div className="h-1.5 w-16 bg-gray-200 rounded-full overflow-hidden mt-1.5">
                                 <div className={cn('h-full rounded-full', isLow ? 'bg-red-400' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
                               </div>
@@ -513,19 +516,19 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-gray-100 bg-gray-50/50 -mx-4 px-4 py-2">
                         <div className="flex items-center space-x-1.5 min-w-0">
                           <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">Received:</span>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">{tr("Received:")}</span>
                           <span className="text-xs font-black text-emerald-600 break-all">{formatCompact(received)}</span>
                         </div>
                         <div className="flex items-center space-x-1.5 justify-end min-w-0">
                           <ArrowUpRight className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                          <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">Consumed:</span>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">{tr("Consumed:")}</span>
                           <span className="text-xs font-black text-red-600 break-all">{formatCompact(consumed)}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-3 mt-2">
                         <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">
-                          Updated: {new Date(material.updatedAt).toLocaleDateString()}
+                          {tr("Updated: ")}{new Date(material.updatedAt).toLocaleDateString()}
                         </span>
                         <div className="flex items-center space-x-2">
                           {canUpdate && (
@@ -536,7 +539,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               setIsModalOpen(true);
                             }}
                             className="p-1.5 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all border border-emerald-100 bg-emerald-50/50"
-                            title="Stock In"
+                            title={tr("Stock In")}
                           >
                             <PlusCircle className="w-4 h-4" />
                           </button>
@@ -549,14 +552,14 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               setIsModalOpen(true);
                             }}
                             className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-all border border-red-100 bg-red-50/50"
-                            title="Stock Out"
+                            title={tr("Stock Out")}
                           >
                             <MinusCircle className="w-4 h-4" />
                           </button>
                           )}
                           <button
                             onClick={() => openHistory(material)}
-                            title="Usage History"
+                            title={tr("Usage History")}
                             className="p-1.5 text-slate-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all border border-gray-200 bg-white"
                           >
                             <History className="w-4 h-4" />
@@ -568,7 +571,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               setSelectedMaterial(material);
                               setIsModalOpen(true);
                             }}
-                            title="Edit Material"
+                            title={tr("Edit Material")}
                             className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-gray-200 bg-white"
                           >
                             <Pencil className="w-4 h-4" />
@@ -578,7 +581,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           <button
                             onClick={() => handleDeleteMaterial(material._id)}
                             disabled={deletingId === material._id}
-                            title="Delete Material"
+                            title={tr("Delete Material")}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-40 border border-gray-200 bg-white"
                           >
                             {deletingId === material._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -593,14 +596,14 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
               {/* Desktop Table (hidden on mobile, visible md+) */}
               <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-200 bg-white">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+                <table className="w-full text-start border-collapse min-w-[800px]">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Material Name</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Unit</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Received</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Consumed</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">In Stock</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Material Name")}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">{tr("Unit")}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Received")}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Consumed")}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("In Stock")}</th>
                       <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider"></th>
                     </tr>
                   </thead>
@@ -613,29 +616,29 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               <Package className="w-5 h-5 text-blue-600" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-gray-900 truncate max-w-[220px]" title={material.name}>{material.name}</p>
-                              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Last updated: {new Date(material.updatedAt).toLocaleDateString()}</p>
+                              <p className="text-sm font-bold text-gray-900 truncate max-w-[220px]" title={material.name}>{tr(material.name)}</p>
+                              <p className="text-[10px] text-slate-500 uppercase tracking-wider">{tr("Last updated: ")}{new Date(material.updatedAt).toLocaleDateString()}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className="px-2 py-1 rounded-md bg-gray-100 border border-gray-200 text-[10px] font-bold text-slate-500">
-                            {material.unit}
+                            {tr(material.unit)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right max-w-[140px]">
+                        <td className="px-6 py-4 text-end max-w-[140px]">
                           <div className="flex items-center justify-end space-x-1 min-w-0">
                             <ArrowDownLeft className="w-3 h-3 text-emerald-500 shrink-0" />
                             <span className="text-sm font-bold text-emerald-600 break-all">{formatCompact(material.totalReceived || 0)}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right max-w-[140px]">
+                        <td className="px-6 py-4 text-end max-w-[140px]">
                           <div className="flex items-center justify-end space-x-1 min-w-0">
                             <ArrowUpRight className="w-3 h-3 text-red-500 shrink-0" />
                             <span className="text-sm font-bold text-red-600 break-all">{formatCompact(material.totalConsumed || 0)}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right max-w-[140px]">
+                        <td className="px-6 py-4 text-end max-w-[140px]">
                           <div className="flex flex-col items-end min-w-0">
                             {(() => {
                               const received = material.totalReceived || 0;
@@ -648,10 +651,10 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               return (
                                 <>
                                   {overConsumed ? (
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">Over-consumed</span>
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
                                   ) : (
                                     <>
-                                      <span className={cn('text-lg font-black break-all text-right', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}</span>
+                                      <span className={cn('text-lg font-black break-all text-end', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}</span>
                                       <div className="h-1 w-16 bg-gray-200 rounded-full overflow-hidden mt-1">
                                         <div className={cn('h-full rounded-full', isLow ? 'bg-red-400' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
                                       </div>
@@ -662,7 +665,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             })()}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-end">
                           <div className="flex items-center justify-end space-x-1">
                             {/* <button
                               onClick={() => {
@@ -700,7 +703,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                                 setSelectedMaterial(material);
                                 setIsModalOpen(true);
                               }}
-                              title="Edit Material"
+                              title={tr("Edit Material")}
                               className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                             >
                               <Pencil className="w-4 h-4" />
@@ -710,7 +713,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             <button
                               onClick={() => handleDeleteMaterial(material._id)}
                               disabled={deletingId === material._id}
-                              title="Delete Material"
+                              title={tr("Delete Material")}
                               className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-40"
                             >
                               {deletingId === material._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -723,7 +726,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     {materials.length === 0 && !loading && (
                       <tr>
                         <td colSpan={6} className="px-6 py-20 text-center text-slate-400 italic">
-                          No materials in inventory for this project.
+                          {tr("No materials in inventory for this project.")}
                         </td>
                       </tr>
                     )}
@@ -740,8 +743,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
-                <h3 className="text-lg font-bold text-gray-900">Material Requests</h3>
-                <p className="text-xs text-slate-500">Track and manage project material requisitions.</p>
+                <h3 className="text-lg font-bold text-gray-900">{tr("Material Requests")}</h3>
+                <p className="text-xs text-slate-500">{tr("Track and manage project material requisitions.")}</p>
               </div>
               <div className="flex items-center space-x-3">
                 {canCreate && (
@@ -750,7 +753,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-all"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>New Request</span>
+                  <span>{tr("New Request")}</span>
                 </button>
                 )}
               </div>
@@ -759,7 +762,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
           {checkedRequestIds.size > 0 && (
             <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-              <span className="text-sm font-bold text-blue-700">{checkedRequestIds.size} request{checkedRequestIds.size > 1 ? 's' : ''} selected</span>
+              <span className="text-sm font-bold text-blue-700">{tr(checkedRequestIds.size)}{tr(" request")}{checkedRequestIds.size > 1 ? 's' : ''}{tr(" selected")}</span>
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => bulkUpdateRequests('Approved')}
@@ -767,20 +770,20 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50"
                 >
                   {isBulkUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRightLeft className="w-4 h-4" />}
-                  <span>Approve</span>
+                  <span>{tr("Approve")}</span>
                 </button>
                 <button
                   onClick={() => bulkUpdateRequests('Rejected')}
                   disabled={isBulkUpdating}
                   className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50"
                 >
-                  <span>Reject</span>
+                  <span>{tr("Reject")}</span>
                 </button>
                 <button
                   onClick={() => setCheckedRequestIds(new Set())}
                   className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-slate-500 hover:text-gray-900 transition-all"
                 >
-                  Clear
+                  {tr("Clear")}
                 </button>
               </div>
             </div>
@@ -804,7 +807,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         <ClipboardList className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900">REQ-{request._id.slice(-6).toUpperCase()}</p>
+                        <p className="text-sm font-bold text-gray-900">{tr("REQ-")}{request._id.slice(-6).toUpperCase()}</p>
                         <p className="text-[10px] text-slate-500 uppercase tracking-wider">{new Date(request.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
@@ -815,23 +818,23 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       request.status === 'Rejected'   ? 'text-red-700 bg-red-100 border-red-200' :
                       'text-amber-700 bg-amber-100 border-amber-200'
                     )}>
-                      {request.status}
+                      {tr(request.status)}
                     </span>
                   </div>
 
                   <div className="space-y-3 mb-6">
                     {request.items.map((item: any, i: number) => (
                       <div key={i} className="flex justify-between items-center text-sm">
-                        <span className="text-slate-500">{item.materialId?.name || 'Unknown Material'}</span>
-                        <span className="font-bold text-gray-900">{item.quantity} {item.unit}</span>
+                        <span className="text-slate-500">{item.materialId?.name || tr("Unknown Material")}</span>
+                        <span className="font-bold text-gray-900">{item.quantity} {tr(item.unit)}</span>
                       </div>
                     ))}
                   </div>
 
                   {request.commonNote && (
                     <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 mb-6">
-                      <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Note</p>
-                      <p className="text-xs text-slate-600 italic">"{request.commonNote}"</p>
+                      <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">{tr("Note")}</p>
+                      <p className="text-xs text-slate-600 italic">"{tr(request.commonNote)}"</p>
                     </div>
                   )}
 
@@ -840,7 +843,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
                         {request.requestedByName?.charAt(0) || 'U'}
                       </div>
-                      <span className="text-[10px] font-bold text-slate-500">{request.requestedByName}</span>
+                      <span className="text-[10px] font-bold text-slate-500">{tr(request.requestedByName)}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       {request.status === 'Pending' && canApprove && (
@@ -848,7 +851,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           <button
                             onClick={() => handleUpdateRequestStatus(request._id, 'Rejected')}
                             disabled={updatingRequestId === request._id}
-                            title="Reject"
+                            title={tr("Reject")}
                             className="p-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
                           >
                             <XCircle className="w-3.5 h-3.5" />
@@ -856,7 +859,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           <button
                             onClick={() => handleUpdateRequestStatus(request._id, 'Approved')}
                             disabled={updatingRequestId === request._id}
-                            title="Approve"
+                            title={tr("Approve")}
                             className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50"
                           >
                             {updatingRequestId === request._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
@@ -867,18 +870,18 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         <button
                           onClick={() => handleUpdateRequestStatus(request._id, 'Fulfilled')}
                           disabled={updatingRequestId === request._id}
-                          title="Mark Fulfilled"
+                          title={tr("Mark Fulfilled")}
                           className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-600 hover:text-white text-[10px] font-bold transition-all disabled:opacity-50"
                         >
                           {updatingRequestId === request._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <PackageCheck className="w-3 h-3" />}
-                          Fulfill
+                          {tr("Fulfill")}
                         </button>
                       )}
                       {canDelete && (
                       <button
                         onClick={() => handleDeleteRequest(request._id)}
                         disabled={deletingId === request._id}
-                        title="Delete"
+                        title={tr("Delete")}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
                       >
                         {deletingId === request._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -887,7 +890,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       <button
                         onClick={() => setSelectedRequest(request)}
                         className="text-xs font-bold text-blue-600 hover:text-blue-500 transition-colors"
-                      >Details &rarr;</button>
+                      >{tr("Details →")}</button>
                     </div>
                   </div>
                 </GlassCard>
@@ -896,8 +899,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <ClipboardList className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No requests found</h3>
-              <p className="text-slate-500 max-w-xs">There are no material requests for this project yet.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{tr("No requests found")}</h3>
+              <p className="text-slate-500 max-w-xs">{tr("There are no material requests for this project yet.")}</p>
             </div>
           )}
         </div>
@@ -908,8 +911,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
-                <h3 className="text-lg font-bold text-gray-900">Material Received</h3>
-                <p className="text-xs text-slate-500">Log and verify incoming material deliveries.</p>
+                <h3 className="text-lg font-bold text-gray-900">{tr("Material Received")}</h3>
+                <p className="text-xs text-slate-500">{tr("Log and verify incoming material deliveries.")}</p>
               </div>
               <div className="flex items-center space-x-3">
                 {canCreate && (
@@ -918,7 +921,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 border border-emerald-500 rounded-xl text-sm font-bold text-white hover:bg-emerald-500 transition-all"
                 >
                   <FileCheck className="w-4 h-4" />
-                  <span>Log Receipt</span>
+                  <span>{tr("Log Receipt")}</span>
                 </button>
                 )}
               </div>
@@ -935,7 +938,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   <GlassCard key={receipt._id} className="p-4 border-gray-200 shadow-none" gradient>
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-bold text-gray-900">GRN-{receipt._id.slice(-6).toUpperCase()}</p>
+                        <p className="text-sm font-bold text-gray-900">{tr("GRN-")}{receipt._id.slice(-6).toUpperCase()}</p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                           {new Date(receipt.createdAt).toLocaleDateString()}
                         </p>
@@ -946,27 +949,27 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         receipt.status === 'Rejected' ? 'text-red-700 bg-red-100 border-red-200' :
                         'text-amber-700 bg-amber-100 border-amber-200'
                       )}>
-                        {receipt.status}
+                        {tr(receipt.status)}
                       </span>
                     </div>
 
                     <div className="mt-4 space-y-2">
                       <div className="flex items-center space-x-2">
                         <Truck className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span className="text-sm font-bold text-slate-700 truncate">{receipt.vendorName}</span>
+                        <span className="text-sm font-bold text-slate-700 truncate">{tr(receipt.vendorName)}</span>
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-500 font-bold uppercase pl-6">
-                        <span>Challan: {receipt.challanNumber}</span>
-                        {receipt.invoiceNumber && <span>Invoice: {receipt.invoiceNumber}</span>}
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-500 font-bold uppercase ps-6">
+                        <span>{tr("Challan: ")}{tr(receipt.challanNumber)}</span>
+                        {receipt.invoiceNumber && <span>{tr("Invoice: ")}{tr(receipt.invoiceNumber)}</span>}
                       </div>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-gray-100">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Items Received</p>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{tr("Items Received")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {receipt.items.map((item: any, i: number) => (
                           <span key={i} className="px-2 py-1 rounded bg-gray-50 border border-gray-200 text-[10px] font-bold text-slate-600">
-                            {item.materialId?.name || 'Item'}: {item.quantity} {item.unit}
+                            {item.materialId?.name || tr("Item")}: {item.quantity} {tr(item.unit)}
                           </span>
                         ))}
                       </div>
@@ -974,8 +977,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
                     {receipt.commonNote && (
                       <div className="mt-3 p-2.5 rounded-xl bg-gray-50 border border-gray-200">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 font-bold">Notes</p>
-                        <p className="text-xs text-slate-500 italic">"{receipt.commonNote}"</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 font-bold">{tr("Notes")}</p>
+                        <p className="text-xs text-slate-500 italic">"{tr(receipt.commonNote)}"</p>
                       </div>
                     )}
 
@@ -987,23 +990,23 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             className="flex items-center space-x-1 text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors border border-emerald-100 bg-emerald-50/50 px-2.5 py-1.5 rounded-lg"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Verify Receipt</span>
+                            <span>{tr("Verify Receipt")}</span>
                           </button>
                         ) : (
                           <span className="text-xs font-bold text-emerald-600 flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100">
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Verified</span>
+                            <span>{tr("Verified")}</span>
                           </span>
                         )}
                       </div>
                       
                       <button
                         onClick={() => printReceipt(receipt)}
-                        title="Print Receipt"
+                        title={tr("Print Receipt")}
                         className="flex items-center space-x-1 text-xs font-bold text-slate-600 hover:text-gray-900 transition-all border border-gray-200 bg-white px-2.5 py-1.5 rounded-lg"
                       >
                         <Printer className="w-3.5 h-3.5" />
-                        <span>Print GRN</span>
+                        <span>{tr("Print GRN")}</span>
                       </button>
                     </div>
                   </GlassCard>
@@ -1012,13 +1015,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
               {/* Desktop Table (hidden on mobile, visible md+) */}
               <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-200 bg-white">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
+                <table className="w-full text-start border-collapse min-w-[1000px]">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Receipt Info</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Vendor & Docs</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Items Received</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Receipt Info")}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Vendor & Docs")}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Items Received")}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">{tr("Status")}</th>
                       <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider"></th>
                     </tr>
                   </thead>
@@ -1026,18 +1029,18 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     {receipts.map((receipt) => (
                       <tr key={receipt._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                         <td className="px-6 py-4">
-                          <p className="text-sm font-bold text-gray-900">GRN-{receipt._id.slice(-6).toUpperCase()}</p>
+                          <p className="text-sm font-bold text-gray-900">{tr("GRN-")}{receipt._id.slice(-6).toUpperCase()}</p>
                           <p className="text-[10px] text-slate-500 uppercase tracking-wider">{new Date(receipt.createdAt).toLocaleDateString()}</p>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col space-y-1">
                             <div className="flex items-center space-x-2">
                               <Truck className="w-3 h-3 text-slate-400" />
-                              <span className="text-sm font-medium text-slate-600">{receipt.vendorName}</span>
+                              <span className="text-sm font-medium text-slate-600">{tr(receipt.vendorName)}</span>
                             </div>
                             <div className="flex items-center space-x-4 text-[10px] text-slate-500 font-bold uppercase">
-                              <span>Challan: {receipt.challanNumber}</span>
-                              {receipt.invoiceNumber && <span>Invoice: {receipt.invoiceNumber}</span>}
+                              <span>{tr("Challan: ")}{tr(receipt.challanNumber)}</span>
+                              {receipt.invoiceNumber && <span>{tr("Invoice: ")}{tr(receipt.invoiceNumber)}</span>}
                             </div>
                           </div>
                         </td>
@@ -1045,7 +1048,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           <div className="flex flex-wrap gap-2">
                             {receipt.items.map((item: any, i: number) => (
                               <span key={i} className="px-2 py-1 rounded-md bg-gray-100 border border-gray-200 text-[10px] font-bold text-slate-500">
-                                {item.materialId?.name || 'Item'}: {item.quantity} {item.unit}
+                                {item.materialId?.name || tr("Item")}: {item.quantity} {tr(item.unit)}
                               </span>
                             ))}
                           </div>
@@ -1057,10 +1060,10 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             receipt.status === 'Rejected' ? 'text-red-700 bg-red-100 border-red-200' :
                             'text-amber-700 bg-amber-100 border-amber-200'
                           )}>
-                            {receipt.status}
+                            {tr(receipt.status)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-end">
                           <div className="flex items-center justify-end space-x-2">
                             {receipt.status !== 'Verified' ? (
                               <button
@@ -1068,17 +1071,17 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                                 className="flex items-center space-x-1 text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Verify</span>
+                                <span>{tr("Verify")}</span>
                               </button>
                             ) : (
                               <span className="text-xs font-bold text-emerald-600 flex items-center space-x-1">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Verified</span>
+                                <span>{tr("Verified")}</span>
                               </span>
                             )}
                             <button
                               onClick={() => printReceipt(receipt)}
-                              title="Print Receipt"
+                              title={tr("Print Receipt")}
                               className="p-1.5 rounded-lg text-slate-400 hover:text-gray-900 hover:bg-gray-100 transition-all"
                             >
                               <Printer className="w-4 h-4" />
@@ -1094,8 +1097,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <FileCheck className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No receipts found</h3>
-              <p className="text-slate-500 max-w-xs">Record incoming material deliveries using the GRN form.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{tr("No receipts found")}</h3>
+              <p className="text-slate-500 max-w-xs">{tr("Record incoming material deliveries using the GRN form.")}</p>
             </div>
           )}
         </div>
@@ -1106,8 +1109,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
-                <h3 className="text-lg font-bold text-gray-900">Purchase Orders</h3>
-                <p className="text-xs text-slate-500">Formal procurement requests to vendors.</p>
+                <h3 className="text-lg font-bold text-gray-900">{tr("Purchase Orders")}</h3>
+                <p className="text-xs text-slate-500">{tr("Formal procurement requests to vendors.")}</p>
               </div>
               {canCreate && (
               <button
@@ -1115,7 +1118,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-all"
               >
                 <Plus className="w-4 h-4" />
-                <span>Create PO</span>
+                <span>{tr("Create PO")}</span>
               </button>
               )}
             </div>
@@ -1129,28 +1132,28 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <GlassCard key={po._id} className="p-6 border-gray-200 shadow-none" gradient>
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <p className="text-sm font-bold text-gray-900">{po.poNumber}</p>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">{po.vendorName}</p>
+                      <p className="text-sm font-bold text-gray-900">{tr(po.poNumber)}</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">{tr(po.vendorName)}</p>
                     </div>
                     <span className={cn(
                       "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
                       PO_STATUS_COLORS[po.status] || 'text-blue-700 bg-blue-100 border-blue-200'
                     )}>
-                      {po.status || 'Active'}
+                      {po.status || tr("Active")}
                     </span>
                   </div>
                   <div className="space-y-2 mb-6">
                     {po.items.map((item: any, i: number) => (
                       <div key={i} className="flex justify-between text-xs">
-                        <span className="text-slate-500">{item.materialId?.name}</span>
-                        <span className="text-gray-900 font-bold">{item.quantity} {item.unit} {(item.unitPrice || item.unitCost) ? `· ${formatCurrency((item.unitPrice || item.unitCost) * item.quantity, (project as any)?.currency || '$')}` : ''}</span>
+                        <span className="text-slate-500">{tr(item.materialId?.name)}</span>
+                        <span className="text-gray-900 font-bold">{item.quantity} {tr(item.unit)} {(item.unitPrice || item.unitCost) ? `· ${formatCurrency((item.unitPrice || item.unitCost) * item.quantity, projectCurrency(project as any))}` : ''}</span>
                       </div>
                     ))}
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Amount</span>
-                       <span className="text-sm font-bold text-emerald-600">{(po.grandTotal ?? po.totalAmount) != null ? formatCurrency(po.grandTotal ?? po.totalAmount, (project as any)?.currency || '$') : '—'}</span>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{tr("Total Amount")}</span>
+                       <span className="text-sm font-bold text-emerald-600">{(po.grandTotal ?? po.totalAmount) != null ? formatCurrency(po.grandTotal ?? po.totalAmount, projectCurrency(project as any)) : '—'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       {po.status !== 'Approved' ? (
@@ -1158,21 +1161,21 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         <button
                           onClick={() => handleDeletePO(po._id)}
                           disabled={deletingId === po._id}
-                          title="Delete PO"
+                          title={tr("Delete PO")}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
                         >
                           {deletingId === po._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                         </button>
                         )
                       ) : (
-                        <span title="Approved POs cannot be deleted" className="p-1.5 text-slate-300 cursor-not-allowed">
+                        <span title={tr("Approved POs cannot be deleted")} className="p-1.5 text-slate-300 cursor-not-allowed">
                           <Lock className="w-3.5 h-3.5" />
                         </span>
                       )}
                       <button
                         onClick={() => setSelectedPO(po)}
                         className="text-xs font-bold text-blue-600 hover:text-blue-500 transition-colors"
-                      >View PO &rarr;</button>
+                      >{tr("View PO →")}</button>
                     </div>
                   </div>
                 </GlassCard>
@@ -1181,7 +1184,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
-              <p className="text-slate-500">No purchase orders found.</p>
+              <p className="text-slate-500">{tr("No purchase orders found.")}</p>
             </div>
           )}
         </div>
@@ -1192,8 +1195,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
-                <h3 className="text-lg font-bold text-gray-900">Usage Log</h3>
-                <p className="text-xs text-slate-500">Track on-site material consumption.</p>
+                <h3 className="text-lg font-bold text-gray-900">{tr("Usage Log")}</h3>
+                <p className="text-xs text-slate-500">{tr("Track on-site material consumption.")}</p>
               </div>
               {canCreate && (
               <button
@@ -1201,7 +1204,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all"
               >
                 <Zap className="w-4 h-4" />
-                <span>Log Consumption</span>
+                <span>{tr("Log Consumption")}</span>
               </button>
               )}
             </div>
@@ -1211,12 +1214,12 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
             <SkeletonLoader loading={true} preset="table"><div /></SkeletonLoader>
           ) : usageLogs.length > 0 ? (
             <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-start border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date & User</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Location / Work</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Materials Consumed</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Date & User")}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Location / Work")}</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Materials Consumed")}</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider"></th>
                   </tr>
                 </thead>
@@ -1225,35 +1228,35 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     <tr key={log._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <p className="text-sm font-bold text-gray-900">{new Date(log.createdAt).toLocaleDateString()}</p>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">{log.usedByName}</p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">{tr(log.usedByName)}</p>
                       </td>
                       <td className="px-6 py-4">
                         <p className="text-sm text-slate-600 font-medium">{log.locationOrTask || '—'}</p>
-                        {log.commonNote && <p className="text-[10px] text-slate-500 italic mt-0.5">{log.commonNote}</p>}
+                        {log.commonNote && <p className="text-[10px] text-slate-500 italic mt-0.5">{tr(log.commonNote)}</p>}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-2">
                           {log.items.map((item: any, i: number) => (
                             <span key={i} className="px-2 py-0.5 rounded bg-purple-100 border border-purple-200 text-[10px] font-bold text-purple-700">
-                              {item.materialId?.name}: {item.quantity} {item.unit}
+                              {tr(item.materialId?.name)}: {item.quantity} {tr(item.unit)}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-end">
                         {/* Logs created by a milestone task submission belong to that task — no delete here */}
                         {log.source === 'task' ? (
                           <span
-                            title="Logged from a milestone task — cannot be deleted here"
+                            title={tr("Logged from a milestone task — cannot be deleted here")}
                             className="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
                           >
-                            From task
+                            {tr("From task")}
                           </span>
                         ) : canDelete && (
                         <button
                           onClick={() => handleDeleteUsageLog(log._id)}
                           disabled={deletingId === log._id}
-                          title="Delete log (restores stock)"
+                          title={tr("Delete log (restores stock)")}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
                         >
                           {deletingId === log._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -1268,7 +1271,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <History className="w-16 h-16 text-gray-300 mb-4" />
-              <p className="text-slate-500">No usage logs found.</p>
+              <p className="text-slate-500">{tr("No usage logs found.")}</p>
             </div>
           )}
         </div>
@@ -1278,8 +1281,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
         <div className="space-y-6">
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-gray-900">Activity Log</h3>
-              <p className="text-xs text-slate-500">All material activity — requests, purchases, receipts, and consumption — in chronological order.</p>
+              <h3 className="text-lg font-bold text-gray-900">{tr("Activity Log")}</h3>
+              <p className="text-xs text-slate-500">{tr("All material activity — requests, purchases, receipts, and consumption — in chronological order.")}</p>
             </div>
           </GlassCard>
 
@@ -1303,7 +1306,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     entry.status === 'Rejected' ? 'text-red-700 bg-red-100 border-red-200' :
                     entry.status === 'Fulfilled' ? 'text-blue-700 bg-blue-100 border-blue-200' :
                     'text-amber-700 bg-amber-100 border-amber-200'
-                  )}>{entry.status}</span>
+                  )}>{tr(entry.status)}</span>
                 ) : null;
 
                 const summaryItems: string[] = entry._type === 'usage'
@@ -1317,16 +1320,16 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-black text-slate-500 uppercase tracking-wider">{typeConfig.label}</span>
-                        {statusBadge}
+                        <span className="text-xs font-black text-slate-500 uppercase tracking-wider">{tr(typeConfig.label)}</span>
+                        {tr(statusBadge)}
                       </div>
-                      <p className="text-sm font-bold text-gray-900 mt-0.5 truncate">{typeConfig.idLabel}</p>
+                      <p className="text-sm font-bold text-gray-900 mt-0.5 truncate">{tr(typeConfig.idLabel)}</p>
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {summaryItems.slice(0, 4).map((s, i) => (
-                          <span key={i} className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 text-[10px] font-bold text-slate-500">{s}</span>
+                          <span key={i} className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 text-[10px] font-bold text-slate-500">{tr(s)}</span>
                         ))}
                         {summaryItems.length > 4 && (
-                          <span className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 text-[10px] font-bold text-slate-400">+{summaryItems.length - 4} more</span>
+                          <span className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 text-[10px] font-bold text-slate-400">+{summaryItems.length - 4}{tr(" more")}</span>
                         )}
                       </div>
                       {(entry.vendorName || entry.requestedByName || entry.usedByName || entry.commonNote) && (
@@ -1338,7 +1341,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         </p>
                       )}
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="text-end shrink-0">
                       <p className="text-[10px] font-bold text-slate-400">{new Date(entry.createdAt).toLocaleDateString()}</p>
                       <p className="text-[10px] text-slate-400">{new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
@@ -1349,8 +1352,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-gray-200 rounded-3xl">
               <ScrollText className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No activity yet</h3>
-              <p className="text-slate-500">Material activity will appear here once requests, purchases, receipts, or usage logs are created.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{tr("No activity yet")}</h3>
+              <p className="text-slate-500">{tr("Material activity will appear here once requests, purchases, receipts, or usage logs are created.")}</p>
             </div>
           )}
         </div>
@@ -1371,8 +1374,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     <ClipboardList className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">REQ-{selectedRequest._id.slice(-6).toUpperCase()}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{new Date(selectedRequest.createdAt).toLocaleDateString()} · by {selectedRequest.requestedByName}</p>
+                    <h3 className="text-lg font-bold text-gray-900">{tr("REQ-")}{selectedRequest._id.slice(-6).toUpperCase()}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{new Date(selectedRequest.createdAt).toLocaleDateString()}{tr(" · by ")}{tr(selectedRequest.requestedByName)}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1382,7 +1385,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     selectedRequest.status === 'Fulfilled' ? 'text-blue-700 bg-blue-100 border-blue-200' :
                     selectedRequest.status === 'Rejected'  ? 'text-red-700 bg-red-100 border-red-200' :
                     'text-amber-700 bg-amber-100 border-amber-200'
-                  )}>{selectedRequest.status}</span>
+                  )}>{tr(selectedRequest.status)}</span>
                   <button onClick={() => setSelectedRequest(null)} className="p-2 rounded-xl hover:bg-gray-100 text-slate-400 hover:text-gray-900 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -1390,21 +1393,21 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Requested Items</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">{tr("Requested Items")}</p>
                   <div className="space-y-2">
                     {selectedRequest.items?.map((item: any, i: number) => (
                       <div key={i} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl">
-                        <span className="text-sm font-semibold text-gray-900">{item.materialId?.name || 'Material'}</span>
-                        <span className="text-sm font-black text-blue-600">{item.quantity} {item.unit}</span>
+                        <span className="text-sm font-semibold text-gray-900">{item.materialId?.name || tr("Material")}</span>
+                        <span className="text-sm font-black text-blue-600">{item.quantity} {tr(item.unit)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 {selectedRequest.commonNote && (
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Note</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{tr("Note")}</p>
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                      <p className="text-sm text-slate-600 italic">"{selectedRequest.commonNote}"</p>
+                      <p className="text-sm text-slate-600 italic">"{tr(selectedRequest.commonNote)}"</p>
                     </div>
                   </div>
                 )}
@@ -1415,7 +1418,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       disabled={updatingRequestId === selectedRequest._id}
                       className="flex-1 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-bold hover:bg-red-600 hover:text-white hover:border-red-600 transition-all disabled:opacity-50"
                     >
-                      Reject
+                      {tr("Reject")}
                     </button>
                     <button
                       onClick={() => handleUpdateRequestStatus(selectedRequest._id, 'Approved')}
@@ -1423,7 +1426,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       className="flex-1 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
                     >
                       {updatingRequestId === selectedRequest._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                      <span>Approve</span>
+                      <span>{tr("Approve")}</span>
                     </button>
                   </div>
                 )}
@@ -1434,7 +1437,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     className="w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-500 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
                   >
                     {updatingRequestId === selectedRequest._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
-                    <span>Mark as Fulfilled</span>
+                    <span>{tr("Mark as Fulfilled")}</span>
                   </button>
                 )}
               </div>
@@ -1458,13 +1461,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     <ShoppingCart className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{selectedPO.poNumber}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{selectedPO.vendorName}</p>
+                    <h3 className="text-lg font-bold text-gray-900">{tr(selectedPO.poNumber)}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr(selectedPO.vendorName)}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 border border-blue-200">
-                    {selectedPO.status || 'Active'}
+                    {selectedPO.status || tr("Active")}
                   </span>
                   <button onClick={() => setSelectedPO(null)} className="p-2 rounded-xl hover:bg-gray-100 text-slate-400 hover:text-gray-900 transition-colors">
                     <X className="w-5 h-5" />
@@ -1473,25 +1476,25 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Order Items</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">{tr("Order Items")}</p>
                   <div className="overflow-hidden rounded-xl border border-gray-200">
-                    <table className="w-full text-left">
+                    <table className="w-full text-start">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">Material</th>
-                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right">Qty</th>
-                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right">Unit Cost</th>
-                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right">Subtotal</th>
+                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">{tr("Material")}</th>
+                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-end">{tr("Qty")}</th>
+                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-end">{tr("Unit Cost")}</th>
+                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-end">{tr("Subtotal")}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {selectedPO.items?.map((item: any, i: number) => (
                           <tr key={i} className="border-b border-gray-100">
-                            <td className="px-4 py-3 text-sm font-semibold text-gray-900">{item.materialId?.name || 'Material'}</td>
-                            <td className="px-4 py-3 text-sm text-right text-slate-600">{item.quantity} {item.unit}</td>
-                            <td className="px-4 py-3 text-sm text-right text-slate-600">{(item.unitPrice ?? item.unitCost) != null ? formatCurrency(item.unitPrice ?? item.unitCost, (project as any)?.currency || '$') : '—'}</td>
-                            <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">
-                              {formatCurrency(item.quantity * (item.unitPrice ?? item.unitCost ?? 0), (project as any)?.currency || '$')}
+                            <td className="px-4 py-3 text-sm font-semibold text-gray-900">{item.materialId?.name || tr("Material")}</td>
+                            <td className="px-4 py-3 text-sm text-end text-slate-600">{item.quantity} {tr(item.unit)}</td>
+                            <td className="px-4 py-3 text-sm text-end text-slate-600">{(item.unitPrice ?? item.unitCost) != null ? formatCurrency(item.unitPrice ?? item.unitCost, projectCurrency(project as any)) : '—'}</td>
+                            <td className="px-4 py-3 text-sm text-end font-bold text-gray-900">
+                              {formatCurrency(item.quantity * (item.unitPrice ?? item.unitCost ?? 0), projectCurrency(project as any))}
                             </td>
                           </tr>
                         ))}
@@ -1500,14 +1503,14 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                  <span className="text-sm font-black text-slate-600 uppercase tracking-wider">Total Amount</span>
-                   <span className="text-xl font-black text-emerald-600">{(selectedPO.grandTotal ?? selectedPO.totalAmount) != null ? formatCurrency(selectedPO.grandTotal ?? selectedPO.totalAmount, (project as any)?.currency || '$') : '—'}</span>
+                  <span className="text-sm font-black text-slate-600 uppercase tracking-wider">{tr("Total Amount")}</span>
+                   <span className="text-xl font-black text-emerald-600">{(selectedPO.grandTotal ?? selectedPO.totalAmount) != null ? formatCurrency(selectedPO.grandTotal ?? selectedPO.totalAmount, projectCurrency(project as any)) : '—'}</span>
                 </div>
                 {selectedPO.expectedDelivery && (
                   <div className="flex items-center space-x-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
                     <Truck className="w-4 h-4 text-slate-400" />
                     <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Expected Delivery</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{tr("Expected Delivery")}</p>
                       <p className="text-sm font-bold text-gray-900">{new Date(selectedPO.expectedDelivery).toLocaleDateString()}</p>
                     </div>
                   </div>
@@ -1519,7 +1522,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       disabled={updatingPOId === selectedPO._id}
                       className="flex-1 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-bold hover:bg-red-600 hover:text-white hover:border-red-600 transition-all disabled:opacity-50"
                     >
-                      Reject
+                      {tr("Reject")}
                     </button>
                     <button
                       onClick={() => handleUpdatePOStatus(selectedPO._id, 'Approved')}
@@ -1527,7 +1530,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       className="flex-1 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
                     >
                       {updatingPOId === selectedPO._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                      <span>Approve</span>
+                      <span>{tr("Approve")}</span>
                     </button>
                   </div>
                 )}
@@ -1552,8 +1555,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     <History className="w-4 h-4 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{historyMaterial.name}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Usage history</p>
+                    <h3 className="text-lg font-bold text-gray-900">{tr(historyMaterial.name)}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr("Usage history")}</p>
                   </div>
                 </div>
                 <button
@@ -1579,11 +1582,11 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           <div>
                             <p className="text-sm font-bold text-gray-900">{log.locationOrTask || '—'}</p>
                             <p className="text-[10px] text-slate-500 uppercase tracking-wider">
-                              {new Date(log.createdAt).toLocaleDateString()} · {log.usedByName}
+                              {new Date(log.createdAt).toLocaleDateString()} · {tr(log.usedByName)}
                             </p>
                           </div>
                           <span className="text-sm font-black text-purple-600">
-                            -{item?.quantity} {item?.unit}
+                            -{item?.quantity} {tr(item?.unit)}
                           </span>
                         </div>
                       );
@@ -1592,8 +1595,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 ) : (
                   <div className="text-center py-12">
                     <History className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                    <p className="text-slate-500 font-medium">No usage history</p>
-                    <p className="text-xs text-slate-400 mt-1">This material has not been consumed yet.</p>
+                    <p className="text-slate-500 font-medium">{tr("No usage history")}</p>
+                    <p className="text-xs text-slate-400 mt-1">{tr("This material has not been consumed yet.")}</p>
                   </div>
                 )}
               </div>

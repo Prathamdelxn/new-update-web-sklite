@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 interface UsageCardProps {
   projects: number;
@@ -21,14 +22,14 @@ export default function UsageCard({ projects, members, maxProjects, maxUsers }: 
     <div className="bg-white rounded-3xl border border-slate-200 p-6">
 
       <h3 className="text-xs tracking-[4px] uppercase text-blue-600 font-bold mb-8">
-        Usage
+        {tr("Usage")}
       </h3>
 
       <div>
 
         <div className="flex justify-between mb-2">
-          <span className="font-medium">Projects</span>
-          <span className="text-slate-500">{projectUsage.label}</span>
+          <span className="font-medium">{tr("Projects")}</span>
+          <span className="text-slate-500">{tr(projectUsage.label)}</span>
         </div>
 
         <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -40,8 +41,8 @@ export default function UsageCard({ projects, members, maxProjects, maxUsers }: 
       <div className="mt-8">
 
         <div className="flex justify-between mb-2">
-          <span className="font-medium">Team Members</span>
-          <span className="text-slate-500">{memberUsage.label}</span>
+          <span className="font-medium">{tr("Team Members")}</span>
+          <span className="text-slate-500">{tr(memberUsage.label)}</span>
         </div>
 
         <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -378,12 +379,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
         mimeType: pendingFile.type,
         size: pendingFile.size,
       });
-      toast.success('Document uploaded successfully');
+      toast.success(tr("Document uploaded successfully"));
       setIsModalOpen(false);
       setPendingFile(null);
       fetchDocs();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Upload failed');
+      toast.error(error.response?.data?.message || tr("Upload failed"));
     } finally {
       setIsUploading(false);
     }
@@ -403,7 +404,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
   const handleSaveEdit = async () => {
     if (!editingDoc) return;
     const name = editName.trim();
-    if (!name) { toast.error('Document name cannot be empty'); return; }
+    if (!name) { toast.error(tr("Document name cannot be empty")); return; }
     setIsSavingEdit(true);
     try {
       const payload: any = { name };
@@ -413,11 +414,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
         payload.size = replacementFile.size;
       }
       await api.patch(`/projects/${projectId}/documents/${editingDoc._id}`, payload);
-      toast.success(replacementFile ? 'Document updated and sent for approval again' : 'Document updated');
+      toast.success(replacementFile ? tr("Document updated and sent for approval again") : tr("Document updated"));
       closeEdit();
       fetchDocs();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update document');
+      toast.error(error.response?.data?.message || tr("Failed to update document"));
     } finally {
       setIsSavingEdit(false);
     }
@@ -425,28 +426,28 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
 
   const handleDelete = async (docId: string, name: string) => {
     const ok = await confirm({
-      title: 'Delete Document',
-      message: `Delete "${name}"? This cannot be undone.`,
+      title: tr("Delete Document"),
+      message: tr("Delete \"{{name}}\"? This cannot be undone.", { name: name }),
       confirmText: 'Delete',
       type: 'danger',
     });
     if (!ok) return;
     try {
       await api.delete(`/projects/${projectId}/documents/${docId}`);
-      toast.success('Document deleted');
+      toast.success(tr("Document deleted"));
       fetchDocs();
     } catch {
-      toast.error('Failed to delete document');
+      toast.error(tr("Failed to delete document"));
     }
   };
 
   const handleAction = async (docId: string, action: 'Approved' | 'Rejected') => {
     try {
       await api.patch(`/projects/${projectId}/documents/${docId}/action`, { action });
-      toast.success(`Document ${action.toLowerCase()} successfully`);
+      toast.success(tr("Document {{action}} successfully", { action: action.toLowerCase() }));
       fetchDocs();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || `Failed to ${action.toLowerCase()} document`);
+      toast.error(error.response?.data?.message || tr("Failed to {{action}} document", { action: action.toLowerCase() }));
     }
   };
 
@@ -477,7 +478,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">You don't have permission to view Documents.</p>
+        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view Documents.")}</p>
       </div>
     );
   }
@@ -495,20 +496,20 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                   setSearchQuery('');
                   setStatusFilter('All');
                 }}
-                className="p-1.5 rounded-lg bg-gray-50 border border-gray-200 text-slate-500 hover:text-gray-900 hover:bg-gray-100 transition-all mr-1"
-                title="Back to Folders"
+                className="p-1.5 rounded-lg bg-gray-50 border border-gray-200 text-slate-500 hover:text-gray-900 hover:bg-gray-100 transition-all me-1"
+                title={tr("Back to Folders")}
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
             )}
             <div>
               <h3 className="text-xl font-bold text-gray-900">
-                {activeFolderId === null ? 'Project Documents' : activeFolderName}
+                {activeFolderId === null ? tr("Project Documents") : activeFolderName}
               </h3>
               <p className="text-sm text-slate-500 mt-1">
                 {activeFolderId === null
-                  ? 'Access project uploads and generated attachments across modules.'
-                  : `Browsing files in ${activeFolderName}`}
+                  ? tr("Access project uploads and generated attachments across modules.")
+                  : tr("Browsing files in {{activeFolderName}}", { activeFolderName: activeFolderName })}
               </p>
             </div>
           </div>
@@ -517,7 +518,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
           {activeFolderId === 'project_docs' && canUpload && (
             <label className="flex items-center space-x-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-xl text-sm font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all cursor-pointer w-fit">
               <Upload className="w-4 h-4" />
-              <span>Upload Document</span>
+              <span>{tr("Upload Document")}</span>
               <input type="file" className="hidden" onChange={openUpload} />
             </label>
           )}
@@ -539,9 +540,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                 <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-all group-hover:translate-x-1" />
               </div>
               <div className="mt-6">
-                <h4 className="text-base font-bold text-gray-900 leading-tight">Project Documents</h4>
+                <h4 className="text-base font-bold text-gray-900 leading-tight">{tr("Project Documents")}</h4>
                 <p className="text-xs text-slate-400 mt-1 font-medium">
-                  {projectDocs.length} Asset{projectDocs.length !== 1 ? 's' : ''}
+                  {projectDocs.length}{tr(" Asset")}{projectDocs.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </GlassCard>
@@ -550,7 +551,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
             {isLoadingFolders ? (
               <div className="col-span-full py-12 flex justify-center items-center gap-2">
                 <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                <span className="text-sm font-semibold text-slate-400">Scanning modules for documents...</span>
+                <span className="text-sm font-semibold text-slate-400">{tr("Scanning modules for documents...")}</span>
               </div>
             ) : (
               virtualFolders.map(folder => {
@@ -569,9 +570,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                       <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-all group-hover:translate-x-1" />
                     </div>
                     <div className="mt-6">
-                      <h4 className="text-base font-bold text-gray-900 leading-tight">{folder.name}</h4>
+                      <h4 className="text-base font-bold text-gray-900 leading-tight">{tr(folder.name)}</h4>
                       <p className="text-xs text-slate-400 mt-1 font-medium">
-                        {folder.documents.length} Asset{folder.documents.length !== 1 ? 's' : ''}
+                        {folder.documents.length}{tr(" Asset")}{folder.documents.length !== 1 ? 's' : ''}
                       </p>
                     </div>
                   </GlassCard>
@@ -623,9 +624,9 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                   return (
                     <div key={i} className="p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
                       <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</p>
-                        <p className={cn('text-2xl font-black mt-1 tracking-tight', s.color)}>{s.value}</p>
-                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{s.desc}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr(s.label)}</p>
+                        <p className={cn('text-2xl font-black mt-1 tracking-tight', s.color)}>{tr(s.value)}</p>
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">{tr(s.desc)}</p>
                       </div>
                       <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center shrink-0", s.bg, s.color)}>
                         <SIcon className="w-5 h-5" />
@@ -642,10 +643,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search by file name or uploader..."
+                  placeholder={tr("Search by file name or uploader...")}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full ps-9 pe-8 py-2 border border-slate-200 bg-slate-50/70 rounded-xl text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -676,7 +677,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                           : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
                       )}
                     >
-                      <span>{status}</span>
+                      <span>{tr(status)}</span>
                       <span className={cn(
                         'px-1.5 py-0.2 rounded-md text-[10px] font-black',
                         isActive ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-600'
@@ -696,19 +697,19 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                   <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-3 shadow-2xs">
                     <FolderOpen className="w-7 h-7" />
                   </div>
-                  <p className="text-sm font-bold text-slate-700">No documents found</p>
-                  <p className="text-xs text-slate-400 mt-1 max-w-sm">No files match your current search and filter criteria in this folder.</p>
+                  <p className="text-sm font-bold text-slate-700">{tr("No documents found")}</p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-sm">{tr("No files match your current search and filter criteria in this folder.")}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[700px]">
+                  <table className="w-full text-start border-collapse min-w-[700px]">
                     <thead>
                       <tr className="border-b border-slate-200/80 bg-slate-50/80">
-                        <th className="py-3.5 pl-6 pr-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Document Name</th>
-                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-36">Status</th>
-                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-36">Uploaded</th>
-                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-28">Size</th>
-                        <th className="py-3.5 pl-4 pr-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right w-44">Actions</th>
+                        <th className="py-3.5 ps-6 pe-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Document Name")}</th>
+                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-36">{tr("Status")}</th>
+                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-36">{tr("Uploaded")}</th>
+                        <th className="py-3.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-28">{tr("Size")}</th>
+                        <th className="py-3.5 ps-4 pe-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-end w-44">{tr("Actions")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -721,18 +722,18 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                         return (
                           <tr key={doc._id} className="hover:bg-slate-50/70 transition-colors group">
                             {/* Name */}
-                            <td className="py-3.5 pl-6 pr-4 align-middle">
+                            <td className="py-3.5 ps-6 pe-4 align-middle">
                               <div className="flex items-center space-x-3 min-w-0">
                                 <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
                                   <Icon className="w-4 h-4" />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="text-xs font-bold text-slate-900 truncate max-w-xs md:max-w-md" title={doc.name}>
-                                    {doc.name}
+                                    {tr(doc.name)}
                                   </p>
                                   {doc.uploadedBy?.name && (
                                     <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">
-                                      by {doc.uploadedBy.name}
+                                      {tr("by ")}{tr(doc.uploadedBy.name)}
                                     </p>
                                   )}
                                 </div>
@@ -753,7 +754,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                                   status === 'Rejected' && 'bg-rose-500',
                                   status === 'Pending' && 'bg-amber-500'
                                 )} />
-                                <span>{status}</span>
+                                <span>{tr(status)}</span>
                               </span>
                             </td>
 
@@ -768,7 +769,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                             </td>
 
                             {/* Actions */}
-                            <td className="py-3.5 pl-4 pr-6 align-middle text-right whitespace-nowrap">
+                            <td className="py-3.5 ps-4 pe-6 align-middle text-end whitespace-nowrap">
                               <div className="flex items-center justify-end gap-1">
                                 {activeFolderId === 'project_docs' && status === 'Pending' && canManageApproval && (
                                   <>
@@ -776,7 +777,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                                       type="button"
                                       onClick={() => handleAction(doc._id, 'Approved')}
                                       className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
-                                      title="Approve Document"
+                                      title={tr("Approve Document")}
                                     >
                                       <Check className="w-3.5 h-3.5" />
                                     </button>
@@ -784,7 +785,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                                       type="button"
                                       onClick={() => handleAction(doc._id, 'Rejected')}
                                       className="p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-all cursor-pointer shadow-2xs"
-                                      title="Reject Document"
+                                      title={tr("Reject Document")}
                                     >
                                       <X className="w-3.5 h-3.5" />
                                     </button>
@@ -794,7 +795,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                                   type="button"
                                   onClick={() => setViewingDoc(doc)}
                                   className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 border border-slate-200/70 text-slate-500 hover:text-blue-600 transition-all cursor-pointer shadow-2xs"
-                                  title="Preview Document"
+                                  title={tr("Preview Document")}
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
@@ -803,7 +804,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 border border-slate-200/70 text-slate-500 hover:text-blue-600 transition-all cursor-pointer shadow-2xs inline-flex items-center justify-center"
-                                  title="Download Document"
+                                  title={tr("Download Document")}
                                 >
                                   <Download className="w-3.5 h-3.5" />
                                 </a>
@@ -812,7 +813,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                                     type="button"
                                     onClick={() => openEdit(doc)}
                                     className="p-1.5 rounded-lg bg-slate-50 hover:bg-amber-50 border border-slate-200/70 text-slate-500 hover:text-amber-600 transition-all cursor-pointer shadow-2xs"
-                                    title="Edit Document"
+                                    title={tr("Edit Document")}
                                   >
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
@@ -822,7 +823,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                                     type="button"
                                     onClick={() => handleDelete(doc._id, doc.name)}
                                     className="p-1.5 rounded-lg bg-slate-50 hover:bg-rose-50 border border-slate-200/70 text-slate-500 hover:text-rose-600 transition-all cursor-pointer shadow-2xs"
-                                    title="Delete Document"
+                                    title={tr("Delete Document")}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -865,8 +866,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                       <Files className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Upload Document</h3>
-                      <p className="text-xs text-slate-500 truncate max-w-[200px]">{pendingFile.name}</p>
+                      <h3 className="text-lg font-bold text-gray-900">{tr("Upload Document")}</h3>
+                      <p className="text-xs text-slate-500 truncate max-w-[200px]">{tr(pendingFile.name)}</p>
                     </div>
                   </div>
                   <button
@@ -884,7 +885,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                       onClick={() => { setIsModalOpen(false); setPendingFile(null); }}
                       className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all"
                     >
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     <button
                       type="button"
@@ -895,12 +896,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                       {isUploading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Uploading...</span>
+                          <span>{tr("Uploading...")}</span>
                         </>
                       ) : (
                         <>
                           <Plus className="w-4 h-4" />
-                          <span>Upload</span>
+                          <span>{tr("Upload")}</span>
                         </>
                       )}
                     </button>
@@ -933,8 +934,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                       <Pencil className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Edit Document</h3>
-                      <p className="text-xs text-slate-500 truncate max-w-[220px]">{editingDoc.name}</p>
+                      <h3 className="text-lg font-bold text-gray-900">{tr("Edit Document")}</h3>
+                      <p className="text-xs text-slate-500 truncate max-w-[220px]">{tr(editingDoc.name)}</p>
                     </div>
                   </div>
                   <button onClick={closeEdit} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -944,7 +945,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Document name</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{tr("Document name")}</label>
                     <input
                       type="text"
                       value={editName}
@@ -954,10 +955,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Replace file (optional)</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{tr("Replace file (optional)")}</label>
                     <label className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer text-sm text-slate-600 transition-colors">
                       <Upload className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span className="truncate">{replacementFile ? replacementFile.name : 'Choose a new file'}</span>
+                      <span className="truncate">{replacementFile ? replacementFile.name : tr("Choose a new file")}</span>
                       <input
                         type="file"
                         className="hidden"
@@ -966,7 +967,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                     </label>
                     {replacementFile && (
                       <p className="text-[11px] text-amber-700 mt-1.5">
-                        Replacing the file sends the document for approval again.
+                        {tr("Replacing the file sends the document for approval again.")}
                       </p>
                     )}
                   </div>
@@ -977,7 +978,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                       onClick={closeEdit}
                       className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all"
                     >
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     <button
                       type="button"
@@ -988,10 +989,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                       {isSavingEdit ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Saving...</span>
+                          <span>{tr("Saving...")}</span>
                         </>
                       ) : (
-                        <span>Save Changes</span>
+                        <span>{tr("Save Changes")}</span>
                       )}
                     </button>
                   </div>

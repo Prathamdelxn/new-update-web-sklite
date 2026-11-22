@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, X, CheckCircle2, AlertTriangle, FileText, Briefcase, Check, Loader2 } from 'lucide-react';
@@ -80,7 +81,7 @@ export const NotificationCenter: React.FC = () => {
       <button
         onClick={() => setOpen(v => !v)}
         className="relative flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200/80 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
-        aria-label="Notifications"
+        aria-label={tr("Notifications")}
       >
         <Bell className="w-4 h-4" />
         {unread > 0 && (
@@ -95,12 +96,12 @@ export const NotificationCenter: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -8 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden z-50"
+            className="absolute end-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden z-50"
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
               <div>
-                <p className="text-sm font-bold text-gray-900">Notifications</p>
-                {unread > 0 && <p className="text-[10px] text-blue-600 font-semibold">{unread} unread</p>}
+                <p className="text-sm font-bold text-gray-900">{tr("Notifications")}</p>
+                {unread > 0 && <p className="text-[10px] text-blue-600 font-semibold">{tr(unread)}{tr(" unread")}</p>}
               </div>
               <div className="flex items-center space-x-2">
                 {unread > 0 && (
@@ -110,7 +111,7 @@ export const NotificationCenter: React.FC = () => {
                     className="flex items-center space-x-1 text-[10px] font-bold text-blue-600 hover:text-blue-500 transition-colors"
                   >
                     {markingAll ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                    <span>Mark all read</span>
+                    <span>{tr("Mark all read")}</span>
                   </button>
                 )}
                 <button onClick={() => setOpen(false)} className="p-1 text-slate-400 hover:text-gray-900 transition-colors">
@@ -127,8 +128,8 @@ export const NotificationCenter: React.FC = () => {
               ) : notifications.length === 0 ? (
                 <div className="flex flex-col items-center py-10 px-4 text-center">
                   <Bell className="w-8 h-8 text-gray-300 mb-2" />
-                  <p className="text-sm text-slate-500">You're all caught up!</p>
-                  <p className="text-[10px] text-slate-400 mt-1">No new notifications.</p>
+                  <p className="text-sm text-slate-500">{tr("You're all caught up!")}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{tr("No new notifications.")}</p>
                 </div>
               ) : (
                 notifications.map(n => {
@@ -138,7 +139,7 @@ export const NotificationCenter: React.FC = () => {
                       key={n._id}
                       onClick={() => markRead(n._id)}
                       className={cn(
-                        'w-full flex items-start space-x-3 px-4 py-3 border-b border-gray-50 last:border-0 text-left transition-colors',
+                        'w-full flex items-start space-x-3 px-4 py-3 border-b border-gray-50 last:border-0 text-start transition-colors',
                         n.isRead ? 'hover:bg-gray-50' : 'bg-blue-50/40 hover:bg-blue-50'
                       )}
                     >
@@ -146,8 +147,8 @@ export const NotificationCenter: React.FC = () => {
                         <cfg.icon className={cn('w-3.5 h-3.5', cfg.color)} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={cn('text-xs font-semibold truncate', n.isRead ? 'text-gray-700' : 'text-gray-900')}>{n.title}</p>
-                        <p className="text-[10px] text-slate-500 line-clamp-2 mt-0.5">{n.message}</p>
+                        <p className={cn('text-xs font-semibold truncate', n.isRead ? 'text-gray-700' : 'text-gray-900')}>{tr(n.title)}</p>
+                        <p className="text-[10px] text-slate-500 line-clamp-2 mt-0.5">{tr(n.message)}</p>
                         <p className="text-[10px] text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                       {!n.isRead && <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-2" />}

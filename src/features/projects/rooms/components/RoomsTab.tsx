@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -101,7 +102,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
       if (roomsRes.status === 'fulfilled') setRooms(roomsRes.value.data || []);
       if (ffeRes.status === 'fulfilled') setFfeItems(ffeRes.value.data?.items || []);
     } catch {
-      toast.error('Failed to load rooms data');
+      toast.error(tr("Failed to load rooms data"));
     } finally {
       setLoading(false);
     }
@@ -177,21 +178,21 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) { toast.error('Room name is required'); return; }
+    if (!form.name.trim()) { toast.error(tr("Room name is required")); return; }
     setSaving(true);
     try {
       const payload = { ...form, area: form.area !== '' ? Number(form.area) : undefined };
       if (editing) {
         await api.patch(`/projects/${projectId}/rooms/${editing._id}`, payload);
-        toast.success('Room updated successfully');
+        toast.success(tr("Room updated successfully"));
       } else {
         await api.post(`/projects/${projectId}/rooms`, payload);
-        toast.success('Room added successfully');
+        toast.success(tr("Room added successfully"));
       }
       setShowModal(false);
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to save room');
+      toast.error(err.response?.data?.message || tr("Failed to save room"));
     } finally {
       setSaving(false);
     }
@@ -201,12 +202,12 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
     if (!confirmDeleteRoom) return;
     try {
       await api.delete(`/projects/${projectId}/rooms/${confirmDeleteRoom._id}`);
-      toast.success(`Room "${confirmDeleteRoom.name}" deleted`);
+      toast.success(tr("Room \"{{name}}\" deleted", { name: confirmDeleteRoom.name }));
       setConfirmDeleteRoom(null);
       if (inspectRoom?._id === confirmDeleteRoom._id) setInspectRoom(null);
       fetchData();
     } catch {
-      toast.error('Failed to delete room');
+      toast.error(tr("Failed to delete room"));
     }
   };
 
@@ -220,7 +221,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-3">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        <p className="text-xs text-slate-500 font-medium">Loading rooms & interior layout...</p>
+        <p className="text-xs text-slate-500 font-medium">{tr("Loading rooms & interior layout...")}</p>
       </div>
     );
   }
@@ -231,13 +232,13 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Rooms & Zones</h2>
+            <h2 className="text-lg font-semibold text-slate-900 tracking-tight">{tr("Rooms & Zones")}</h2>
             <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">
-              {rooms.length} {rooms.length === 1 ? 'space' : 'spaces'}
+              {rooms.length} {rooms.length === 1 ? tr("space") : tr("spaces")}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage room layouts, dimensions, and track interior FFE progress floor by floor.
+            {tr("Manage room layouts, dimensions, and track interior FFE progress floor by floor.")}
           </p>
         </div>
 
@@ -247,7 +248,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
             className="flex items-center gap-1.5 px-3.5 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg text-xs font-medium transition-colors cursor-pointer"
           >
             <Package className="w-3.5 h-3.5" />
-            <span>Manage FFE</span>
+            <span>{tr("Manage FFE")}</span>
             <ArrowRight className="w-3 h-3" />
           </button>
 
@@ -257,7 +258,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
               className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Room</span>
+              <span>{tr("Add Room")}</span>
             </button>
           )}
         </div>
@@ -268,67 +269,67 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
         {/* Total Rooms */}
         <div className="bg-white rounded-xl border border-slate-200 p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium text-slate-500">Total Rooms</span>
+            <span className="text-[11px] font-medium text-slate-500">{tr("Total Rooms")}</span>
             <LayoutGrid className="w-3.5 h-3.5 text-slate-400" />
           </div>
           <p className="text-xl font-semibold text-slate-900">{rooms.length}</p>
           <p className="text-[11px] text-slate-400 mt-0.5">
-            {floors.length} {floors.length === 1 ? 'floor' : 'floors'} tracked
+            {floors.length} {floors.length === 1 ? tr("floor") : tr("floors")}{tr(" tracked")}
           </p>
         </div>
 
         {/* In Progress */}
         <button
-          onClick={() => setSelectedStatusFilter(selectedStatusFilter === 'In Progress' ? 'All' : 'In Progress')}
+          onClick={() => setSelectedStatusFilter(selectedStatusFilter === 'In Progress' ? 'All' : tr("In Progress"))}
           className={cn(
-            'bg-white rounded-xl border p-4 text-left transition-colors cursor-pointer hover:border-blue-300',
+            'bg-white rounded-xl border p-4 text-start transition-colors cursor-pointer hover:border-blue-300',
             selectedStatusFilter === 'In Progress' ? 'border-blue-400 ring-1 ring-blue-400/30' : 'border-slate-200'
           )}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium text-slate-500">In Progress</span>
+            <span className="text-[11px] font-medium text-slate-500">{tr("In Progress")}</span>
             <Clock className="w-3.5 h-3.5 text-blue-500" />
           </div>
           <p className="text-xl font-semibold text-slate-900">
             {rooms.filter(r => r.status === 'In Progress').length}
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Active fit-out & work</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{tr("Active fit-out & work")}</p>
         </button>
 
         {/* Snagging */}
         <button
           onClick={() => setSelectedStatusFilter(selectedStatusFilter === 'Snagging' ? 'All' : 'Snagging')}
           className={cn(
-            'bg-white rounded-xl border p-4 text-left transition-colors cursor-pointer hover:border-amber-300',
+            'bg-white rounded-xl border p-4 text-start transition-colors cursor-pointer hover:border-amber-300',
             selectedStatusFilter === 'Snagging' ? 'border-amber-400 ring-1 ring-amber-400/30' : 'border-slate-200'
           )}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium text-slate-500">Under Snagging</span>
+            <span className="text-[11px] font-medium text-slate-500">{tr("Under Snagging")}</span>
             <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
           </div>
           <p className="text-xl font-semibold text-slate-900">
             {rooms.filter(r => r.status === 'Snagging').length}
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Quality audit & fixes</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{tr("Quality audit & fixes")}</p>
         </button>
 
         {/* Completed */}
         <button
           onClick={() => setSelectedStatusFilter(selectedStatusFilter === 'Completed' ? 'All' : 'Completed')}
           className={cn(
-            'bg-white rounded-xl border p-4 text-left transition-colors cursor-pointer hover:border-emerald-300',
+            'bg-white rounded-xl border p-4 text-start transition-colors cursor-pointer hover:border-emerald-300',
             selectedStatusFilter === 'Completed' ? 'border-emerald-400 ring-1 ring-emerald-400/30' : 'border-slate-200'
           )}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium text-slate-500">Completed</span>
+            <span className="text-[11px] font-medium text-slate-500">{tr("Completed")}</span>
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
           </div>
           <p className="text-xl font-semibold text-slate-900">
             {rooms.filter(r => r.status === 'Completed').length}
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Handover ready</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{tr("Handover ready")}</p>
         </button>
       </div>
 
@@ -341,8 +342,8 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search rooms by name, type, floor or notes..."
-            className="w-full pl-9 pr-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            placeholder={tr("Search rooms by name, type, floor or notes...")}
+            className="w-full ps-9 pe-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
           {searchQuery && (
             <button
@@ -361,8 +362,8 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
             onChange={(e) => setSelectedStatusFilter(e.target.value)}
             className="px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
           >
-            <option value="All">All Statuses</option>
-            {ROOM_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+            <option value="All">{tr("All Statuses")}</option>
+            {ROOM_STATUSES.map(s => <option key={s} value={s}>{tr(s)}</option>)}
           </select>
 
           {/* Floor filter */}
@@ -372,9 +373,9 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
               onChange={(e) => setSelectedFloorFilter(e.target.value)}
               className="px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
             >
-              <option value="All">All Floors</option>
+              <option value="All">{tr("All Floors")}</option>
               {allAvailableFloors.map(f => (
-                <option key={f} value={f.toString()}>Floor {f}</option>
+                <option key={f} value={f.toString()}>{tr("Floor ")}{tr(f)}</option>
               ))}
             </select>
           )}
@@ -387,7 +388,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                 'p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                 viewMode === 'grid' ? 'bg-white text-blue-600 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
               )}
-              title="Grid View"
+              title={tr("Grid View")}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
             </button>
@@ -397,7 +398,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                 'p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                 viewMode === 'list' ? 'bg-white text-blue-600 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
               )}
-              title="List View"
+              title={tr("List View")}
             >
               <List className="w-3.5 h-3.5" />
             </button>
@@ -414,7 +415,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
               {/* Floor Divider Header */}
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-slate-500 shrink-0">
-                  Floor {floor} <span className="text-slate-400">· {roomsOnFloor.length} {roomsOnFloor.length === 1 ? 'room' : 'rooms'}</span>
+                  {tr("Floor ")}{tr(floor)} <span className="text-slate-400">· {roomsOnFloor.length} {roomsOnFloor.length === 1 ? tr("room") : tr("rooms")}</span>
                 </span>
                 <div className="h-px flex-1 bg-slate-200" />
               </div>
@@ -443,27 +444,27 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                               </div>
                               <div>
                                 <h3 className="font-semibold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
-                                  {room.name}
+                                  {tr(room.name)}
                                 </h3>
                                 <p className="text-[11px] text-slate-400 mt-0.5">
-                                  {room.type} {room.area ? `· ${room.area} ${room.areaUnit}` : ''}
+                                  {tr(room.type)} {room.area ? `· ${room.area} ${room.areaUnit}` : ''}
                                 </p>
                               </div>
                             </div>
 
                             <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0 flex items-center gap-1.5', sm.bg, sm.color)}>
                               <span className={cn('w-1.5 h-1.5 rounded-full', sm.dot)} />
-                              {room.status}
+                              {tr(room.status)}
                             </span>
                           </div>
 
                           {/* FFE statistics */}
                           <div className="flex items-center gap-3 text-xs mb-2">
                             <span className="text-slate-500">
-                              <span className="font-semibold text-slate-800">{stats.total}</span> FFE
+                              <span className="font-semibold text-slate-800">{stats.total}</span>{tr(" FFE")}
                             </span>
                             <span className="text-slate-500">
-                              <span className="font-semibold text-emerald-600">{stats.installed}</span> installed
+                              <span className="font-semibold text-emerald-600">{tr(stats.installed)}</span>{tr(" installed")}
                             </span>
                             <span className="text-slate-500 font-semibold">
                               {formatCurrency(stats.cost, currency)}
@@ -484,7 +485,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
 
                           {room.notes && (
                             <p className="text-[11px] text-slate-400 italic mb-2 line-clamp-2">
-                              "{room.notes}"
+                              "{tr(room.notes)}"
                             </p>
                           )}
                         </div>
@@ -496,7 +497,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 text-xs font-medium transition-colors cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            <span>Details</span>
+                            <span>{tr("Details")}</span>
                           </button>
 
                           {isAdmin && (
@@ -504,14 +505,14 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                               <button
                                 onClick={() => openEdit(room)}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                                title="Edit Room"
+                                title={tr("Edit Room")}
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => setConfirmDeleteRoom(room)}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                title="Delete Room"
+                                title={tr("Delete Room")}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -540,20 +541,20 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-slate-900 text-sm truncate">{room.name}</h4>
+                              <h4 className="font-semibold text-slate-900 text-sm truncate">{tr(room.name)}</h4>
                               <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0', sm.bg, sm.color)}>
-                                {room.status}
+                                {tr(room.status)}
                               </span>
                             </div>
                             <p className="text-[11px] text-slate-400 mt-0.5">
-                              {room.type} · Floor {room.floor} {room.area ? `· ${room.area} ${room.areaUnit}` : ''}
+                              {tr(room.type)}{tr(" · Floor ")}{tr(room.floor)} {room.area ? `· ${room.area} ${room.areaUnit}` : ''}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between sm:justify-end gap-5 shrink-0">
-                          <div className="text-right">
-                            <p className="text-xs font-semibold text-slate-800">{stats.installed} / {stats.total} FFE</p>
+                          <div className="text-end">
+                            <p className="text-xs font-semibold text-slate-800">{tr(stats.installed)} / {stats.total}{tr(" FFE")}</p>
                             <p className="text-[10px] text-slate-500">{formatCurrency(stats.cost, currency)}</p>
                           </div>
 
@@ -562,7 +563,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                               onClick={() => setInspectRoom(room)}
                               className="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 text-xs font-medium transition-colors cursor-pointer"
                             >
-                              Details
+                              {tr("Details")}
                             </button>
                             {isAdmin && (
                               <>
@@ -597,19 +598,19 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
             <LayoutGrid className="w-6 h-6" />
           </div>
           <h3 className="text-sm font-semibold text-slate-900">
-            {rooms.length === 0 ? 'No rooms added yet' : 'No matching rooms found'}
+            {rooms.length === 0 ? tr("No rooms added yet") : tr("No matching rooms found")}
           </h3>
           <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
             {rooms.length === 0
-              ? 'Add room spaces to start allocating FFE items, measurements, and floor layouts.'
-              : 'Try adjusting your search criteria or floor/status filters.'}
+              ? tr("Add room spaces to start allocating FFE items, measurements, and floor layouts.")
+              : tr("Try adjusting your search criteria or floor/status filters.")}
           </p>
           {rooms.length === 0 && isAdmin && (
             <button
               onClick={openCreate}
               className="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Add First Room
+              <Plus className="w-4 h-4" />{tr(" Add First Room")}
             </button>
           )}
         </div>
@@ -639,9 +640,9 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                     <LayoutGrid className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900">{inspectRoom.name}</h3>
+                    <h3 className="text-lg font-bold text-slate-900">{tr(inspectRoom.name)}</h3>
                     <p className="text-xs text-slate-500">
-                      {inspectRoom.type} • Floor {inspectRoom.floor} {inspectRoom.area ? `• ${inspectRoom.area} ${inspectRoom.areaUnit}` : ''}
+                      {tr(inspectRoom.type)}{tr(" • Floor ")}{tr(inspectRoom.floor)} {inspectRoom.area ? `• ${inspectRoom.area} ${inspectRoom.areaUnit}` : ''}
                     </p>
                   </div>
                 </div>
@@ -658,21 +659,21 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                 {/* Status & Notes */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                    <span className="text-[10px] font-black uppercase text-slate-400">Current Status</span>
-                    <p className="text-sm font-extrabold text-slate-800 mt-0.5">{inspectRoom.status}</p>
+                    <span className="text-[10px] font-black uppercase text-slate-400">{tr("Current Status")}</span>
+                    <p className="text-sm font-extrabold text-slate-800 mt-0.5">{tr(inspectRoom.status)}</p>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                    <span className="text-[10px] font-black uppercase text-slate-400">FFE Items Count</span>
+                    <span className="text-[10px] font-black uppercase text-slate-400">{tr("FFE Items Count")}</span>
                     <p className="text-sm font-extrabold text-purple-700 mt-0.5">
-                      {(roomStats[inspectRoom._id]?.total || 0)} Items
+                      {(roomStats[inspectRoom._id]?.total || 0)}{tr(" Items")}
                     </p>
                   </div>
                 </div>
 
                 {inspectRoom.notes && (
                   <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
-                    <span className="text-[10px] font-black uppercase text-blue-800">Room Notes</span>
-                    <p className="text-xs text-slate-700 mt-1">{inspectRoom.notes}</p>
+                    <span className="text-[10px] font-black uppercase text-blue-800">{tr("Room Notes")}</span>
+                    <p className="text-xs text-slate-700 mt-1">{tr(inspectRoom.notes)}</p>
                   </div>
                 )}
 
@@ -680,13 +681,13 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
-                      Allocated FFE Items ({roomStats[inspectRoom._id]?.items?.length || 0})
+                      {tr("Allocated FFE Items (")}{roomStats[inspectRoom._id]?.items?.length || 0})
                     </h4>
                     <button
                       onClick={() => router.push(ffeRoute)}
                       className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <span>Manage in FFE Tab</span>
+                      <span>{tr("Manage in FFE Tab")}</span>
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -696,15 +697,15 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                       {roomStats[inspectRoom._id].items.map((item: any) => (
                         <div key={item._id} className="p-3 flex items-center justify-between text-xs">
                           <div>
-                            <p className="font-bold text-slate-900">{item.name}</p>
-                            <p className="text-[10px] text-slate-400">{item.category} • Qty: {item.quantity || 1}</p>
+                            <p className="font-bold text-slate-900">{tr(item.name)}</p>
+                            <p className="text-[10px] text-slate-400">{tr(item.category)}{tr(" • Qty: ")}{item.quantity || 1}</p>
                           </div>
                           <div className="flex items-center gap-3">
                             <span className={cn(
                               'px-2 py-0.5 rounded-full text-[10px] font-bold border',
                               item.status === 'Installed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'
                             )}>
-                              {item.status || 'Pending'}
+                              {item.status || tr("Pending")}
                             </span>
                             <span className="font-extrabold text-slate-800">
                               {formatCurrency((item.unitCost || 0) * (item.quantity || 1), currency)}
@@ -716,7 +717,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                   ) : (
                     <div className="p-6 text-center bg-slate-50 rounded-2xl border border-slate-200/80">
                       <Package className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                      <p className="text-xs text-slate-500 font-semibold">No FFE items assigned to this room yet.</p>
+                      <p className="text-xs text-slate-500 font-semibold">{tr("No FFE items assigned to this room yet.")}</p>
                     </div>
                   )}
                 </div>
@@ -733,7 +734,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                     }}
                     className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-500 transition-all shadow-xs cursor-pointer"
                   >
-                    <Edit2 className="w-3.5 h-3.5" /> Edit Room
+                    <Edit2 className="w-3.5 h-3.5" />{tr(" Edit Room")}
                   </button>
                 )}
               </div>
@@ -761,7 +762,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <h3 className="text-lg font-bold text-slate-900">
-                  {editing ? 'Edit Room' : 'Add Room Space'}
+                  {editing ? tr("Edit Room") : tr("Add Room Space")}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
@@ -773,30 +774,30 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
 
               <form onSubmit={handleSave} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Room Name *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{tr("Room Name *")}</label>
                   <input
                     required
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     className={inputCls}
-                    placeholder="e.g. Master Bedroom, Living Lounge, Kitchen"
+                    placeholder={tr("e.g. Master Bedroom, Living Lounge, Kitchen")}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Room Type</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">{tr("Room Type")}</label>
                     <select
                       value={form.type}
                       onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))}
                       className={inputCls}
                     >
-                      {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      {ROOM_TYPES.map(t => <option key={t} value={t}>{tr(t)}</option>)}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Floor Level</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">{tr("Floor Level")}</label>
                     <input
                       type="number"
                       min="0"
@@ -809,7 +810,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Floor Area</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">{tr("Floor Area")}</label>
                     <input
                       type="number"
                       min="0"
@@ -821,20 +822,20 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Unit</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">{tr("Unit")}</label>
                     <select
                       value={form.areaUnit}
                       onChange={e => setForm(f => ({ ...f, areaUnit: e.target.value as any }))}
                       className={inputCls}
                     >
-                      <option value="sqft">sqft</option>
-                      <option value="sqm">sqm</option>
+                      <option value="sqft">{tr("sqft")}</option>
+                      <option value="sqm">{tr("sqm")}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Status</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{tr("Status")}</label>
                   <div className="grid grid-cols-2 gap-2">
                     {ROOM_STATUSES.map(s => {
                       const isSelected = form.status === s;
@@ -849,7 +850,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                             isSelected ? `${sm.bg} ${sm.color} ${sm.border} ring-2 ring-blue-500/20` : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                           )}
                         >
-                          <span>{s}</span>
+                          <span>{tr(s)}</span>
                           {isSelected && <Check className="w-3.5 h-3.5" />}
                         </button>
                       );
@@ -858,13 +859,13 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Notes / Instructions</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{tr("Notes / Instructions")}</label>
                   <textarea
                     rows={3}
                     value={form.notes}
                     onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                     className={inputCls}
-                    placeholder="Specific design notes, wall finishes or electrical details..."
+                    placeholder={tr("Specific design notes, wall finishes or electrical details...")}
                   />
                 </div>
 
@@ -874,7 +875,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                     onClick={() => setShowModal(false)}
                     className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -882,7 +883,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                     className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-600/20 disabled:opacity-50 cursor-pointer"
                   >
                     {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    <span>{editing ? 'Update Room' : 'Save Room'}</span>
+                    <span>{editing ? tr("Update Room") : tr("Save Room")}</span>
                   </button>
                 </div>
               </form>
@@ -912,9 +913,9 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Delete Room?</h3>
+                <h3 className="text-base font-bold text-slate-900">{tr("Delete Room?")}</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Are you sure you want to delete <span className="font-bold text-slate-800">"{confirmDeleteRoom.name}"</span>? This action cannot be undone.
+                  {tr("Are you sure you want to delete ")}<span className="font-bold text-slate-800">"{tr(confirmDeleteRoom.name)}"</span>{tr("? This action cannot be undone.")}
                 </p>
               </div>
               <div className="flex items-center gap-2 pt-2">
@@ -922,13 +923,13 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                   onClick={() => setConfirmDeleteRoom(null)}
                   className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   onClick={handleDelete}
                   className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-rose-600/20 cursor-pointer"
                 >
-                  Delete Room
+                  {tr("Delete Room")}
                 </button>
               </div>
             </motion.div>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 import { useRouter } from 'next/navigation';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { AuditTab } from '@/features/projects/audit/components/AuditTab';
@@ -16,16 +17,16 @@ export default function AuditTabPage() {
         <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mb-4">
           <ShieldAlert className="w-8 h-8" />
         </div>
-        <h2 className="text-lg font-bold text-slate-900">Access Denied</h2>
+        <h2 className="text-lg font-bold text-slate-900">{tr("Access Denied")}</h2>
         <p className="text-xs text-slate-500 max-w-sm mt-1 mb-5">
-          Project audit logs and activity history are restricted to Administrators only.
+          {tr("Project audit logs and activity history are restricted to Administrators only.")}
         </p>
         <button
           onClick={() => router.push(`/construction-dashboard/projects/${projectId}/details`)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Overview
+          {tr("Back to Overview")}
         </button>
       </div>
     );

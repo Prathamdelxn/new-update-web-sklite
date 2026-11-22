@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
 import React, { useState, useEffect } from 'react';
@@ -78,7 +79,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
       const response = await api.get(endpoint);
       setIssues(response.data || []);
     } catch (error) {
-      toast.error(`Failed to load ${activeType.toLowerCase()}s`);
+      toast.error(tr("Failed to load {{activeType}}s", { activeType: activeType.toLowerCase() }));
     } finally {
       setLoading(false);
     }
@@ -127,11 +128,11 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
   }, [projectId, activeType]);
 
   const handleStartSnagging = async () => {
-    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isProjectLocked(project)) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     const ok = await confirm({
-      title: 'Start Snagging Phase',
-      message: 'Are you sure you want to transition this project to the Snagging phase? This will allow defects to be reported and resolved.',
-      confirmText: 'Start Snagging',
+      title: tr("Start Snagging Phase"),
+      message: tr("Are you sure you want to transition this project to the Snagging phase? This will allow defects to be reported and resolved."),
+      confirmText: tr("Start Snagging"),
       type: 'info',
     });
     if (!ok) return;
@@ -144,11 +145,11 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         auditDetails: 'Snagging phase initiated manually.'
       });
 
-      toast.success('Project moved to Under Snagging phase successfully!');
+      toast.success(tr("Project moved to Under Snagging phase successfully!"));
       fetchIssues();
       fetchProject();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to start snagging phase');
+      toast.error(error.response?.data?.message || tr("Failed to start snagging phase"));
     } finally {
       setStartingSnagging(false);
     }
@@ -156,8 +157,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
   const handleDeleteIssue = async (e: React.MouseEvent, issueId: string) => {
     e.stopPropagation();
-    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
-    if (!window.confirm(`Delete this ${activeType.toLowerCase()}? This cannot be undone.`)) return;
+    if (isProjectLocked(project)) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
+    if (!window.confirm(tr("Delete this {{activeType}}? This cannot be undone.", { activeType: activeType.toLowerCase() }))) return;
     setDeletingId(issueId);
     try {
       const endpoint = activeType === 'Snag' ? `/snags/${issueId}` : `/issues/${issueId}`;
@@ -169,7 +170,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         toast.success(`${activeType} deleted`);
         fetchIssues();
       } else {
-        toast.error(error.response?.data?.message || `Failed to delete ${activeType.toLowerCase()}`);
+        toast.error(error.response?.data?.message || tr("Failed to delete {{activeType}}", { activeType: activeType.toLowerCase() }));
       }
     } finally {
       setDeletingId(null);
@@ -178,7 +179,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
   const handleAssignSnagForFixing = async (assignedUser: any) => {
     if (!assigningSnag) return;
-    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isProjectLocked(project)) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     try {
       // 1. Update snag to "In Progress" and set assignedTo
       await api.patch(`/snags/${assigningSnag._id}`, {
@@ -193,18 +194,18 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         auditDetails: `Snag "${assigningSnag.title}" sent for fixing.`
       });
 
-      toast.success('Snag assigned for fixing successfully!');
+      toast.success(tr("Snag assigned for fixing successfully!"));
       setAssigningSnag(null);
       fetchIssues();
       fetchProject();
     } catch (error) {
-      toast.error('Failed to assign snag');
+      toast.error(tr("Failed to assign snag"));
     }
   };
 
   const handleCompleteSnagAction = async (proofUrl: string, details: string) => {
     if (!completingSnag) return;
-    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isProjectLocked(project)) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     try {
       await api.patch(`/snags/${completingSnag._id}`, {
         status: 'Resolved',
@@ -213,24 +214,24 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         resolutionDetails: details || 'Snag rectified by assignee.'
       });
 
-      toast.success('Snag completed successfully!');
+      toast.success(tr("Snag completed successfully!"));
       setCompletingSnag(null);
       fetchIssues();
       fetchProject();
     } catch (error) {
-      toast.error('Failed to complete snag');
+      toast.error(tr("Failed to complete snag"));
     }
   };
 
   const handleBulkSendDrafts = async () => {
-    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isProjectLocked(project)) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     const draftSnags = issues.filter(i => i.status === 'Draft');
     if (draftSnags.length === 0) return;
 
     const ok = await confirm({
-      title: 'Bulk Send Draft Snags',
-      message: `Send all ${draftSnags.length} draft snags for fixing?`,
-      confirmText: 'Send Snags',
+      title: tr("Bulk Send Draft Snags"),
+      message: tr("Send all {{draftSnagsCount}} draft snags for fixing?", { draftSnagsCount: draftSnags.length }),
+      confirmText: tr("Send Snags"),
       type: 'warning',
     });
     if (!ok) return;
@@ -251,19 +252,19 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         auditDetails: `${draftSnags.length} snags updated to In Progress.`
       });
 
-      toast.success(`${draftSnags.length} snags sent for fixing successfully!`);
+      toast.success(tr("{{draftSnagsCount}} snags sent for fixing successfully!", { draftSnagsCount: draftSnags.length }));
       fetchIssues();
       fetchProject();
     } catch (error) {
-      toast.error('Failed to bulk send snags');
+      toast.error(tr("Failed to bulk send snags"));
     } finally {
       setBulkSubmitting(false);
     }
   };
 
   const handleFinalizeSnagging = async () => {
-    if (isProjectLocked(project)) { toast.error('This project is locked and can no longer be modified.'); return; }
-    if (!window.confirm('Are you sure you want to finalize the snagging phase? This will set the project status to Snagging Completed.')) return;
+    if (isProjectLocked(project)) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
+    if (!window.confirm(tr("Are you sure you want to finalize the snagging phase? This will set the project status to Snagging Completed."))) return;
 
     setFinalizing(true);
     try {
@@ -273,11 +274,11 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         auditDetails: 'Snagging phase finalized by inspector.'
       });
 
-      toast.success('Snagging phase finalized successfully!');
+      toast.success(tr("Snagging phase finalized successfully!"));
       fetchIssues();
       fetchProject();
     } catch (error) {
-      toast.error('Failed to finalize snagging phase');
+      toast.error(tr("Failed to finalize snagging phase"));
     } finally {
       setFinalizing(false);
     }
@@ -352,7 +353,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">You don't have permission to view the Snag Management module.</p>
+        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view the Snag Management module.")}</p>
       </div>
     );
   }
@@ -362,8 +363,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-900">{activeType === 'Snag' ? 'Snag Tracker' : 'Issue Tracker'}</h3>
-          <p className="text-xs text-slate-500 mt-0.5">{activeType === 'Snag' ? 'Track defects and snagging items on site.' : 'Report and track site issues and field problems.'}</p>
+          <h3 className="text-lg font-bold text-slate-900">{activeType === 'Snag' ? tr("Snag Tracker") : tr("Issue Tracker")}</h3>
+          <p className="text-xs text-slate-500 mt-0.5">{activeType === 'Snag' ? tr("Track defects and snagging items on site.") : tr("Report and track site issues and field problems.")}</p>
         </div>
 
         <div className="flex items-center space-x-3">
@@ -373,7 +374,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               className="flex items-center space-x-1.5 px-3.5 py-2 bg-orange-50 border border-orange-200 rounded-xl text-xs font-bold text-orange-700 hover:bg-orange-100 transition-all cursor-pointer"
             >
               <GitBranch className="w-3.5 h-3.5" />
-              <span>Escalation Matrix</span>
+              <span>{tr("Escalation Matrix")}</span>
             </button>
           )}
           {activeType === 'Snag' && project?.status === 'Under Snagging' && (
@@ -389,7 +390,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                   ) : (
                     <Wrench className="w-3.5 h-3.5" />
                   )}
-                  <span>Send Drafts ({issues.filter(i => i.status === 'Draft').length})</span>
+                  <span>{tr("Send Drafts (")}{issues.filter(i => i.status === 'Draft').length})</span>
                 </button>
               )}
               {isInspector && (
@@ -403,7 +404,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                   ) : (
                     <CheckCircle className="w-3.5 h-3.5" />
                   )}
-                  <span>Finalize Snagging</span>
+                  <span>{tr("Finalize Snagging")}</span>
                 </button>
               )}
             </>
@@ -414,7 +415,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Report {activeType}</span>
+              <span>{tr("Report ")}{tr(activeType)}</span>
             </button>
           )}
         </div>
@@ -430,24 +431,24 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
             </div>
 
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-600 mb-3">
-              <span>Current Project Stage:</span>
-              <span className="font-bold text-blue-600">{project?.status || 'Planning'}</span>
+              <span>{tr("Current Project Stage:")}</span>
+              <span className="font-bold text-blue-600">{project?.status || tr("Planning")}</span>
             </div>
 
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Snagging Phase Not Started</h3>
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">{tr("Snagging Phase Not Started")}</h3>
             <p className="text-xs text-slate-500 mt-1.5 max-w-lg leading-relaxed">
-              Defect logging and snag list management activate once the project transitions into the inspection and snagging stage.
+              {tr("Defect logging and snag list management activate once the project transitions into the inspection and snagging stage.")}
             </p>
 
         
 
             {/* Milestone Progress Bar if milestones exist */}
             {milestoneProgress && milestoneProgress.total > 0 && (
-              <div className="w-full mt-6 p-4 rounded-xl bg-slate-50/80 border border-slate-200 text-left">
+              <div className="w-full mt-6 p-4 rounded-xl bg-slate-50/80 border border-slate-200 text-start">
                 <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="font-semibold text-slate-700">Milestone Completion</span>
+                  <span className="font-semibold text-slate-700">{tr("Milestone Completion")}</span>
                   <span className="font-bold text-slate-900">
-                    {milestoneProgress.completed} of {milestoneProgress.total} ({Math.round((milestoneProgress.completed / milestoneProgress.total) * 100)}%)
+                    {tr(milestoneProgress.completed)}{tr(" of ")}{milestoneProgress.total} ({Math.round((milestoneProgress.completed / milestoneProgress.total) * 100)}%)
                   </span>
                 </div>
                 <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
@@ -463,7 +464,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
             {project?.status === 'Ongoing' && !isLocked && hasProjectPermission(user, project, 'projects:update') ? (
               <div className="mt-8 pt-6 border-t border-slate-100 w-full flex flex-col items-center">
                 <p className="text-xs text-slate-600 mb-3">
-                  Ready for site inspection? Transition the project to start logging snags.
+                  {tr("Ready for site inspection? Transition the project to start logging snags.")}
                 </p>
                 <button
                   onClick={handleStartSnagging}
@@ -471,7 +472,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer disabled:opacity-50"
                 >
                   {startingSnagging ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
-                  <span>Start Snagging Phase</span>
+                  <span>{tr("Start Snagging Phase")}</span>
                 </button>
               </div>
             ) : (
@@ -492,8 +493,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               { label: 'Resolved', value: typeIssues.filter(i => i.status === 'Resolved').length, color: 'text-emerald-600' },
             ].map((stat, i) => (
               <div key={i} className="p-4 rounded-2xl bg-white border border-slate-200">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</p>
-                <p className={cn('text-2xl font-extrabold', stat.color)}>{stat.value}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{tr(stat.label)}</p>
+                <p className={cn('text-2xl font-extrabold', stat.color)}>{tr(stat.value)}</p>
               </div>
             ))}
           </div>
@@ -507,8 +508,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                     <GitBranch className="w-4 h-4 text-orange-600 animate-pulse" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Escalation Pathway</h4>
-                    <p className="text-[10px] text-slate-500">Configured sequential progression for resolving critical issues.</p>
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{tr("Escalation Pathway")}</h4>
+                    <p className="text-[10px] text-slate-500">{tr("Configured sequential progression for resolving critical issues.")}</p>
                   </div>
                 </div>
 
@@ -523,11 +524,11 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                         )}
                         <div className="flex items-center space-x-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shrink-0">
                           <span className="flex items-center justify-center w-5 h-5 rounded-lg bg-orange-100 text-orange-700 text-[10px] font-black">
-                            L{lvl.level}
+                            L{tr(lvl.level)}
                           </span>
                           <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-gray-900 leading-tight">{userName}</p>
-                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none">{userRole}</p>
+                            <p className="text-[11px] font-bold text-gray-900 leading-tight">{tr(userName)}</p>
+                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none">{tr(userRole)}</p>
                           </div>
                         </div>
                       </React.Fragment>
@@ -544,10 +545,10 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
               <input
                 type="text"
-                placeholder={`Search ${activeType.toLowerCase()}s...`}
+                placeholder={tr("Search {{activeType}}s...", { activeType: activeType.toLowerCase() })}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-12 pr-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 ps-12 pe-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
 
@@ -574,8 +575,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                         : 'bg-white border-gray-200 text-slate-500 hover:border-gray-300 hover:text-gray-900'
                     )}
                   >
-                    {f}
-                    <span className="ml-1.5 opacity-70">
+                    {tr(f)}
+                    <span className="ms-1.5 opacity-70">
                       ({matches.length})
                     </span>
                   </button>
@@ -591,11 +592,11 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
             ) : filteredIssues.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
                 <CheckCircle2 className="w-16 h-16 text-slate-300 mb-4" />
-                <h4 className="text-base font-bold text-slate-800">No {activeType.toLowerCase()}s found</h4>
+                <h4 className="text-base font-bold text-slate-800">{tr("No ")}{activeType.toLowerCase()}{tr("s found")}</h4>
                 <p className="text-xs text-slate-400 max-w-xs mt-1.5">
                   {statusFilter !== 'All'
-                    ? `No ${activeType.toLowerCase()}s match the "${statusFilter}" filter.`
-                    : 'The tracking board is clear. All systems look good.'}
+                    ? tr("No {{activeType}}s match the \"{{statusFilter}}\" filter.", { activeType: activeType.toLowerCase(), statusFilter: statusFilter })
+                    : tr("The tracking board is clear. All systems look good.")}
                 </p>
               </div>
             ) : activeType === 'Snag' ? (
@@ -614,29 +615,29 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                         {/* Header */}
                         <div className="flex items-center justify-between gap-4 mb-3">
                           <h4 className="text-sm font-bold text-slate-900 truncate flex-1 leading-snug">
-                            {item.title}
+                            {tr(item.title)}
                           </h4>
                           <span className={cn('px-2.5 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider shrink-0', getPriorityColor(item.priority))}>
-                            {item.priority}
+                            {tr(item.priority)}
                           </span>
                         </div>
 
                         {/* Status Badge */}
                         <div className="mb-3">
                           <span className={cn('px-2.5 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider', getSnagStatusBadgeClass(item.status))}>
-                            {item.status}
+                            {tr(item.status)}
                           </span>
                         </div>
 
                         {/* Description */}
                         <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
-                          {item.description || 'No description provided.'}
+                          {item.description || tr("No description provided.")}
                         </p>
 
                         {/* Evidence Photo */}
                         {item.images && item.images.length > 0 && (
                           <div className="mt-3 rounded-2xl overflow-hidden border border-slate-100 mb-4 bg-slate-50">
-                            <img loading="lazy" decoding="async" src={item.images[0]} alt="Evidence" className="w-full h-36 object-cover" />
+                            <img loading="lazy" decoding="async" src={item.images[0]} alt={tr("Evidence")} className="w-full h-36 object-cover" />
                           </div>
                         )}
                       </div>
@@ -647,10 +648,10 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                         <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
                           <div className="flex items-center space-x-1">
                             <Clock className="w-3.5 h-3.5" />
-                            <span>Reported: {new Date(item.createdAt).toLocaleDateString()}</span>
+                            <span>{tr("Reported: ")}{new Date(item.createdAt).toLocaleDateString()}</span>
                           </div>
                           {item.assignedTo?.name && (
-                            <span className="text-slate-700">Fixer: {item.assignedTo.name}</span>
+                            <span className="text-slate-700">{tr("Fixer: ")}{tr(item.assignedTo.name)}</span>
                           )}
                         </div>
 
@@ -662,7 +663,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                               className="flex items-center space-x-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl px-3 py-1.5 text-[10px] font-bold text-blue-600 transition-all shrink-0"
                             >
                               <Wrench className="w-3 h-3" />
-                              <span>Assign for Fixing</span>
+                              <span>{tr("Assign for Fixing")}</span>
                             </button>
                           )}
 
@@ -672,7 +673,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                               {canUpdate && (
                                 <button
                                   onClick={() => setEditingIssue(item)}
-                                  title="Edit snag"
+                                  title={tr("Edit snag")}
                                   className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all"
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
@@ -682,7 +683,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                                 <button
                                   onClick={(e) => handleDeleteIssue(e, item._id)}
                                   disabled={deletingId === item._id}
-                                  title="Delete snag"
+                                  title={tr("Delete snag")}
                                   className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all disabled:opacity-40"
                                 >
                                   {deletingId === item._id ? (
@@ -702,7 +703,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                               className="flex items-center space-x-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl px-3 py-1.5 text-[10px] font-bold text-emerald-600 transition-all shrink-0"
                             >
                               <CheckCircle className="w-3 h-3" />
-                              <span>Complete Snag</span>
+                              <span>{tr("Complete Snag")}</span>
                             </button>
                           )}
                         </div>
@@ -731,28 +732,28 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                       <div>
                         <div className="flex items-center space-x-3 mb-1">
                           <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border', getPriorityColor(issue.priority))}>
-                            {issue.priority}
+                            {tr(issue.priority)}
                           </span>
                           {issue.category && (
                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                              {issue.category}
+                              {tr(issue.category)}
                             </span>
                           )}
                           {issue.status === 'Escalated' && issue.escalationLevel > 0 && (
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border bg-purple-100 border-purple-200 text-purple-700">
-                              Level {issue.escalationLevel}
+                              {tr("Level ")}{tr(issue.escalationLevel)}
                             </span>
                           )}
                         </div>
-                        <h4 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{issue.title}</h4>
+                        <h4 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{tr(issue.title)}</h4>
                         <div className="flex items-center space-x-4 mt-2">
                           <div className="flex items-center space-x-1 text-[10px] text-slate-500 font-bold">
                             <User className="w-3 h-3" />
-                            <span>Assigned: {issue.assignedTo?.name || 'Unassigned'}</span>
+                            <span>{tr("Assigned: ")}{issue.assignedTo?.name || tr("Unassigned")}</span>
                           </div>
                           <div className="flex items-center space-x-1 text-[10px] text-slate-500 font-bold">
                             <Clock className="w-3 h-3" />
-                            <span>Reported {new Date(issue.createdAt).toLocaleDateString()}</span>
+                            <span>{tr("Reported ")}{new Date(issue.createdAt).toLocaleDateString()}</span>
                           </div>
                         </div>
                       </div>
@@ -760,13 +761,13 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
                     <div className="flex items-center justify-between md:justify-end space-x-2 border-t md:border-t-0 border-gray-100 pt-4 md:pt-0">
                       <span className={cn('px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border', getStatusColor(issue.status))}>
-                        {issue.status}
+                        {tr(issue.status)}
                       </span>
                       <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
                         {canUpdate && (
                           <button
                             onClick={() => setEditingIssue(issue)}
-                            title="Edit issue"
+                            title={tr("Edit issue")}
                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                           >
                             <Pencil className="w-4 h-4" />
@@ -776,7 +777,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                           <button
                             onClick={(e) => handleDeleteIssue(e, issue._id)}
                             disabled={deletingId === issue._id}
-                            title="Delete issue"
+                            title={tr("Delete issue")}
                             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-40"
                           >
                             {deletingId === issue._id

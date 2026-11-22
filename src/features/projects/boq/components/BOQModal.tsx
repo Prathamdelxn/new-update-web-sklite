@@ -1,4 +1,6 @@
 'use client';
+import { tr } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -102,7 +104,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
 
   const addRow = () => setRows(prev => [...prev, emptyRow()]);
   const removeRow = (id: string) => {
-    if (rows.length === 1) { toast.error('At least one item is required'); return; }
+    if (rows.length === 1) { toast.error(tr("At least one item is required")); return; }
     setRows(prev => prev.filter(r => r.id !== id));
   };
 
@@ -144,7 +146,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
         Number(editForm.unitCost) === initialData.unitCost &&
         editForm.remark === (initialData.remark || '');
       if (unchanged) {
-        toast.error('Make at least one change before creating a new version');
+        toast.error(tr("Make at least one change before creating a new version"));
         return false;
       }
     }
@@ -163,7 +165,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
           quantity: Number(editForm.quantity),
           unitCost: Number(editForm.unitCost),
         });
-        toast.success(isNewVersion ? `New version v${nextVersion} created` : 'BOQ item updated');
+        toast.success(isNewVersion ? tr("New version v{{nextVersion}} created", { nextVersion: nextVersion }) : tr("BOQ item updated"));
       } else {
         const items = rows.map(({ id: _id, quantity, unitCost, ...r }) => ({
           ...r,
@@ -172,7 +174,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
           unitCost: Number(unitCost),
         }));
         await api.post(`/projects/${projectId}/boq`, { items });
-        toast.success(`${items.length} item${items.length > 1 ? 's' : ''} added to BOQ`);
+        toast.success(tr("{{itemsCount}} item{{value}} added to BOQ", { itemsCount: items.length, value: items.length > 1 ? 's' : '' }));
       }
       onSuccess();
       onClose();
@@ -180,13 +182,13 @@ export const BOQModal: React.FC<BOQModalProps> = ({
       if (error.response?.status >= 500) {
         toast.success(
           initialData
-            ? isNewVersion ? `New version v${nextVersion} created` : 'BOQ item updated'
-            : 'Items added to BOQ'
+            ? isNewVersion ? tr("New version v{{nextVersion}} created", { nextVersion: nextVersion }) : tr("BOQ item updated")
+            : tr("Items added to BOQ")
         );
         onSuccess();
         onClose();
       } else {
-        toast.error(error.response?.data?.message || 'Failed to save BOQ item');
+        toast.error(error.response?.data?.message || tr("Failed to save BOQ item"));
       }
     } finally {
       setIsLoading(false);
@@ -224,13 +226,13 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                   {isNewVersion ? <GitBranch className="w-4.5 h-4.5 text-blue-600" /> : <Tag className="w-4.5 h-4.5 text-blue-600" />}
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 leading-tight">{modalTitle}</h2>
+                  <h2 className="text-base font-bold text-slate-900 leading-tight">{tr(modalTitle)}</h2>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {isNewVersion
-                      ? `v${currentVersion} will be archived. New v${nextVersion} starts as Draft.`
+                      ? tr("v{{currentVersion}} will be archived. New v{{nextVersion}} starts as Draft.", { currentVersion: currentVersion, nextVersion: nextVersion })
                       : initialData
-                        ? 'Update item specifications, cost, and quantities'
-                        : 'Set group name and configure line items'}
+                        ? tr("Update item specifications, cost, and quantities")
+                        : tr("Set group name and configure line items")}
                   </p>
                 </div>
               </div>
@@ -248,7 +250,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
               <div className="mx-5 mt-3 flex items-start gap-3 p-3 bg-blue-50 border border-blue-200/80 rounded-xl shrink-0">
                 <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-900 leading-relaxed">
-                  <span className="font-bold">Creating a new version:</span> Current approved v{currentVersion} will be archived. New v{nextVersion} starts as <span className="font-bold">Draft</span>.
+                  <span className="font-bold">{tr("Creating a new version:")}</span>{tr(" Current approved v")}{tr(currentVersion)}{tr(" will be archived. New v")}{tr(nextVersion)}{tr(" starts as ")}<span className="font-bold">{tr("Draft")}</span>.
                 </p>
               </div>
             )}
@@ -263,25 +265,25 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
                       <div className="sm:col-span-8">
                         <label className="text-xs font-semibold text-slate-700 block mb-1">
-                          Group Name <span className="text-rose-500">*</span>
+                          {tr("Group Name ")}<span className="text-rose-500">*</span>
                         </label>
                         <input
                           required
                           value={editForm.groupName}
                           onChange={e => setEditForm({ ...editForm, groupName: e.target.value })}
                           className={inputCls()}
-                          placeholder="e.g. Civil Works"
+                          placeholder={tr("e.g. Civil Works")}
                         />
                       </div>
                       <div className="sm:col-span-4">
                         <label className="text-xs font-semibold text-slate-700 block mb-1">
-                          Item # (Optional)
+                          {tr("Item # (Optional)")}
                         </label>
                         <input
                           value={editForm.itemNumber}
                           onChange={e => setEditForm({ ...editForm, itemNumber: e.target.value })}
                           className={inputCls()}
-                          placeholder="e.g. CW-01"
+                          placeholder={tr("e.g. CW-01")}
                         />
                       </div>
                     </div>
@@ -289,23 +291,23 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                     {/* Row 2: Description */}
                     <div>
                       <label className="text-xs font-semibold text-slate-700 block mb-1">
-                        Description <span className="text-rose-500">*</span>
+                        {tr("Description ")}<span className="text-rose-500">*</span>
                       </label>
                       <input
                         required
                         value={editForm.itemDescription}
                         onChange={e => setEditForm({ ...editForm, itemDescription: e.target.value })}
                         className={inputCls(!!errors.itemDescription)}
-                        placeholder="Detailed item description..."
+                        placeholder={tr("Detailed item description...")}
                       />
-                      {errors.itemDescription && <p className="text-[11px] text-rose-500 mt-0.5">{errors.itemDescription}</p>}
+                      {errors.itemDescription && <p className="text-[11px] text-rose-500 mt-0.5">{tr(errors.itemDescription)}</p>}
                     </div>
 
                     {/* Row 3: Quantity + Unit + Unit Cost */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       <div>
                         <label className="text-xs font-semibold text-slate-700 block mb-1">
-                          Quantity <span className="text-rose-500">*</span>
+                          {tr("Quantity ")}<span className="text-rose-500">*</span>
                         </label>
                         <input
                           type="number"
@@ -321,19 +323,19 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                         {errors.quantity && <p className="text-[11px] text-rose-500 mt-0.5">{errors.quantity}</p>}
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-slate-700 block mb-1">Unit</label>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">{tr("Unit")}</label>
                         <select
                           value={editForm.unit}
                           onChange={e => setEditForm({ ...editForm, unit: e.target.value })}
                           className={inputCls()}
                         >
-                          <option value="">Select Unit</option>
-                          {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                          <option value="">{tr("Select Unit")}</option>
+                          {UNIT_OPTIONS.map(u => <option key={u} value={u}>{tr(u)}</option>)}
                         </select>
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-slate-700 block mb-1">
-                          Rate ({project?.currency || '$'}) <span className="text-rose-500">*</span>
+                          {tr("Rate (")}{projectCurrency(project)}) <span className="text-rose-500">*</span>
                         </label>
                         <input
                           type="number"
@@ -346,26 +348,26 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                           className={inputCls(!!errors.unitCost)}
                           placeholder="0"
                         />
-                        {errors.unitCost && <p className="text-[11px] text-rose-500 mt-0.5">{errors.unitCost}</p>}
+                        {errors.unitCost && <p className="text-[11px] text-rose-500 mt-0.5">{tr(errors.unitCost)}</p>}
                       </div>
                     </div>
 
                     {/* Row 4: Remark + Total inline */}
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
                       <div className="sm:col-span-8">
-                        <label className="text-xs font-semibold text-slate-700 block mb-1">Remark (optional)</label>
+                        <label className="text-xs font-semibold text-slate-700 block mb-1">{tr("Remark (optional)")}</label>
                         <input
                           value={editForm.remark}
                           onChange={e => setEditForm({ ...editForm, remark: e.target.value })}
                           className={inputCls()}
-                          placeholder="Optional note..."
+                          placeholder={tr("Optional note...")}
                         />
                       </div>
                       <div className="sm:col-span-4">
                         <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-blue-50/70 border border-blue-200/80">
-                          <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Total</span>
+                          <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">{tr("Total")}</span>
                           <span className="text-xs font-bold text-slate-900">
-                            {formatCurrency(editTotal, project?.currency || '$')}
+                            {formatCurrency(editTotal, projectCurrency(project))}
                           </span>
                         </div>
                       </div>
@@ -379,7 +381,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                     {/* Compact Group Name Input */}
                     <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3 sm:px-4 sm:py-2.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                       <label className="text-xs font-semibold text-slate-700 shrink-0">
-                        BOQ Group Name <span className="text-rose-500">*</span>:
+                        {tr("BOQ Group Name ")}<span className="text-rose-500">*</span>:
                       </label>
                       <div className="flex-1 min-w-0">
                         <input
@@ -388,14 +390,14 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                           value={groupName}
                           onChange={e => { setGroupName(e.target.value); if (errors.groupName) setErrors(p => { const n = { ...p }; delete n.groupName; return n; }); }}
                           className={inputCls(!!errors.groupName)}
-                          placeholder="e.g. Civil Works, Finishing Works"
+                          placeholder={tr("e.g. Civil Works, Finishing Works")}
                         />
                         {existingGroups.length > 0 && (
                           <datalist id="boq-group-names">
                             {existingGroups.map(g => <option key={g} value={g} />)}
                           </datalist>
                         )}
-                        {errors.groupName && <p className="text-[11px] text-rose-500 mt-1">{errors.groupName}</p>}
+                        {errors.groupName && <p className="text-[11px] text-rose-500 mt-1">{tr(errors.groupName)}</p>}
                       </div>
                     </div>
 
@@ -403,7 +405,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between px-1">
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                          Line Items ({rows.length})
+                          {tr("Line Items (")}{rows.length})
                         </span>
                       </div>
 
@@ -413,10 +415,10 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                             {/* Item card header */}
                             <div className="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-900">Item {idx + 1}</span>
+                                <span className="text-xs font-bold text-slate-900">{tr("Item ")}{idx + 1}</span>
                                 {row.quantity && row.unitCost && Number(row.quantity) > 0 && Number(row.unitCost) > 0 && (
                                   <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-md">
-                                    Est. {formatCurrency(Number(row.quantity) * Number(row.unitCost), project?.currency || '$')}
+                                    {tr("Est. ")}{formatCurrency(Number(row.quantity) * Number(row.unitCost), projectCurrency(project))}
                                   </span>
                                 )}
                               </div>
@@ -425,7 +427,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                 onClick={() => removeRow(row.id)}
                                 disabled={rows.length === 1}
                                 className="p-1 text-slate-400 hover:text-rose-600 disabled:opacity-0 disabled:pointer-events-none transition-colors rounded-md cursor-pointer"
-                                title="Remove item"
+                                title={tr("Remove item")}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -438,7 +440,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                   value={row.itemNumber || ''}
                                   onChange={e => updateRow(row.id, 'itemNumber', e.target.value)}
                                   className={inputCls()}
-                                  placeholder="Item # (Optional)"
+                                  placeholder={tr("Item # (Optional)")}
                                 />
                               </div>
                               <div className="sm:col-span-9">
@@ -447,10 +449,10 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                   value={row.itemDescription}
                                   onChange={e => updateRow(row.id, 'itemDescription', e.target.value)}
                                   className={inputCls(!!errors[`${row.id}_itemDescription`])}
-                                  placeholder="Item Description *"
+                                  placeholder={tr("Item Description *")}
                                 />
                                 {errors[`${row.id}_itemDescription`] && (
-                                  <p className="text-[11px] text-rose-500 mt-0.5">{errors[`${row.id}_itemDescription`]}</p>
+                                  <p className="text-[11px] text-rose-500 mt-0.5">{tr(errors[`${row.id}_itemDescription`])}</p>
                                 )}
                               </div>
                             </div>
@@ -467,10 +469,10 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                   value={row.quantity}
                                   onChange={e => updateRow(row.id, 'quantity', e.target.value)}
                                   className={inputCls(!!errors[`${row.id}_quantity`])}
-                                  placeholder="Qty *"
+                                  placeholder={tr("Qty *")}
                                 />
                                 {errors[`${row.id}_quantity`] && (
-                                  <p className="text-[11px] text-rose-500 mt-0.5">{errors[`${row.id}_quantity`]}</p>
+                                  <p className="text-[11px] text-rose-500 mt-0.5">{tr(errors[`${row.id}_quantity`])}</p>
                                 )}
                               </div>
                               <div className="col-span-1 sm:col-span-2">
@@ -479,11 +481,11 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                   onChange={e => updateRow(row.id, 'unit', e.target.value)}
                                   className={inputCls(!!errors[`${row.id}_unit`])}
                                 >
-                                  <option value="">Unit *</option>
-                                  {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                  <option value="">{tr("Unit *")}</option>
+                                  {UNIT_OPTIONS.map(u => <option key={u} value={u}>{tr(u)}</option>)}
                                 </select>
                                 {errors[`${row.id}_unit`] && (
-                                  <p className="text-[11px] text-rose-500 mt-0.5">{errors[`${row.id}_unit`]}</p>
+                                  <p className="text-[11px] text-rose-500 mt-0.5">{tr(errors[`${row.id}_unit`])}</p>
                                 )}
                               </div>
                               <div className="col-span-1 sm:col-span-3">
@@ -496,10 +498,10 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                   value={row.unitCost}
                                   onChange={e => updateRow(row.id, 'unitCost', e.target.value)}
                                   className={inputCls(!!errors[`${row.id}_unitCost`])}
-                                  placeholder={`Rate (${project?.currency || '$'}) *`}
+                                  placeholder={tr("Rate ({{value}}) *", { value: projectCurrency(project) })}
                                 />
                                 {errors[`${row.id}_unitCost`] && (
-                                  <p className="text-[11px] text-rose-500 mt-0.5">{errors[`${row.id}_unitCost`]}</p>
+                                  <p className="text-[11px] text-rose-500 mt-0.5">{tr(errors[`${row.id}_unitCost`])}</p>
                                 )}
                               </div>
                               <div className="col-span-1 sm:col-span-5">
@@ -507,7 +509,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                                   value={row.remark}
                                   onChange={e => updateRow(row.id, 'remark', e.target.value)}
                                   className={inputCls()}
-                                  placeholder="Remark (optional)"
+                                  placeholder={tr("Remark (optional)")}
                                 />
                               </div>
                             </div>
@@ -522,7 +524,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                         className="w-full flex items-center justify-center gap-1.5 py-2 border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl bg-white hover:bg-blue-50/30 text-blue-600 font-semibold text-xs transition-colors cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Add Another Item</span>
+                        <span>{tr("Add Another Item")}</span>
                       </button>
                     </div>
                   </div>
@@ -536,7 +538,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                   onClick={onClose}
                   className="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl border border-slate-200 transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -546,22 +548,22 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                   {isLoading ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Saving…</span>
+                      <span>{tr("Saving…")}</span>
                     </>
                   ) : isNewVersion ? (
                     <>
                       <GitBranch className="w-3.5 h-3.5" />
-                      <span>Create v{nextVersion}</span>
+                      <span>{tr("Create v")}{tr(nextVersion)}</span>
                     </>
                   ) : initialData ? (
                     <>
                       <Save className="w-3.5 h-3.5" />
-                      <span>Update BOQ Item</span>
+                      <span>{tr("Update BOQ Item")}</span>
                     </>
                   ) : (
                     <>
                       <Save className="w-3.5 h-3.5" />
-                      <span>{rows.length > 1 ? `Save ${rows.length} Items` : 'Create BOQ Group'}</span>
+                      <span>{rows.length > 1 ? tr("Save {{rowsCount}} Items", { rowsCount: rows.length }) : tr("Create BOQ Group")}</span>
                     </>
                   )}
                 </button>

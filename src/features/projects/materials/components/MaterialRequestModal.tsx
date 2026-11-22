@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,11 +55,11 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
     e.preventDefault();
 
     if (items.some(item => !item.materialId || item.quantity <= 0)) {
-      toast.error('Please fill in all items correctly');
+      toast.error(tr("Please fill in all items correctly"));
       return;
     }
     if (items.some(item => item.quantity > MAX_INPUT_VALUE)) {
-      toast.error('Quantity is too large');
+      toast.error(tr("Quantity is too large"));
       return;
     }
 
@@ -68,13 +69,13 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
         items,
         commonNote: note
       });
-      toast.success('Material request sent successfully!');
+      toast.success(tr("Material request sent successfully!"));
       onSuccess();
       onClose();
       setItems([{ materialId: '', quantity: 0, unit: '' }]);
       setNote('');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to send request');
+      toast.error(error.response?.data?.message || tr("Failed to send request"));
     } finally {
       setIsLoading(false);
     }
@@ -105,8 +106,8 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                     <ClipboardList className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Request Materials</h2>
-                    <p className="text-xs text-slate-500 mt-0.5">Create a request for project supplies.</p>
+                    <h2 className="text-xl font-bold text-gray-900">{tr("Request Materials")}</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr("Create a request for project supplies.")}</p>
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -115,24 +116,24 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-4 max-h-[40vh] overflow-y-auto pe-2 custom-scrollbar">
                   {items.map((item, index) => (
                     <div key={index} className="flex gap-4 items-end p-4 rounded-2xl bg-gray-50 border border-gray-200 relative group">
                       <div className="flex-1 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Material</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
                         <select
                           value={item.materialId}
                           onChange={(e) => handleItemChange(index, 'materialId', e.target.value)}
                           className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
                         >
-                          <option value="">Select Material</option>
+                          <option value="">{tr("Select Material")}</option>
                           {materials.map(m => (
-                            <option key={m._id} value={m._id}>{m.name} ({m.unit})</option>
+                            <option key={m._id} value={m._id}>{tr(m.name)} ({tr(m.unit)})</option>
                           ))}
                         </select>
                       </div>
                       <div className="w-24 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Qty</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Qty")}</label>
                         <input
                           type="number"
                           min="1"
@@ -144,7 +145,7 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                         />
                       </div>
                       <div className="w-20 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Unit</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Unit")}</label>
                         <input
                           type="text"
                           readOnly
@@ -170,20 +171,20 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                     className="w-full py-3 border-2 border-dashed border-gray-200 rounded-2xl text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-all flex items-center justify-center space-x-2 text-sm font-bold"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add Another Item</span>
+                    <span>{tr("Add Another Item")}</span>
                   </button>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600 ml-1">Common Note (Optional)</label>
+                  <label className="text-sm font-medium text-slate-600 ms-1">{tr("Common Note (Optional)")}</label>
                   <div className="relative group">
                     <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                     <textarea
                       rows={2}
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm resize-none"
-                      placeholder="Instructions for procurement..."
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 ps-10 pe-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm resize-none"
+                      placeholder={tr("Instructions for procurement...")}
                     />
                   </div>
                 </div>
@@ -194,7 +195,7 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                     onClick={onClose}
                     className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all active:scale-[0.98]"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -204,10 +205,10 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                     {isLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Sending...</span>
+                        <span>{tr("Sending...")}</span>
                       </>
                     ) : (
-                      <span>Submit Request</span>
+                      <span>{tr("Submit Request")}</span>
                     )}
                   </button>
                 </div>

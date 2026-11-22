@@ -1,4 +1,6 @@
 'use client';
+import { tr } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -54,7 +56,7 @@ const emptyForm = {
   room: '',
 };
 
-const formatCost = (n: number, currency: string = '$') => formatCurrency(n, currency);
+const formatCost = (n: number, currency?: string) => formatCurrency(n, projectCurrency({ currency }));
 
 interface FFETabProps {
   projectId: string;
@@ -97,7 +99,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
         setRooms(roomsRes.value.data || []);
       }
     } catch {
-      toast.error('Failed to load FFE items');
+      toast.error(tr("Failed to load FFE items"));
     } finally {
       setLoading(false);
     }
@@ -140,7 +142,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error('Item name is required');
+      toast.error(tr("Item name is required"));
       return;
     }
     setSaving(true);
@@ -167,15 +169,15 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
 
       if (editing) {
         await api.patch(`/projects/${projectId}/ffe/${editing._id}`, payload);
-        toast.success('FFE item updated');
+        toast.success(tr("FFE item updated"));
       } else {
         await api.post(`/projects/${projectId}/ffe`, payload);
-        toast.success('FFE item added');
+        toast.success(tr("FFE item added"));
       }
       setShowModal(false);
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to save');
+      toast.error(err.response?.data?.message || tr("Failed to save"));
     } finally {
       setSaving(false);
     }
@@ -188,23 +190,23 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
   const executeDelete = async (item: any) => {
     try {
       await api.delete(`/projects/${projectId}/ffe/${item._id}`);
-      toast.success('Item deleted');
+      toast.success(tr("Item deleted"));
       fetchData();
     } catch {
-      toast.error('Failed to delete item');
+      toast.error(tr("Failed to delete item"));
     }
   };
 
   const handleStatusChange = async (item: any, newStatus: string) => {
     try {
       await api.patch(`/projects/${projectId}/ffe/${item._id}`, { status: newStatus });
-      toast.success(`Status updated to ${newStatus}`);
+      toast.success(tr("Status updated to {{newStatus}}", { newStatus: newStatus }));
       if (detailItem && detailItem._id === item._id) {
         setDetailItem((prev: any) => prev ? { ...prev, status: newStatus } : null);
       }
       fetchData();
     } catch {
-      toast.error('Failed to update status');
+      toast.error(tr("Failed to update status"));
     }
   };
 
@@ -229,13 +231,13 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Furniture, Fixtures & Equipment</h2>
+            <h2 className="text-lg font-semibold text-slate-900 tracking-tight">{tr("Furniture, Fixtures & Equipment")}</h2>
             <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-medium">
-              {totalItems} {totalItems === 1 ? 'item' : 'items'}
+              {tr(totalItems)} {totalItems === 1 ? tr("item") : tr("items")}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Track FFE procurement, specifications, cost and installation progress by room.
+            {tr("Track FFE procurement, specifications, cost and installation progress by room.")}
           </p>
         </div>
         {isAdmin && (
@@ -244,7 +246,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
             className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add FFE Item</span>
+            <span>{tr("Add FFE Item")}</span>
           </button>
         )}
       </div>
@@ -253,17 +255,17 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border border-slate-200 p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium text-slate-500">Total Cost</span>
+            <span className="text-[11px] font-medium text-slate-500">{tr("Total Cost")}</span>
             <Package className="w-3.5 h-3.5 text-slate-400" />
           </div>
           <p className="text-xl font-semibold text-slate-900">{formatCost(summary.totalCost, project?.currency)}</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium text-slate-500">Installed</span>
+            <span className="text-[11px] font-medium text-slate-500">{tr("Installed")}</span>
             <Check className="w-3.5 h-3.5 text-emerald-500" />
           </div>
-          <p className="text-xl font-semibold text-slate-900">{overallProgress}%</p>
+          <p className="text-xl font-semibold text-slate-900">{tr(overallProgress)}%</p>
           <div className="h-1 bg-slate-100 rounded-full overflow-hidden mt-2">
             <div
               className="h-full bg-emerald-500 rounded-full transition-all duration-500"
@@ -277,7 +279,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
           return (
             <div key={s} className="bg-white rounded-xl border border-slate-200 p-3.5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-medium text-slate-500">{s}</span>
+                <span className="text-[11px] font-medium text-slate-500">{tr(s)}</span>
                 <span className={cn('w-2 h-2 rounded-full', sc.bg)} />
               </div>
               <p className="text-xl font-semibold text-slate-900">{count}</p>
@@ -303,7 +305,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
               )}
             >
               {Icon && <Icon className="w-3.5 h-3.5" />}
-              <span>{c}</span>
+              <span>{tr(c)}</span>
             </button>
           );
         })}
@@ -315,8 +317,8 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
           <Sofa className="w-8 h-8 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-500 text-sm font-medium">
             {activeCategory === 'All'
-              ? 'Add furniture, fixtures & equipment to track costs and installation status'
-              : `No ${activeCategory} items added yet`}
+              ? tr("Add furniture, fixtures & equipment to track costs and installation status")
+              : tr("No {{activeCategory}} items added yet", { activeCategory: activeCategory })}
           </p>
         </div>
       ) : (
@@ -342,15 +344,15 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors text-sm truncate">
-                          {item.name}
+                          {tr(item.name)}
                         </h4>
                         <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                          {item.category}{roomName ? ` · ${roomName}` : ''}
+                          {tr(item.category)}{roomName ? ` · ${roomName}` : ''}
                         </p>
                       </div>
                     </div>
                     <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0", sc.color, sc.bg)}>
-                      {item.status}
+                      {tr(item.status)}
                     </span>
                   </div>
 
@@ -362,29 +364,29 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                   {/* Specification Chips */}
                   <div className="flex flex-wrap gap-1 mb-2">
                     <span className="px-1.5 py-0.5 bg-slate-50 rounded text-[11px] font-medium text-slate-500">
-                      Qty: {item.quantity} {item.unit}
+                      {tr("Qty: ")}{item.quantity} {tr(item.unit)}
                     </span>
                     <span className="px-1.5 py-0.5 bg-slate-50 rounded text-[11px] font-medium text-slate-500">
-                      {formatCost(item.unitCost || 0, project?.currency)}/unit
+                      {formatCost(item.unitCost || 0, project?.currency)}{tr("/unit")}
                     </span>
                     {item.brand && (
                       <span className="px-1.5 py-0.5 bg-slate-50 rounded text-[11px] font-medium text-slate-500 max-w-[120px] truncate" title={item.brand}>
-                        {item.brand}
+                        {tr(item.brand)}
                       </span>
                     )}
                     {item.supplier && (
                       <span className="px-1.5 py-0.5 bg-slate-50 rounded text-[11px] font-medium text-slate-500 max-w-[120px] truncate" title={item.supplier}>
-                        {item.supplier}
+                        {tr(item.supplier)}
                       </span>
                     )}
                     {item.poNumber && (
                       <span className="px-1.5 py-0.5 bg-slate-50 rounded text-[11px] font-medium text-slate-500 max-w-[120px] truncate" title={`PO: ${item.poNumber}`}>
-                        PO: {item.poNumber}
+                        {tr("PO: ")}{tr(item.poNumber)}
                       </span>
                     )}
                     {item.expectedDelivery && (
                       <span className="px-1.5 py-0.5 bg-slate-50 rounded text-[11px] font-medium text-slate-500">
-                        ETA: {new Date(item.expectedDelivery).toLocaleDateString()}
+                        {tr("ETA: ")}{new Date(item.expectedDelivery).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -392,7 +394,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                   {/* Notes Snippet */}
                   {item.notes && (
                     <p className="text-[11px] text-slate-400 line-clamp-2 mt-1.5 pt-1.5 border-t border-slate-100 italic">
-                      "{item.notes}"
+                      "{tr(item.notes)}"
                     </p>
                   )}
                 </div>
@@ -405,7 +407,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                   <button
                     onClick={() => setDetailItem(item)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                    title="View Details"
+                    title={tr("View Details")}
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </button>
@@ -414,14 +416,14 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                       <button
                         onClick={() => openEdit(item)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="Edit FFE"
+                        title={tr("Edit FFE")}
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(item)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete FFE"
+                        title={tr("Delete FFE")}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -449,14 +451,14 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                     {React.createElement(CATEGORY_ICON[detailItem.category] || LayoutGrid, { className: "w-6 h-6 text-blue-600" })}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900 leading-tight">{detailItem.name}</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 leading-tight">{tr(detailItem.name)}</h3>
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-semibold uppercase tracking-wider rounded-md">
-                        {detailItem.category}
+                        {tr(detailItem.category)}
                       </span>
                       {assignedRoom?.name && (
                         <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-semibold uppercase tracking-wider rounded-md">
-                          {assignedRoom.name}
+                          {tr(assignedRoom.name)}
                         </span>
                       )}
                     </div>
@@ -473,11 +475,11 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                 <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Installation Status</p>
-                      <p className="text-xs font-medium text-slate-500 mt-0.5">Changing status to "Installed" increases overall FFE progress.</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tr("Installation Status")}</p>
+                      <p className="text-xs font-medium text-slate-500 mt-0.5">{tr("Changing status to \"Installed\" increases overall FFE progress.")}</p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Cost</p>
+                    <div className="text-end shrink-0">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tr("Total Cost")}</p>
                       <p className="text-lg font-bold text-slate-900">
                         {formatCost((detailItem.unitCost || 0) * (detailItem.quantity || 1), project?.currency)}
                       </p>
@@ -500,7 +502,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                               : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
                           )}
                         >
-                          <span>{st}</span>
+                          <span>{tr(st)}</span>
                           {isCurrent && <Check className="w-3.5 h-3.5" />}
                         </button>
                       );
@@ -510,7 +512,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
 
                 {/* Quantity & Pricing Grid */}
                 <div>
-                  <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Quantity & Pricing</h4>
+                  <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">{tr("Quantity & Pricing")}</h4>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
                       { label: 'Quantity', value: `${detailItem.quantity} ${detailItem.unit || 'nos'}` },
@@ -519,8 +521,8 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                       { label: 'Subtotal', value: formatCost((detailItem.unitCost || 0) * (detailItem.quantity || 1), project?.currency), highlighted: true }
                     ].map((c, i) => (
                       <div key={i} className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{c.label}</p>
-                        <p className={cn("text-sm font-semibold mt-1 text-slate-800", c.highlighted && "text-blue-600")}>{c.value}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr(c.label)}</p>
+                        <p className={cn("text-sm font-semibold mt-1 text-slate-800", c.highlighted && "text-blue-600")}>{tr(c.value)}</p>
                       </div>
                     ))}
                   </div>
@@ -529,36 +531,36 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                 {/* Specifications Grid */}
                 {(detailItem.brand || detailItem.modelNo || detailItem.supplier || detailItem.finish || detailItem.dimensions) && (
                   <div>
-                    <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Specifications</h4>
+                    <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">{tr("Specifications")}</h4>
                     <div className="grid grid-cols-2 gap-3">
                       {detailItem.brand && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Brand</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{detailItem.brand}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Brand")}</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.brand)}</p>
                         </div>
                       )}
                       {detailItem.modelNo && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Model No</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{detailItem.modelNo}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Model No")}</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.modelNo)}</p>
                         </div>
                       )}
                       {detailItem.supplier && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Supplier</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{detailItem.supplier}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Supplier")}</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.supplier)}</p>
                         </div>
                       )}
                       {detailItem.finish && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Finish</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{detailItem.finish}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Finish")}</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.finish)}</p>
                         </div>
                       )}
                       {detailItem.dimensions && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 col-span-2">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Dimensions</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{detailItem.dimensions}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Dimensions")}</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.dimensions)}</p>
                         </div>
                       )}
                     </div>
@@ -568,30 +570,30 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                 {/* Procurement Grid */}
                 {(detailItem.poNumber || detailItem.leadTimeDays != null || detailItem.expectedDelivery || detailItem.warrantyMonths != null) && (
                   <div>
-                    <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Procurement</h4>
+                    <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">{tr("Procurement")}</h4>
                     <div className="grid grid-cols-2 gap-3">
                       {detailItem.poNumber && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">PO / Order Ref</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{detailItem.poNumber}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("PO / Order Ref")}</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.poNumber)}</p>
                         </div>
                       )}
                       {detailItem.leadTimeDays != null && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Lead Time</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{detailItem.leadTimeDays} days</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Lead Time")}</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.leadTimeDays)}{tr(" days")}</p>
                         </div>
                       )}
                       {detailItem.expectedDelivery && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Expected Delivery</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Expected Delivery")}</p>
                           <p className="text-sm font-bold text-slate-800 mt-1">{new Date(detailItem.expectedDelivery).toLocaleDateString()}</p>
                         </div>
                       )}
                       {detailItem.warrantyMonths != null && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Warranty</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{detailItem.warrantyMonths} months</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Warranty")}</p>
+                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.warrantyMonths)}{tr(" months")}</p>
                         </div>
                       )}
                     </div>
@@ -601,9 +603,9 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                 {/* Notes Block */}
                 {detailItem.notes && (
                   <div>
-                    <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Notes</h4>
+                    <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">{tr("Notes")}</h4>
                     <div className="bg-slate-50/55 border border-slate-100 rounded-xl p-4 italic text-sm text-slate-600">
-                      "{detailItem.notes}"
+                      "{tr(detailItem.notes)}"
                     </div>
                   </div>
                 )}
@@ -621,7 +623,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-50 border border-blue-200 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors"
                   >
                     <Edit2 className="w-4 h-4" />
-                    Edit Item
+                    {tr("Edit Item")}
                   </button>
                   <button
                     onClick={() => {
@@ -632,7 +634,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    {tr("Delete")}
                   </button>
                 </div>
               )}
@@ -648,9 +650,9 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
           <div className="relative z-10 w-full max-w-xl bg-white rounded-xl shadow-xl border border-slate-200 max-h-[85vh] overflow-hidden flex flex-col">
             <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center shrink-0">
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">{editing ? 'Edit FFE Item' : 'Add FFE Item'}</h3>
+                <h3 className="text-lg font-semibold text-slate-900">{editing ? tr("Edit FFE Item") : tr("Add FFE Item")}</h3>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                  {editing ? 'Update Item Details' : 'Track New Furniture, Fixture, or Equipment'}
+                  {editing ? tr("Update Item Details") : tr("Track New Furniture, Fixture, or Equipment")}
                 </p>
               </div>
               <button onClick={() => setShowModal(false)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors">
@@ -661,37 +663,37 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Item Name *</label>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Item Name *")}</label>
                 <input
                   required
                   type="text"
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
-                  placeholder="e.g. Sofa Set"
+                  placeholder={tr("e.g. Sofa Set")}
                 />
               </div>
 
               {/* Category & Status */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Category</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Category")}</label>
                   <select
                     value={form.category}
                     onChange={e => setForm(f => ({ ...f, category: e.target.value as any }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
                   >
-                    {FFE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {FFE_CATEGORIES.map(c => <option key={c} value={c}>{tr(c)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Status")}</label>
                   <select
                     value={form.status}
                     onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
                   >
-                    {FFE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                    {FFE_STATUSES.map(s => <option key={s} value={s}>{tr(s)}</option>)}
                   </select>
                 </div>
               </div>
@@ -699,7 +701,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
               {/* Quantity, Unit, Unit Cost */}
               <div className="grid grid-cols-3 gap-2.5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Quantity</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Quantity")}</label>
                   <input
                     type="number"
                     min="1"
@@ -709,17 +711,17 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Unit Type</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Unit Type")}</label>
                   <input
                     type="text"
                     value={form.unit}
                     onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
-                    placeholder="nos"
+                    placeholder={tr("nos")}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Unit Cost ($)</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Unit Cost ({{currency}})", { currency: projectCurrency(project) })}</label>
                   <input
                     type="number"
                     min="0"
@@ -734,16 +736,16 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
               {/* Room Assignment */}
               {rooms.length > 0 && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Assign to Room</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Assign to Room")}</label>
                   <select
                     value={form.room}
                     onChange={e => setForm(f => ({ ...f, room: e.target.value }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
                   >
-                    <option value="">— No Room Assigned —</option>
+                    <option value="">{tr("— No Room Assigned —")}</option>
                     {rooms.map(r => (
                       <option key={r._id} value={r._id}>
-                        {r.name} {r.floor ? `(Floor ${r.floor})` : ''}
+                        {tr(r.name)} {r.floor ? tr("(Floor {{floor}})", { floor: r.floor }) : ''}
                       </option>
                     ))}
                   </select>
@@ -753,29 +755,29 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
               {/* Specifications Split Divider */}
               <div className="relative py-2 shrink-0">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                <div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-widest"><span className="bg-white px-3 text-slate-400">Specifications (Optional)</span></div>
+                <div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-widest"><span className="bg-white px-3 text-slate-400">{tr("Specifications (Optional)")}</span></div>
               </div>
 
               {/* Brand & Model */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Brand</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Brand")}</label>
                   <input
                     type="text"
                     value={form.brand}
                     onChange={e => setForm(f => ({ ...f, brand: e.target.value }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
-                    placeholder="e.g. IKEA"
+                    placeholder={tr("e.g. IKEA")}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Model No.</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Model No.")}</label>
                   <input
                     type="text"
                     value={form.modelNo}
                     onChange={e => setForm(f => ({ ...f, modelNo: e.target.value }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
-                    placeholder="e.g. SK-401"
+                    placeholder={tr("e.g. SK-401")}
                   />
                 </div>
               </div>
@@ -783,59 +785,59 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
               {/* Supplier & Finish */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Supplier</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Supplier")}</label>
                   <input
                     type="text"
                     value={form.supplier}
                     onChange={e => setForm(f => ({ ...f, supplier: e.target.value }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
-                    placeholder="e.g. ABC Decor"
+                    placeholder={tr("e.g. ABC Decor")}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Finish</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Finish")}</label>
                   <input
                     type="text"
                     value={form.finish}
                     onChange={e => setForm(f => ({ ...f, finish: e.target.value }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
-                    placeholder="e.g. Matte Finish"
+                    placeholder={tr("e.g. Matte Finish")}
                   />
                 </div>
               </div>
 
               {/* Dimensions */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Dimensions</label>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Dimensions")}</label>
                 <input
                   type="text"
                   value={form.dimensions}
                   onChange={e => setForm(f => ({ ...f, dimensions: e.target.value }))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
-                  placeholder="e.g. 200cm x 90cm x 75cm"
+                  placeholder={tr("e.g. 200cm x 90cm x 75cm")}
                 />
               </div>
 
               {/* Procurement Split Divider */}
               <div className="relative py-2 shrink-0">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                <div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-widest"><span className="bg-white px-3 text-slate-400">Procurement (Optional)</span></div>
+                <div className="relative flex justify-center text-[10px] font-semibold uppercase tracking-widest"><span className="bg-white px-3 text-slate-400">{tr("Procurement (Optional)")}</span></div>
               </div>
 
               {/* PO Number & Lead Time */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">PO / Order Ref</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("PO / Order Ref")}</label>
                   <input
                     type="text"
                     value={form.poNumber}
                     onChange={e => setForm(f => ({ ...f, poNumber: e.target.value }))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold"
-                    placeholder="e.g. PO-2024-0091"
+                    placeholder={tr("e.g. PO-2024-0091")}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Lead Time (days)</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Lead Time (days)")}</label>
                   <input
                     type="number"
                     min="0"
@@ -850,7 +852,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
               {/* Expected Delivery & Warranty */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Expected Delivery</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Expected Delivery")}</label>
                   <input
                     type="date"
                     value={form.expectedDelivery}
@@ -859,7 +861,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Warranty (months)</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Warranty (months)")}</label>
                   <input
                     type="number"
                     min="0"
@@ -873,13 +875,13 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
 
               {/* Notes */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Notes</label>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{tr("Notes")}</label>
                 <textarea
                   rows={2}
                   value={form.notes}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all font-semibold resize-none"
-                  placeholder="Additional item descriptions, specification details, etc."
+                  placeholder={tr("Additional item descriptions, specification details, etc.")}
                 />
               </div>
 
@@ -890,7 +892,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                   onClick={() => setShowModal(false)}
                   className="flex-1 py-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm transition-all"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -898,7 +900,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                   className="flex-1 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  {editing ? 'Save Changes' : 'Add FFE Item'}
+                  {editing ? tr("Save Changes") : tr("Add FFE Item")}
                 </button>
               </div>
             </form>
@@ -911,14 +913,14 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)} />
           <div className="relative z-10 w-full max-w-sm bg-white rounded-xl p-6 shadow-xl border border-slate-200 text-center">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Delete FFE Item</h3>
-            <p className="text-sm text-slate-500 mb-6">Are you sure you want to delete "{confirmDeleteId.name}"? This action cannot be undone.</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">{tr("Delete FFE Item")}</h3>
+            <p className="text-sm text-slate-500 mb-6">{tr("Are you sure you want to delete \"")}{tr(confirmDeleteId.name)}{tr("\"? This action cannot be undone.")}</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDeleteId(null)}
                 className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm transition-all"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               <button
                 onClick={() => {
@@ -928,7 +930,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all"
               >
-                Delete
+                {tr("Delete")}
               </button>
             </div>
           </div>

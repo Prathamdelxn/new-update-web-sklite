@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -8,8 +9,18 @@ import { Topnav } from '@/components/layouts/Topnav';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
 import { isInteriorSession } from '@/lib/interiorAuth';
+import { I18nProvider } from '@/i18n/I18nProvider';
 
-export default function ConstructionDashboardLayout({
+// English / Arabic for the construction workspace (same switch as interior)
+export default function ConstructionDashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <I18nProvider>
+      <ConstructionDashboardLayoutInner>{children}</ConstructionDashboardLayoutInner>
+    </I18nProvider>
+  );
+}
+
+function ConstructionDashboardLayoutInner({
   children,
 }: {
   children: React.ReactNode;
@@ -53,7 +64,7 @@ export default function ConstructionDashboardLayout({
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           <p className="text-sm font-medium text-slate-500">
-            {isInterior ? 'Redirecting to Interior Workspace...' : 'Loading Workspace...'}
+            {isInterior ? tr("Redirecting to Interior Workspace...") : tr("Loading Workspace...")}
           </p>
         </div>
       </div>
@@ -72,7 +83,7 @@ export default function ConstructionDashboardLayout({
       <div 
         className={cn(
           "flex flex-col min-h-screen w-full min-w-0 transition-all duration-200",
-          isCollapsed ? "lg:pl-[60px]" : "lg:pl-[260px]"
+          isCollapsed ? "lg:ps-[60px]" : "lg:ps-[260px]"
         )}
       >
         <Topnav 

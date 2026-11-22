@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -46,7 +47,7 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
     const fetchUrl = endpoint || '/users';
     api.get(fetchUrl)
       .then(r => setUsers(r.data?.users || r.data || []))
-      .catch(() => toast.error('Failed to load users'))
+      .catch(() => toast.error(tr("Failed to load users")))
       .finally(() => setLoading(false));
   }, [isOpen, endpoint]);
 
@@ -91,8 +92,8 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
                     <Users className={cn('w-5 h-5', accent.iconColor)} />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-gray-900">{title}</h2>
-                    {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+                    <h2 className="text-base font-bold text-gray-900">{tr(title)}</h2>
+                    {description && <p className="text-xs text-slate-500 mt-0.5">{tr(description)}</p>}
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -105,17 +106,17 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Search by name or email..."
+                    placeholder={tr("Search by name or email...")}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 ps-10 pe-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
 
                 <SkeletonLoader loading={loading} preset="modal">
-                  <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                  <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pe-1">
                     {filtered.length === 0 && !loading && (
-                      <p className="text-sm text-slate-400 text-center py-6">No users found.</p>
+                      <p className="text-sm text-slate-400 text-center py-6">{tr("No users found.")}</p>
                     )}
                     {filtered.map(user => {
                       const isSelected = selected.has(user._id);
@@ -125,7 +126,7 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
                           type="button"
                           onClick={() => toggle(user._id)}
                           className={cn(
-                            'w-full flex items-center space-x-3 p-3 rounded-xl border transition-all text-left',
+                            'w-full flex items-center space-x-3 p-3 rounded-xl border transition-all text-start',
                             isSelected ? accent.selectedItem : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                           )}
                         >
@@ -136,7 +137,7 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
                             {isSelected ? <Check className="w-4 h-4" /> : user.name?.[0]?.toUpperCase() || 'U'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">{tr(user.name)}</p>
                             <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                           </div>
                           {(user.role?.name || user.roleName) && (
@@ -152,7 +153,7 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
 
                 {selected.size > 0 && (
                   <p className={cn('text-xs font-semibold text-center', accent.count)}>
-                    {selected.size} user{selected.size > 1 ? 's' : ''} selected
+                    {tr(selected.size)}{tr(" user")}{selected.size > 1 ? 's' : ''}{tr(" selected")}
                   </p>
                 )}
               </div>
@@ -162,14 +163,14 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
                   onClick={onClose}
                   className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-gray-100 transition-all"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   onClick={handleConfirm}
                   disabled={loading}
                   className={cn('flex items-center space-x-2 px-5 py-2.5 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-sm', accent.btn)}
                 >
-                  <span>{confirmLabel}</span>
+                  <span>{tr(confirmLabel)}</span>
                 </button>
               </div>
             </div>

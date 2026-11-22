@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import { ShieldAlert } from 'lucide-react';
@@ -28,9 +29,9 @@ export const UserManagementGate: React.FC<{ children: React.ReactNode }> = ({ ch
         <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mb-4">
           <ShieldAlert className="w-6 h-6 text-amber-600" />
         </div>
-        <p className="text-sm font-bold text-slate-700">You don't have access to Team & Roles</p>
+        <p className="text-sm font-bold text-slate-700">{tr("You don't have access to Team & Roles")}</p>
         <p className="text-xs text-slate-500 mt-1 max-w-sm">
-          Ask your admin to enable <span className="font-semibold">User Management → View</span> on your role.
+          {tr("Ask your admin to enable ")}<span className="font-semibold">{tr("User Management → View")}</span>{tr(" on your role.")}
         </p>
       </div>
     );

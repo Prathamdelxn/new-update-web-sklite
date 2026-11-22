@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,7 +42,7 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      toast.error('Proof photo is required');
+      toast.error(tr("Proof photo is required"));
       return;
     }
 
@@ -59,7 +60,7 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
       setResolutionDetails('Snag rectified by assignee.');
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to complete snag');
+      toast.error(err.message || tr("Failed to complete snag"));
     } finally {
       setIsSubmitting(false);
     }
@@ -86,8 +87,8 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
               {/* Header */}
               <div className="p-6 border-b border-gray-100 flex items-start justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Complete Snag</h2>
-                  <p className="text-xs text-slate-500 mt-1 max-w-[280px] truncate">{snagTitle}</p>
+                  <h2 className="text-lg font-bold text-gray-900">{tr("Complete Snag")}</h2>
+                  <p className="text-xs text-slate-500 mt-1 max-w-[280px] truncate">{tr(snagTitle)}</p>
                 </div>
                 <button
                   onClick={onClose}
@@ -100,11 +101,11 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
               {/* Form Body */}
               <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
-                    Proof of Rectification
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ms-1">
+                    {tr("Proof of Rectification")}
                   </label>
-                  <p className="text-xs text-slate-400 ml-1">
-                    Please upload a clear photo showing that the snag has been fixed.
+                  <p className="text-xs text-slate-400 ms-1">
+                    {tr("Please upload a clear photo showing that the snag has been fixed.")}
                   </p>
 
                   <input
@@ -119,7 +120,7 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
                     <div className="relative rounded-2xl border border-slate-150 overflow-hidden group">
                       <img loading="lazy" decoding="async"
                         src={previewUrl}
-                        alt="Proof preview"
+                        alt={tr("Proof preview")}
                         className="w-full h-44 object-cover"
                       />
                       <button
@@ -140,21 +141,21 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
                       className="w-full h-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-blue-50/10 rounded-2xl transition-all space-y-2"
                     >
                       <Camera className="w-8 h-8 text-blue-600" />
-                      <span className="text-xs font-bold text-blue-600">Add Proof Photo</span>
+                      <span className="text-xs font-bold text-blue-600">{tr("Add Proof Photo")}</span>
                     </button>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ml-1">
-                    Resolution Details
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ms-1">
+                    {tr("Resolution Details")}
                   </label>
                   <textarea
                     rows={2}
                     value={resolutionDetails}
                     onChange={(e) => setResolutionDetails(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
-                    placeholder="Details about the rectification..."
+                    placeholder={tr("Details about the rectification...")}
                   />
                 </div>
 
@@ -165,7 +166,7 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
                     onClick={onClose}
                     className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold text-slate-600 transition-all"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -175,12 +176,12 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Resolving...</span>
+                        <span>{tr("Resolving...")}</span>
                       </>
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Mark as Resolved</span>
+                        <span>{tr("Mark as Resolved")}</span>
                       </>
                     )}
                   </button>

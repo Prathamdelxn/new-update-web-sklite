@@ -1,4 +1,5 @@
 'use client';
+import { tr, getLang } from '@/i18n';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -39,9 +40,9 @@ const StatCard = ({
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0">
-      <div className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{value}</div>
-      <div className="text-xs text-slate-500 font-medium truncate">{label}</div>
-      {sub && <div className="text-[11px] text-slate-400 font-normal truncate mt-0.5">{sub}</div>}
+      <div className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{tr(value)}</div>
+      <div className="text-xs text-slate-500 font-medium truncate">{tr(label)}</div>
+      {sub && <div className="text-[11px] text-slate-400 font-normal truncate mt-0.5">{tr(sub)}</div>}
     </div>
   </div>
 );
@@ -111,7 +112,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         setSnags(Array.isArray(snagsData) ? snagsData : []);
       } catch (err: any) {
         if (err.response?.status !== 403) console.error(err);
-        toast.error('Failed to load reports data');
+        toast.error(tr("Failed to load reports data"));
       } finally {
         setLoading(false);
       }
@@ -233,11 +234,11 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
 
   const handleExportReport = () => {
     if (Object.keys(groupedTasks).length === 0) {
-      toast.error('No report data available to export');
+      toast.error(tr("No report data available to export"));
       return;
     }
 
-    const headers = ['Milestone Name', 'Task Title', 'Completed By', 'Completed Date', 'Completion Note'];
+    const headers = ['Milestone Name', 'Task Title', 'Completed By', 'Completed Date', 'Completion Note'].map((h) => tr(h));
     const rows: any[] = [];
 
     Object.entries(groupedTasks).forEach(([milestoneName, tasks]) => {
@@ -258,7 +259,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
       });
     });
 
-    const csv = [headers, ...rows].map(r =>
+    // ﻿: Excel opens UTF-8 (Arabic) CSV correctly
+    const csv = '﻿' + [headers, ...rows].map(r =>
       r.map((v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')
     ).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -268,7 +270,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
     a.download = `Project_Report_${reportType}_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(`${reportType} report exported successfully`);
+    toast.success(tr("{{reportType}} report exported successfully", { reportType: reportType }));
   };
 
   const safeFormatDate = (dateVal: any) => {
@@ -330,11 +332,13 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
       const recentTasks = allCompletedTasks.filter(t => t.completedAtDate >= startLimit && t.completedAtDate <= endLimit);
 
       // Generate HTML string matching the PDF format
+      const rtl = getLang() === 'ar';
       let htmlContent = `
-        <html>
+        <html lang="${rtl ? 'ar' : 'en'}" dir="${rtl ? 'rtl' : 'ltr'}">
         <head>
           <style>
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 24px; color: #1e293b; line-height: 1.5; }
+            body { font-family: ${rtl ? "var(--font-arabic), 'Segoe UI', Tahoma, Arial, sans-serif" : "'Helvetica Neue', Helvetica, Arial, sans-serif"}; padding: 24px; color: #1e293b; line-height: 1.5; direction: ${rtl ? 'rtl' : 'ltr'}; }
+            ${rtl ? 'h3, th { letter-spacing: normal !important; text-transform: none !important; } th { text-align: right !important; }' : ''}
             .header { margin-bottom: 24px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; }
             .project-label { color: #2563eb; font-size: 14px; font-weight: bold; margin: 0; }
             .report-title { font-size: 20px; font-weight: 800; color: #0f172a; margin: 4px 0 0 0; }
@@ -353,21 +357,21 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         </head>
         <body>
           <div class="header">
-            <p class="project-label">Project: ${project?.name || contextProject?.name || 'Sunrise Height'}</p>
-            <h2 class="report-title">${reportType === 'Daily' ? 'Daily Project Report (Last 7 Days)' : 'Monthly Project Report (Last 6 Months)'}</h2>
-            <p class="gen-date">Generated on: ${safeFormatDate(new Date())}</p>
+            <p class="project-label">${tr('Project:')} ${project?.name || contextProject?.name || 'Sunrise Height'}</p>
+            <h2 class="report-title">${reportType === 'Daily' ? tr('Daily Project Report (Last 7 Days)') : tr('Monthly Project Report (Last 6 Months)')}</h2>
+            <p class="gen-date">${tr('Generated on:')} ${safeFormatDate(new Date())}</p>
           </div>
 
-          <h3>Completed Tasks</h3>
+          <h3>${tr('Completed Tasks')}</h3>
           ${recentTasks.length === 0 ? `
-            <div class="empty">No tasks completed in this range.</div>
+            <div class="empty">${tr('No tasks completed in this range.')}</div>
           ` : `
             <table>
               <thead>
                 <tr>
-                  <th>Milestone</th>
-                  <th>Task Title</th>
-                  <th>Completion Date</th>
+                  <th>${tr('Milestone')}</th>
+                  <th>${tr('Task Title')}</th>
+                  <th>${tr('Completion Date')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -382,15 +386,15 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
             </table>
           `}
 
-          <h3>Reported Issues</h3>
+          <h3>${tr('Reported Issues')}</h3>
           ${rangeIssues.length === 0 ? `
-            <div class="empty">No issues reported in this range.</div>
+            <div class="empty">${tr('No issues reported in this range.')}</div>
           ` : `
             <table>
               <thead>
                 <tr>
-                  <th>Issue Title</th>
-                  <th>Category</th>
+                  <th>${tr('Issue Title')}</th>
+                  <th>${tr('Category')}</th>
                   <th>Priority</th>
                   <th>Status</th>
                   <th>Reported Date</th>
@@ -403,9 +407,9 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                       <span style="font-weight: bold; color: #0f172a;">${issue.title}</span>
                       ${issue.description ? `<small>${issue.description}</small>` : ''}
                     </td>
-                    <td>${issue.category || 'Other'}</td>
-                    <td><span class="priority-${issue.priority.toLowerCase()}">${issue.priority}</span></td>
-                    <td>${issue.status}</td>
+                    <td>${tr(issue.category || 'Other')}</td>
+                    <td><span class="priority-${issue.priority.toLowerCase()}">${tr(issue.priority)}</span></td>
+                    <td>${tr(issue.status)}</td>
                     <td>${safeFormatDate(issue.createdAt)}</td>
                   </tr>
                 `).join('')}
@@ -413,14 +417,14 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
             </table>
           `}
 
-          <h3>Reported Snags</h3>
+          <h3>${tr('Reported Snags')}</h3>
           ${rangeSnags.length === 0 ? `
-            <div class="empty">No snags reported in this range.</div>
+            <div class="empty">${tr('No snags reported in this range.')}</div>
           ` : `
             <table>
               <thead>
                 <tr>
-                  <th>Snag Title</th>
+                  <th>${tr('Snag Title')}</th>
                   <th>Priority</th>
                   <th>Status</th>
                   <th>Reported Date</th>
@@ -433,8 +437,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                       <span style="font-weight: bold; color: #0f172a;">${snag.title}</span>
                       ${snag.description ? `<small>${snag.description}</small>` : ''}
                     </td>
-                    <td><span class="priority-${snag.priority.toLowerCase()}">${snag.priority}</span></td>
-                    <td>${snag.status}</td>
+                    <td><span class="priority-${snag.priority.toLowerCase()}">${tr(snag.priority)}</span></td>
+                    <td>${tr(snag.status)}</td>
                     <td>${safeFormatDate(snag.createdAt)}</td>
                   </tr>
                 `).join('')}
@@ -442,26 +446,26 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
             </table>
           `}
 
-          <h3>Activity Logs</h3>
+          <h3>${tr('Activity Logs')}</h3>
           ${rangeLogs.length === 0 ? `
-            <div class="empty">No activity logs in this range.</div>
+            <div class="empty">${tr('No activity logs in this range.')}</div>
           ` : `
             <table>
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Action</th>
-                  <th>Details</th>
-                  <th>Date</th>
+                  <th>${tr('User')}</th>
+                  <th>${tr('Role')}</th>
+                  <th>${tr('Action')}</th>
+                  <th>${tr('Details')}</th>
+                  <th>${tr('Date')}</th>
                 </tr>
               </thead>
               <tbody>
                 ${rangeLogs.map((log: any) => `
                   <tr>
-                    <td style="font-weight: bold;">${log.userName || log.user?.name || 'System'}</td>
+                    <td style="font-weight: bold;">${log.userName || log.user?.name || tr('System')}</td>
                     <td style="text-transform: capitalize;">${log.userRole || log.user?.role || '-'}</td>
-                    <td><span style="font-weight: bold; color: #2563eb;">${log.action}</span></td>
+                    <td><span style="font-weight: bold; color: #2563eb;">${tr(log.action)}</span></td>
                     <td>${log.details}</td>
                     <td>${safeFormatDate(log.timestamp)}</td>
                   </tr>
@@ -485,10 +489,10 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
       };
 
       await html2pdf().set(opt).from(element).save();
-      toast.success('PDF report downloaded successfully');
+      toast.success(tr("PDF report downloaded successfully"));
     } catch (err: any) {
       console.error(err);
-      toast.error(`Failed to download PDF report: ${err.message || err}`);
+      toast.error(tr("Failed to download PDF report: {{value}}", { value: err.message || err }));
     } finally {
       setDownloadingPDF(false);
     }
@@ -497,7 +501,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
   const handleEmailReport = async () => {
     const targetEmail = user?.email;
     if (!targetEmail) {
-      toast.error('Could not determine logged-in user email');
+      toast.error(tr("Could not determine logged-in user email"));
       return;
     }
     setEmailing(true);
@@ -512,14 +516,15 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
 
       await api.post(`/projects/${projectId}/email-report`, {
         reportType,
+        lang: getLang(), // emailed PDF follows the selected language
         startDate: startLimit.toISOString(),
         endDate: new Date().toISOString(),
         customTargetEmail: targetEmail,
       });
-      toast.success(`Report PDF sent successfully to ${targetEmail}`);
+      toast.success(tr("Report PDF sent successfully to {{targetEmail}}", { targetEmail: targetEmail }));
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.message || 'Failed to send email report');
+      toast.error(err.response?.data?.message || tr("Failed to send email report"));
     } finally {
       setEmailing(false);
     }
@@ -557,9 +562,9 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
           <XOctagon className="w-8 h-8 text-slate-400" />
         </div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Access Denied</h2>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{tr("Access Denied")}</h2>
         <p className="text-slate-500 text-sm max-w-sm text-center mb-6">
-          You do not have the required "Reports Management" permission to view this tab.
+          {tr("You do not have the required \"Reports Management\" permission to view this tab.")}
         </p>
       </div>
     );
@@ -582,7 +587,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                     : 'text-slate-600 hover:text-slate-900'
                 )}
               >
-                Daily (7 Days)
+                {tr("Daily (7 Days)")}
               </button>
               <button
                 type="button"
@@ -594,13 +599,13 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                     : 'text-slate-600 hover:text-slate-900'
                 )}
               >
-                Monthly (6 Months)
+                {tr("Monthly (6 Months)")}
               </button>
             </div>
 
             <div className="hidden md:flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-50 border border-slate-200/60 px-3 py-1.5 rounded-lg">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              <span>{dateRangeLabel}</span>
+              <span>{tr(dateRangeLabel)}</span>
             </div>
           </div>
 
@@ -609,10 +614,10 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               type="button"
               onClick={handleExportReport}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors text-xs font-medium cursor-pointer shadow-none"
-              title="Export Report as CSV"
+              title={tr("Export Report as CSV")}
             >
               <Download className="w-3.5 h-3.5 text-slate-500" />
-              <span>Export CSV</span>
+              <span>{tr("Export CSV")}</span>
             </button>
 
             <button
@@ -620,14 +625,14 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               onClick={handleDownloadPDF}
               disabled={downloadingPDF}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors text-xs font-medium cursor-pointer disabled:opacity-50 shadow-none"
-              title="Download Report PDF"
+              title={tr("Download Report PDF")}
             >
               {downloadingPDF ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
               ) : (
                 <FileText className="w-3.5 h-3.5 text-slate-500" />
               )}
-              <span>{downloadingPDF ? 'Generating...' : 'Download PDF'}</span>
+              <span>{downloadingPDF ? tr("Generating...") : tr("Download PDF")}</span>
             </button>
 
             <button
@@ -635,14 +640,14 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               onClick={handleEmailReport}
               disabled={emailing}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-xs font-medium cursor-pointer disabled:opacity-50 shadow-none"
-              title="Email PDF Report"
+              title={tr("Email PDF Report")}
             >
               {emailing ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
               ) : (
                 <Mail className="w-3.5 h-3.5" />
               )}
-              <span>{emailing ? 'Sending...' : 'Email PDF'}</span>
+              <span>{emailing ? tr("Sending...") : tr("Email PDF")}</span>
             </button>
           </div>
         </div>
@@ -650,7 +655,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         {/* ── Metric Stat Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatCard
-            label="Tasks Completed"
+            label={tr("Tasks Completed")}
             value={totalFiltered}
             icon={CheckCircle2}
             accent="text-blue-600"
@@ -658,7 +663,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
             sub={reportType === 'Daily' ? 'last 7 days' : 'last 6 months'}
           />
           <StatCard
-            label="Reported Issues"
+            label={tr("Reported Issues")}
             value={rangeIssues.length}
             icon={AlertCircle}
             accent="text-amber-600"
@@ -666,7 +671,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
             sub={`${rangeIssues.filter(i => i.status !== 'Resolved' && i.status !== 'Closed').length} unresolved`}
           />
           <StatCard
-            label="Site Snags"
+            label={tr("Site Snags")}
             value={rangeSnags.length}
             icon={Wrench}
             accent="text-purple-600"
@@ -674,7 +679,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
             sub={`${rangeSnags.filter(s => s.status !== 'Resolved' && s.status !== 'Closed').length} pending fix`}
           />
           <StatCard
-            label="Activity Events"
+            label={tr("Activity Events")}
             value={rangeLogs.length}
             icon={Activity}
             accent="text-emerald-600"
@@ -689,15 +694,15 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
             <div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight">Task Completion Velocity</h3>
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">{tr("Task Completion Velocity")}</h3>
               </div>
               <p className="text-xs text-slate-400 font-medium mt-0.5">
-                {reportType === 'Daily' ? 'Milestone tasks completed daily over the past 7 days' : 'Milestone tasks completed monthly over the past 6 months'}
+                {reportType === 'Daily' ? tr("Milestone tasks completed daily over the past 7 days") : tr("Milestone tasks completed monthly over the past 6 months")}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-100">
-                {totalFiltered} {totalFiltered === 1 ? 'Task Completed' : 'Tasks Completed'}
+                {tr(totalFiltered)} {totalFiltered === 1 ? tr("Task Completed") : tr("Tasks Completed")}
               </span>
             </div>
           </div>
@@ -726,7 +731,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                       textAnchor="middle"
                       className="text-xs font-semibold fill-slate-500"
                     >
-                      No tasks completed in this time range
+                      {tr("No tasks completed in this time range")}
                     </text>
                     <text
                       x="350"
@@ -734,7 +739,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                       textAnchor="middle"
                       className="text-[11px] font-normal fill-slate-400"
                     >
-                      Completed milestone tasks will plot across this timeline
+                      {tr("Completed milestone tasks will plot across this timeline")}
                     </text>
                   </g>
                 )}
@@ -787,7 +792,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                           p.value > 0 ? "fill-blue-600" : "fill-slate-400"
                         )}
                       >
-                        {p.value}
+                        {tr(p.value)}
                       </text>
                     )}
 
@@ -797,7 +802,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                       textAnchor="middle"
                       className="text-[10px] font-semibold fill-slate-500"
                     >
-                      {p.label}
+                      {tr(p.label)}
                     </text>
                   </g>
                 ))}
@@ -814,12 +819,12 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                 <CheckCircle2 className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Breakdown by Milestone</h3>
-                <p className="text-xs text-slate-400 font-medium">Completed task deliverables grouped by milestone</p>
+                <h3 className="text-sm font-bold text-slate-900">{tr("Breakdown by Milestone")}</h3>
+                <p className="text-xs text-slate-400 font-medium">{tr("Completed task deliverables grouped by milestone")}</p>
               </div>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
-              {totalFiltered} {totalFiltered === 1 ? 'Task' : 'Tasks'}
+              {tr(totalFiltered)} {totalFiltered === 1 ? tr("Task") : tr("Tasks")}
             </span>
           </div>
 
@@ -828,9 +833,9 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center mx-auto mb-2 text-slate-400">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
-              <p className="text-xs font-bold text-slate-700">No Tasks Completed in this Timeframe</p>
+              <p className="text-xs font-bold text-slate-700">{tr("No Tasks Completed in this Timeframe")}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                Tasks marked complete during this period will appear grouped here.
+                {tr("Tasks marked complete during this period will appear grouped here.")}
               </p>
             </div>
           ) : (
@@ -840,7 +845,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                     <h4 className="text-xs font-bold text-slate-800 tracking-wide">
-                      {milestoneName}
+                      {tr(milestoneName)}
                     </h4>
                     <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
                       {tasks.length}
@@ -857,7 +862,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                           <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
-                              {task.title}
+                              {tr(task.title)}
                             </p>
                             <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 font-medium">
                               <span className="flex items-center gap-1">
@@ -889,12 +894,12 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                   <AlertCircle className="w-4 h-4 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">Reported Issues</h3>
-                  <p className="text-[11px] text-slate-400 font-medium">Logged site issues & blockers</p>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">{tr("Reported Issues")}</h3>
+                  <p className="text-[11px] text-slate-400 font-medium">{tr("Logged site issues & blockers")}</p>
                 </div>
               </div>
               <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
-                {rangeIssues.length} {rangeIssues.length === 1 ? 'Issue' : 'Issues'}
+                {rangeIssues.length} {rangeIssues.length === 1 ? tr("Issue") : tr("Issues")}
               </span>
             </div>
 
@@ -904,48 +909,48 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                   <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
                     <AlertCircle className="w-4 h-4" />
                   </div>
-                  <p className="text-xs font-bold text-slate-700">No Issues Reported</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">All clear for this time range.</p>
+                  <p className="text-xs font-bold text-slate-700">{tr("No Issues Reported")}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{tr("All clear for this time range.")}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                  <table className="w-full text-start border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                        <th className="pb-2">Issue</th>
-                        <th className="pb-2">Priority</th>
-                        <th className="pb-2">Status</th>
-                        <th className="pb-2 text-right">Date</th>
+                        <th className="pb-2">{tr("Issue")}</th>
+                        <th className="pb-2">{tr("Priority")}</th>
+                        <th className="pb-2">{tr("Status")}</th>
+                        <th className="pb-2 text-end">{tr("Date")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {rangeIssues.map((issue, idx) => (
                         <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                          <td className="py-2.5 pr-2">
-                            <div className="font-semibold text-slate-900 truncate max-w-[180px]">{issue.title}</div>
-                            <div className="text-[10px] text-slate-400 capitalize">{issue.category || 'General'}</div>
+                          <td className="py-2.5 pe-2">
+                            <div className="font-semibold text-slate-900 truncate max-w-[180px]">{tr(issue.title)}</div>
+                            <div className="text-[10px] text-slate-400 capitalize">{issue.category || tr("General")}</div>
                           </td>
-                          <td className="py-2.5 pr-2">
+                          <td className="py-2.5 pe-2">
                             <span className={cn(
                               'px-2 py-0.5 rounded-md text-[10px] font-semibold border',
                               issue.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-100' :
                               issue.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
                               'bg-blue-50 text-blue-700 border-blue-100'
                             )}>
-                              {issue.priority}
+                              {tr(issue.priority)}
                             </span>
                           </td>
-                          <td className="py-2.5 pr-2">
+                          <td className="py-2.5 pe-2">
                             <span className={cn(
                               'px-2 py-0.5 rounded-md text-[10px] font-semibold border',
                               issue.status === 'Resolved' || issue.status === 'Closed'
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                 : 'bg-amber-50 text-amber-700 border-amber-100'
                             )}>
-                              {issue.status}
+                              {tr(issue.status)}
                             </span>
                           </td>
-                          <td className="py-2.5 text-right text-slate-400 text-[11px] whitespace-nowrap">
+                          <td className="py-2.5 text-end text-slate-400 text-[11px] whitespace-nowrap">
                             {safeFormatDate(issue.createdAt)}
                           </td>
                         </tr>
@@ -965,12 +970,12 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                   <Wrench className="w-4 h-4 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">Reported Snags</h3>
-                  <p className="text-[11px] text-slate-400 font-medium">Defects & punch list items</p>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">{tr("Reported Snags")}</h3>
+                  <p className="text-[11px] text-slate-400 font-medium">{tr("Defects & punch list items")}</p>
                 </div>
               </div>
               <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
-                {rangeSnags.length} {rangeSnags.length === 1 ? 'Snag' : 'Snags'}
+                {rangeSnags.length} {rangeSnags.length === 1 ? tr("Snag") : tr("Snags")}
               </span>
             </div>
 
@@ -980,48 +985,48 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                   <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
                     <Wrench className="w-4 h-4" />
                   </div>
-                  <p className="text-xs font-bold text-slate-700">No Snags Reported</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">No punch items recorded for this range.</p>
+                  <p className="text-xs font-bold text-slate-700">{tr("No Snags Reported")}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{tr("No punch items recorded for this range.")}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                  <table className="w-full text-start border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                        <th className="pb-2">Snag Title</th>
-                        <th className="pb-2">Priority</th>
-                        <th className="pb-2">Status</th>
-                        <th className="pb-2 text-right">Date</th>
+                        <th className="pb-2">{tr("Snag Title")}</th>
+                        <th className="pb-2">{tr("Priority")}</th>
+                        <th className="pb-2">{tr("Status")}</th>
+                        <th className="pb-2 text-end">{tr("Date")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {rangeSnags.map((snag, idx) => (
                         <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                          <td className="py-2.5 pr-2">
-                            <div className="font-semibold text-slate-900 truncate max-w-[180px]">{snag.title}</div>
-                            {snag.description && <div className="text-[10px] text-slate-400 truncate max-w-[180px]">{snag.description}</div>}
+                          <td className="py-2.5 pe-2">
+                            <div className="font-semibold text-slate-900 truncate max-w-[180px]">{tr(snag.title)}</div>
+                            {snag.description && <div className="text-[10px] text-slate-400 truncate max-w-[180px]">{tr(snag.description)}</div>}
                           </td>
-                          <td className="py-2.5 pr-2">
+                          <td className="py-2.5 pe-2">
                             <span className={cn(
                               'px-2 py-0.5 rounded-md text-[10px] font-semibold border',
                               snag.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-100' :
                               snag.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
                               'bg-blue-50 text-blue-700 border-blue-100'
                             )}>
-                              {snag.priority}
+                              {tr(snag.priority)}
                             </span>
                           </td>
-                          <td className="py-2.5 pr-2">
+                          <td className="py-2.5 pe-2">
                             <span className={cn(
                               'px-2 py-0.5 rounded-md text-[10px] font-semibold border',
                               snag.status === 'Resolved' || snag.status === 'Closed'
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                 : 'bg-amber-50 text-amber-700 border-amber-100'
                             )}>
-                              {snag.status}
+                              {tr(snag.status)}
                             </span>
                           </td>
-                          <td className="py-2.5 text-right text-slate-400 text-[11px] whitespace-nowrap">
+                          <td className="py-2.5 text-end text-slate-400 text-[11px] whitespace-nowrap">
                             {safeFormatDate(snag.createdAt)}
                           </td>
                         </tr>
@@ -1042,12 +1047,12 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                 <Activity className="w-4 h-4 text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Activity Logs</h3>
-                <p className="text-xs text-slate-400 font-medium">Audit trail of actions performed on this project</p>
+                <h3 className="text-sm font-bold text-slate-900">{tr("Activity Logs")}</h3>
+                <p className="text-xs text-slate-400 font-medium">{tr("Audit trail of actions performed on this project")}</p>
               </div>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60">
-              {rangeLogs.length} {rangeLogs.length === 1 ? 'Record' : 'Records'}
+              {rangeLogs.length} {rangeLogs.length === 1 ? tr("Record") : tr("Records")}
             </span>
           </div>
 
@@ -1056,19 +1061,19 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
                 <Activity className="w-5 h-5" />
               </div>
-              <p className="text-xs font-bold text-slate-700">No Activity Logs Found</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">No logged actions recorded within this date range.</p>
+              <p className="text-xs font-bold text-slate-700">{tr("No Activity Logs Found")}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">{tr("No logged actions recorded within this date range.")}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-start border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10.5px]">
-                    <th className="px-4 py-3">User</th>
-                    <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Action</th>
-                    <th className="px-4 py-3">Details</th>
-                    <th className="px-4 py-3 text-right">Date & Time</th>
+                    <th className="px-4 py-3">{tr("User")}</th>
+                    <th className="px-4 py-3">{tr("Role")}</th>
+                    <th className="px-4 py-3">{tr("Action")}</th>
+                    <th className="px-4 py-3">{tr("Details")}</th>
+                    <th className="px-4 py-3 text-end">{tr("Date & Time")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -1086,9 +1091,9 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-600 font-bold text-[10px] flex items-center justify-center shrink-0">
-                              {initials}
+                              {tr(initials)}
                             </div>
-                            <span className="font-bold text-slate-900 truncate">{userName}</span>
+                            <span className="font-bold text-slate-900 truncate">{tr(userName)}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
@@ -1098,13 +1103,13 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                         </td>
                         <td className="px-4 py-3">
                           <span className="inline-block px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
-                            {log.action}
+                            {tr(log.action)}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-slate-600 max-w-sm truncate" title={log.details}>
-                          {log.details}
+                          {tr(log.details)}
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-400 font-medium whitespace-nowrap">
+                        <td className="px-4 py-3 text-end text-slate-400 font-medium whitespace-nowrap">
                           {safeFormatDateTime(log.timestamp)}
                         </td>
                       </tr>
@@ -1140,7 +1145,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                     <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-5 h-5 text-blue-600" />
                     </div>
-                    <p className="text-base font-bold text-gray-900">Task Details</p>
+                    <p className="text-base font-bold text-gray-900">{tr("Task Details")}</p>
                   </div>
                   <button
                     onClick={() => setSelectedTask(null)}
@@ -1152,20 +1157,20 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
 
                 <div className="space-y-4">
                   <div>
-                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Task Title</h5>
-                    <p className="text-sm font-semibold text-gray-900 mt-1">{selectedTask.title}</p>
+                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{tr("Task Title")}</h5>
+                    <p className="text-sm font-semibold text-gray-900 mt-1">{tr(selectedTask.title)}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Completed By</h5>
+                      <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{tr("Completed By")}</h5>
                       <p className="text-xs font-medium text-slate-700 mt-1 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-slate-400" />
                         {getMemberName(selectedTask.assignedTo)}
                       </p>
                     </div>
                     <div>
-                      <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Completed On</h5>
+                      <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{tr("Completed On")}</h5>
                       <p className="text-xs font-medium text-slate-700 mt-1 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
                         {safeFormatDate(selectedTask.completedAtDate)}
@@ -1176,21 +1181,21 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                   {selectedTask.completionNote && (
                     <div className="bg-blue-50/50 border border-blue-100/60 rounded-xl p-4">
                       <p className="text-xs font-bold text-blue-600 flex items-center gap-1">
-                        <MessageSquare className="w-3.5 h-3.5" /> Completion Note
+                        <MessageSquare className="w-3.5 h-3.5" />{tr(" Completion Note")}
                       </p>
                       <p className="text-xs text-slate-700 font-medium mt-2 leading-relaxed whitespace-pre-wrap">
-                        {selectedTask.completionNote}
+                        {tr(selectedTask.completionNote)}
                       </p>
                     </div>
                   )}
 
                   <div>
-                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Proof of Work</h5>
+                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{tr("Proof of Work")}</h5>
                     {selectedTask.proofImage?.url ? (
                       <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50 aspect-video relative group">
                         <img loading="lazy" decoding="async"
                           src={selectedTask.proofImage.url}
-                          alt="Proof of work"
+                          alt={tr("Proof of work")}
                           className="w-full h-full object-cover"
                         />
                         <a
@@ -1199,13 +1204,13 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                           rel="noreferrer"
                           className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5"
                         >
-                          <ImageIcon className="w-4 h-4" /> View Full Image
+                          <ImageIcon className="w-4 h-4" />{tr(" View Full Image")}
                         </a>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center p-8 border border-dashed border-gray-200 rounded-xl bg-gray-50 text-slate-400 text-center gap-1.5">
                         <ImageIcon className="w-5 h-5 text-gray-300" />
-                        <p className="text-xs font-medium">No proof image provided</p>
+                        <p className="text-xs font-medium">{tr("No proof image provided")}</p>
                       </div>
                     )}
                   </div>
@@ -1216,7 +1221,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                     onClick={() => setSelectedTask(null)}
                     className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-bold text-slate-700 transition-colors"
                   >
-                    Close
+                    {tr("Close")}
                   </button>
                 </div>
               </div>

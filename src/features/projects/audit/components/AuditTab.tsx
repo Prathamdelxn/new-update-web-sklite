@@ -1,4 +1,6 @@
 'use client';
+import { tr } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,9 +45,9 @@ const StatCard = ({
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0">
-      <div className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{value}</div>
-      <div className="text-xs text-slate-500 font-medium truncate">{label}</div>
-      {sub && <div className="text-[11px] text-slate-400 font-normal truncate mt-0.5">{sub}</div>}
+      <div className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{tr(value)}</div>
+      <div className="text-xs text-slate-500 font-medium truncate">{tr(label)}</div>
+      {sub && <div className="text-[11px] text-slate-400 font-normal truncate mt-0.5">{tr(sub)}</div>}
     </div>
   </div>
 );
@@ -150,7 +152,7 @@ function buildAuditLog(project: any) {
     entries.push({
       id: `budget-${b._id || Math.random()}`,
       action: actionKey,
-      details: `${formatCurrency(Number(b.amount), project?.currency || '$')} — ${b.reason}`,
+      details: `${formatCurrency(Number(b.amount), projectCurrency(project))} — ${b.reason}`,
       userName: b.updatedByName || 'System',
       userRole: null,
       timestamp: b.timestamp || b.createdAt,
@@ -223,13 +225,13 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
             <History className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">Project Audit Trail</h2>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Immutable activity ledger and project execution history</p>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">{tr("Project Audit Trail")}</h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{tr("Immutable activity ledger and project execution history")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 rounded-md border border-slate-200/60 text-slate-700">
-            Total Logs: <span className="font-bold text-slate-900">{allEntries.length}</span>
+            {tr("Total Logs: ")}<span className="font-bold text-slate-900">{allEntries.length}</span>
           </span>
         </div>
       </div>
@@ -237,7 +239,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
       {/* ── Stats Cards Row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-          label="Total Events"
+          label={tr("Total Events")}
           value={allEntries.length}
           icon={History}
           accent="text-blue-600"
@@ -245,7 +247,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
           sub="immutable ledger entries"
         />
         <StatCard
-          label="Issues Logged"
+          label={tr("Issues Logged")}
           value={totalByCategory.issues}
           icon={AlertCircle}
           accent="text-amber-600"
@@ -253,7 +255,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
           sub="issue lifecycle events"
         />
         <StatCard
-          label="Snags Recorded"
+          label={tr("Snags Recorded")}
           value={totalByCategory.snags}
           icon={Wrench}
           accent="text-purple-600"
@@ -261,7 +263,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
           sub="defect & punch actions"
         />
         <StatCard
-          label="Financial Actions"
+          label={tr("Financial Actions")}
           value={totalByCategory.finance}
           icon={Coins}
           accent="text-emerald-600"
@@ -293,10 +295,10 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
                 )}
               >
                 <Icon className={cn("w-3.5 h-3.5", isActive ? "text-white" : "text-slate-400")} />
-                <span>{f.label}</span>
+                <span>{tr(f.label)}</span>
                 {count > 0 && (
                   <span className={cn(
-                    'ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold leading-none',
+                    'ms-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold leading-none',
                     isActive ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
                   )}>
                     {count}
@@ -316,8 +318,8 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search audit trail..."
-            className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200/80 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
+            placeholder={tr("Search audit trail...")}
+            className="w-full ps-8 pe-7 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200/80 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
           />
           {searchQuery && (
             <button
@@ -336,11 +338,11 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
           <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-3 text-slate-400">
             <History className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-800">No activity logs found</p>
+          <p className="text-sm font-bold text-slate-800">{tr("No activity logs found")}</p>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
             {searchQuery
-              ? `No logs match "${searchQuery}". Try clearing your search.`
-              : 'Changes, status transitions, and execution records will automatically appear here.'}
+              ? tr("No logs match \"{{searchQuery}}\". Try clearing your search.", { searchQuery: searchQuery })
+              : tr("Changes, status transitions, and execution records will automatically appear here.")}
           </p>
           {searchQuery && (
             <button
@@ -348,22 +350,22 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
               onClick={() => setSearchQuery('')}
               className="mt-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
             >
-              Clear Search
+              {tr("Clear Search")}
             </button>
           )}
         </div>
       ) : (
         <div className="space-y-4">
           {/* Timeline Wrapper grouped by date */}
-          <div className="relative pl-6 sm:pl-8 before:absolute before:top-4 before:bottom-4 before:left-2 sm:before:left-3 before:w-[2px] before:bg-slate-200">
+          <div className="relative ps-6 sm:ps-8 before:absolute before:top-4 before:bottom-4 before:left-2 sm:before:left-3 before:w-[2px] before:bg-slate-200">
             <AnimatePresence mode="popLayout">
               {Object.entries(grouped).map(([dateKey, entries]) => (
                 <div key={dateKey} className="space-y-4">
                   {/* Date separator header */}
-                  <div className="flex items-center gap-3 my-4 -ml-6 sm:-ml-8 relative z-10">
+                  <div className="flex items-center gap-3 my-4 -ms-6 sm:-ms-8 relative z-10">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold uppercase tracking-wider shadow-none">
                       <Calendar className="w-3 h-3 text-slate-500" />
-                      <span>{dateKey}</span>
+                      <span>{tr(dateKey)}</span>
                     </div>
                     <div className="flex-1 h-px bg-slate-200/80" />
                   </div>
@@ -396,7 +398,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
                                 meta.color
                               )}>
                                 <ActionIcon className="w-3.5 h-3.5" />
-                                {meta.label}
+                                {tr(meta.label)}
                               </span>
                               
                               {/* User tag with initials avatar */}
@@ -405,11 +407,11 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
                                   {getInitials(log.userName)}
                                 </div>
                                 <span className="font-bold text-slate-900 truncate">
-                                  {log.userName}
+                                  {tr(log.userName)}
                                 </span>
                                 {log.userRole && (
                                   <span className="text-[10px] uppercase font-semibold text-slate-500 bg-slate-50 border border-slate-200/60 px-1.5 py-0.5 rounded shrink-0">
-                                    {log.userRole}
+                                    {tr(log.userRole)}
                                   </span>
                                 )}
                               </div>
@@ -426,7 +428,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
 
                           {/* Log details */}
                           <p className="text-xs sm:text-sm text-slate-700 mt-2.5 font-normal leading-relaxed">
-                            {log.details}
+                            {tr(log.details)}
                           </p>
                         </div>
                       </motion.div>
@@ -447,12 +449,12 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                Previous
+                {tr("Previous")}
               </button>
               
               <span className="text-xs font-medium text-slate-500">
-                Page <span className="font-bold text-slate-900">{currentPage}</span> of <span className="font-bold text-slate-900">{totalPages}</span>
-                <span className="hidden sm:inline text-slate-400 ml-1.5">({totalItems} entries)</span>
+                {tr("Page ")}<span className="font-bold text-slate-900">{tr(currentPage)}</span>{tr(" of ")}<span className="font-bold text-slate-900">{tr(totalPages)}</span>
+                <span className="hidden sm:inline text-slate-400 ms-1.5">({tr(totalItems)}{tr(" entries)")}</span>
               </span>
 
               <button
@@ -461,7 +463,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
                 disabled={currentPage === totalPages}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
-                Next
+                {tr("Next")}
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

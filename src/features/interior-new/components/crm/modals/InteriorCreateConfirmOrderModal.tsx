@@ -3,30 +3,7 @@ import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  ShieldCheck,
-  Receipt,
-  FileText,
-  Paperclip,
-  UploadCloud,
-  Trash2,
-  Eye,
-  Building2,
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  Image as ImageIcon,
-  DollarSign,
-  CheckCircle2,
-  Tag,
-  Mail,
-  Phone,
-  Layers,
-  Send,
-  Check,
-  AlertCircle,
-} from 'lucide-react';
+import { X, ShieldCheck, Receipt, FileText, Paperclip, UploadCloud, Trash2, Eye, Building2, Plus, ChevronDown, ChevronUp, Image as ImageIcon, CheckCircle2, Tag, Mail, Phone, Layers, Send, Check, AlertCircle, Banknote } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { useCurrency } from '@/hooks/useCurrency';

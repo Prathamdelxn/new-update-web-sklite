@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -19,11 +20,11 @@ export default function MembersPage() {
 
         <div>
           <h1 className="text-3xl font-bold">
-            Member Management
+            {tr("Member Management")}
           </h1>
 
           <p className="text-gray-500 mt-1">
-            Manage all organization members.
+            {tr("Manage all organization members.")}
           </p>
         </div>
       </div>

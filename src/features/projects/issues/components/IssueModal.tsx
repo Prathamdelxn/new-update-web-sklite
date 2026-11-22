@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -94,10 +95,10 @@ export const IssueModal: React.FC<IssueModalProps> = ({
 
         if (isEdit) {
           await api.patch(`/snags/${existingIssue._id}`, snagPayload);
-          toast.success(`Snag updated successfully!`);
+          toast.success(tr("Snag updated successfully!"));
         } else {
           await api.post(`/projects/${projectId}/snags`, snagPayload);
-          toast.success(`Snag reported successfully!`);
+          toast.success(tr("Snag reported successfully!"));
         }
       } else {
         const issuePayload = {
@@ -111,10 +112,10 @@ export const IssueModal: React.FC<IssueModalProps> = ({
 
         if (isEdit) {
           await api.patch(`/issues/${existingIssue._id}`, issuePayload);
-          toast.success(`Issue updated successfully!`);
+          toast.success(tr("Issue updated successfully!"));
         } else {
           await api.post(`/projects/${projectId}/issues`, issuePayload);
-          toast.success(`Issue reported successfully!`);
+          toast.success(tr("Issue reported successfully!"));
         }
       }
       onSuccess();
@@ -122,7 +123,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
       setFormData({ title: '', description: '', priority: 'Medium', category: 'Technical', assignedTo: '' });
       setFiles([]);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || `Failed to ${isEdit ? 'update' : 'report'} ${type}`);
+      toast.error(error.response?.data?.message || tr("Failed to {{value}} {{type}}", { value: isEdit ? 'update' : 'report', type: type }));
     } finally {
       setIsLoading(false);
     }
@@ -155,8 +156,8 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                     <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-none">{isEdit ? `Edit ${type}` : `Report New ${type}`}</h2>
-                    <p className="text-[10px] sm:text-xs text-slate-500 mt-1">Project Tracking & Accountability</p>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-none">{isEdit ? `Edit ${type}` : tr("Report New {{type}}", { type: type })}</h2>
+                    <p className="text-[10px] sm:text-xs text-slate-500 mt-1">{tr("Project Tracking & Accountability")}</p>
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors shrink-0">
@@ -168,7 +169,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
               <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1">
                 <form id="issue-form" onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-600 ml-1">Title</label>
+                    <label className="text-sm font-medium text-slate-600 ms-1">{tr("Title")}</label>
                     <input
                       type="text"
                       required
@@ -182,34 +183,34 @@ export const IssueModal: React.FC<IssueModalProps> = ({
 
                   {canAssign && (
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-600 ml-1">Assign To</label>
+                    <label className="text-sm font-medium text-slate-600 ms-1">{tr("Assign To")}</label>
                     <select
                       value={formData.assignedTo}
                       onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all"
                     >
-                      <option value="">Select Assignee (Optional)</option>
+                      <option value="">{tr("Select Assignee (Optional)")}</option>
                       {users.map(u => (
-                        <option key={u._id} value={u._id}>{u.name}</option>
+                        <option key={u._id} value={u._id}>{tr(u.name)}</option>
                       ))}
                     </select>
                   </div>
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-600 ml-1">Description</label>
+                    <label className="text-sm font-medium text-slate-600 ms-1">{tr("Description")}</label>
                     <textarea
                       required
                       rows={3}
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all resize-none"
-                      placeholder="Detail the issue and impact..."
+                      placeholder={tr("Detail the issue and impact...")}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-600 ml-1">Attach Photos</label>
+                    <label className="text-sm font-medium text-slate-600 ms-1">{tr("Attach Photos")}</label>
                     <input
                       type="file"
                       multiple
@@ -219,10 +220,10 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                           setFiles(Array.from(e.target.files));
                         }
                       }}
-                      className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all"
+                      className="w-full text-sm text-slate-500 file:me-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all"
                     />
                     {files.length > 0 && (
-                      <p className="text-xs text-slate-500 ml-1">{files.length} file(s) selected</p>
+                      <p className="text-xs text-slate-500 ms-1">{files.length}{tr(" file(s) selected")}</p>
                     )}
                   </div>
 
@@ -236,7 +237,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                   onClick={onClose}
                   className="flex-1 py-2.5 sm:py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-bold transition-all active:scale-[0.98] text-sm"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -247,7 +248,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-                      <span>{isEdit ? 'Saving...' : 'Reporting...'}</span>
+                      <span>{isEdit ? tr("Saving...") : tr("Reporting...")}</span>
                     </>
                   ) : (
                     <span>{isEdit ? `Save ${type}` : `Report ${type}`}</span>

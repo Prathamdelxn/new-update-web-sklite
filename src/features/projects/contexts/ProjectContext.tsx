@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/services/api.client';
@@ -46,7 +47,7 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
         return;
       }
       console.error('Error fetching project:', err);
-      toast.error(err?.response?.data?.message || 'Failed to load project');
+      toast.error(err?.response?.data?.message || tr("Failed to load project"));
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,7 @@
 'use client';
+import { tr } from '@/i18n';
 
+import { LanguageSelector } from '@/components/interior/LanguageSwitcher';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -142,7 +144,7 @@ export default function SettingsPage() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profileName.trim()) {
-      return toast.error('Full name is required');
+      return toast.error(tr("Full name is required"));
     }
 
     setSavingProfile(true);
@@ -161,7 +163,7 @@ export default function SettingsPage() {
       if (refreshUser) {
         refreshUser(updatedUser);
       }
-      toast.success('Profile details saved successfully!');
+      toast.success(tr("Profile details saved successfully!"));
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to update profile';
       toast.error(msg);
@@ -174,7 +176,7 @@ export default function SettingsPage() {
   const handleSaveOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgName.trim()) {
-      return toast.error('Organization name cannot be empty');
+      return toast.error(tr("Organization name cannot be empty"));
     }
 
     setSavingOrg(true);
@@ -195,7 +197,7 @@ export default function SettingsPage() {
         });
       }
       if (updatedOrg) setOrgData(updatedOrg);
-      toast.success('Organization updated successfully!');
+      toast.success(tr("Organization updated successfully!"));
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to update organization';
       toast.error(msg);
@@ -208,12 +210,12 @@ export default function SettingsPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword)
-      return toast.error('Please enter your current password');
-    if (!newPassword) return toast.error('Please enter a new password');
+      return toast.error(tr("Please enter your current password"));
+    if (!newPassword) return toast.error(tr("Please enter a new password"));
     if (newPassword.length < 8)
-      return toast.error('New password must be at least 8 characters long');
+      return toast.error(tr("New password must be at least 8 characters long"));
     if (newPassword !== confirmPassword)
-      return toast.error('New passwords do not match');
+      return toast.error(tr("New passwords do not match"));
 
     setSavingPassword(true);
     try {
@@ -221,7 +223,7 @@ export default function SettingsPage() {
         currentPassword,
         newPassword,
       });
-      toast.success('Password changed successfully!');
+      toast.success(tr("Password changed successfully!"));
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -246,7 +248,7 @@ export default function SettingsPage() {
     if (!orgId) return;
     navigator.clipboard.writeText(orgId);
     setCopiedId(true);
-    toast.success('Workspace ID copied to clipboard');
+    toast.success(tr("Workspace ID copied to clipboard"));
     setTimeout(() => setCopiedId(false), 2000);
   };
 
@@ -259,7 +261,7 @@ export default function SettingsPage() {
         pushNotifications: nextVal,
       });
       toast.success(
-        nextVal ? 'Push notifications enabled' : 'Push notifications muted'
+        nextVal ? tr("Push notifications enabled") : tr("Push notifications muted")
       );
     } catch {
       // Non-blocking UI update
@@ -271,7 +273,7 @@ export default function SettingsPage() {
     setLanguage(newLang);
     try {
       localStorage.setItem('language', newLang);
-      toast.success(`Language set to ${newLang}`);
+      toast.success(tr("Language set to {{newLang}}", { newLang: newLang }));
     } catch {
       // silent
     }
@@ -305,11 +307,11 @@ export default function SettingsPage() {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                Settings & <span className="text-blue-600">Preferences</span>
+                {tr("Settings & ")}<span className="text-blue-600">{tr("Preferences")}</span>
               </h1>
             </div>
             <p className="text-xs font-semibold text-slate-500 mt-0.5">
-              Configure your personal account, organization workspace, security, and project preferences.
+              {tr("Configure your personal account, organization workspace, security, and project preferences.")}
             </p>
           </div>
         </div>
@@ -337,7 +339,7 @@ export default function SettingsPage() {
                     isActive ? 'text-blue-600' : 'text-slate-400'
                   )}
                 />
-                <span>{tab.label}</span>
+                <span>{tr(tab.label)}</span>
               </button>
             );
           })}
@@ -356,7 +358,7 @@ export default function SettingsPage() {
                     </div>
                     <div
                       className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white"
-                      title="Active"
+                      title={tr("Active")}
                     >
                       <Check className="w-2 h-2 stroke-[3]" />
                     </div>
@@ -365,22 +367,22 @@ export default function SettingsPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-base font-extrabold text-slate-900 tracking-tight truncate">
-                        {currentOrgName}
+                        {tr(currentOrgName)}
                       </h2>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px] uppercase tracking-wider border border-blue-200">
                         <Building2 className="w-3 h-3 text-blue-600" />
-                        Organization
+                        {tr("Organization")}
                       </span>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px] uppercase tracking-wider border border-slate-200">
                         <ShieldCheck className="w-3 h-3 text-blue-600" />
-                        {roleName}
+                        {tr(roleName)}
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-500 mt-1">
                       <span className="flex items-center gap-1.5 font-bold text-slate-800">
                         <User className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{user?.name || 'Administrator'}</span>
+                        <span>{user?.name || tr("Administrator")}</span>
                       </span>
                       <span className="text-slate-300">•</span>
                       <span className="flex items-center gap-1.5 text-slate-500 truncate">
@@ -394,12 +396,12 @@ export default function SettingsPage() {
                 <div className="flex items-center sm:flex-col sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 shrink-0">
                   <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-150">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Verified & Active
+                    {tr("Verified & Active")}
                   </span>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Industry:{' '}
+                    {tr("Industry:")}{' '}
                     <span className="font-semibold text-slate-600">
-                      Construction
+                      {tr("Construction")}
                     </span>
                   </p>
                 </div>
@@ -413,17 +415,17 @@ export default function SettingsPage() {
             >
               <div className="pb-3 border-b border-slate-100">
                 <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-                  Personal Information
+                  {tr("Personal Information")}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Update your contact profile name and phone number.
+                  {tr("Update your contact profile name and phone number.")}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Full Name <span className="text-rose-500">*</span>
+                    {tr("Full Name ")}<span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -432,17 +434,17 @@ export default function SettingsPage() {
                       required
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value)}
-                      placeholder="e.g. John Doe"
-                      className="w-full pl-9.5 pr-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                      placeholder={tr("e.g. John Doe")}
+                      className="w-full ps-9.5 pe-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Email Address{' '}
+                    {tr("Email Address")}{' '}
                     <span className="text-[11px] text-slate-400 font-normal">
-                      (Primary Login)
+                      {tr("(Primary Login)")}
                     </span>
                   </label>
                   <div className="relative">
@@ -451,17 +453,17 @@ export default function SettingsPage() {
                       type="email"
                       disabled
                       value={user?.email || ''}
-                      className="w-full pl-9.5 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-500 cursor-not-allowed"
+                      className="w-full ps-9.5 pe-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-500 cursor-not-allowed"
                     />
                   </div>
                   <p className="text-[10px] text-slate-400 mt-1">
-                    To change login email, contact your super administrator.
+                    {tr("To change login email, contact your super administrator.")}
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Phone Number
+                    {tr("Phone Number")}
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -470,14 +472,14 @@ export default function SettingsPage() {
                       value={profilePhone}
                       onChange={(e) => setProfilePhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full pl-9.5 pr-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                      className="w-full ps-9.5 pe-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Global Role
+                    {tr("Global Role")}
                   </label>
                   <div className="relative">
                     <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -485,7 +487,7 @@ export default function SettingsPage() {
                       type="text"
                       disabled
                       value={roleName}
-                      className="w-full pl-9.5 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-500 cursor-not-allowed font-medium"
+                      className="w-full ps-9.5 pe-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-500 cursor-not-allowed font-medium"
                     />
                   </div>
                 </div>
@@ -501,7 +503,7 @@ export default function SettingsPage() {
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   )}
                   <span>
-                    {savingProfile ? 'Saving Changes...' : 'Save Profile Changes'}
+                    {savingProfile ? tr("Saving Changes...") : tr("Save Profile Changes")}
                   </span>
                 </button>
               </div>
@@ -521,17 +523,17 @@ export default function SettingsPage() {
                 <div>
                   <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-blue-600" />
-                    <span>Organization & Workspace Details</span>
+                    <span>{tr("Organization & Workspace Details")}</span>
                   </h3>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    This organization name is shown in the workspace header, dashboard sidebar, and reports.
+                    {tr("This organization name is shown in the workspace header, dashboard sidebar, and reports.")}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider border border-blue-200 flex items-center gap-1">
                     <HardHat className="w-3.5 h-3.5" />
-                    Construction Workspace
+                    {tr("Construction Workspace")}
                   </span>
                 </div>
               </div>
@@ -539,7 +541,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Organization Name <span className="text-rose-500">*</span>
+                    {tr("Organization Name ")}<span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -548,24 +550,24 @@ export default function SettingsPage() {
                       required
                       value={orgName}
                       onChange={(e) => setOrgName(e.target.value)}
-                      placeholder="e.g. Apex Construction Solutions"
+                      placeholder={tr("e.g. Apex Construction Solutions")}
                       disabled={!isAdmin || savingOrg}
                       className={cn(
-                        'w-full pl-9.5 pr-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300',
+                        'w-full ps-9.5 pe-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300',
                         !isAdmin && 'cursor-not-allowed bg-slate-50 text-slate-500'
                       )}
                     />
                   </div>
                   {!isAdmin && (
                     <p className="text-[10px] text-amber-600 mt-1">
-                      Only organization administrators can rename this workspace.
+                      {tr("Only organization administrators can rename this workspace.")}
                     </p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Workspace Unique ID
+                    {tr("Workspace Unique ID")}
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -574,13 +576,13 @@ export default function SettingsPage() {
                       value={
                         orgData?._id || user?.organizationId || 'Loading...'
                       }
-                      className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-mono text-slate-600 outline-none"
+                      className="w-full ps-3 pe-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-mono text-slate-600 outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleCopyOrgId}
                       className="shrink-0 p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition cursor-pointer"
-                      title="Copy ID"
+                      title={tr("Copy ID")}
                     >
                       {copiedId ? (
                         <Check className="w-4 h-4 text-emerald-600" />
@@ -593,13 +595,13 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Workspace Industry
+                    {tr("Workspace Industry")}
                   </label>
                   <input
                     type="text"
                     disabled
                     value="Construction & Civil Infrastructure"
-                    className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-600 outline-none cursor-not-allowed"
+                    className="w-full ps-3 pe-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-600 outline-none cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -615,7 +617,7 @@ export default function SettingsPage() {
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     )}
                     <span>
-                      {savingOrg ? 'Updating...' : 'Save Organization Name'}
+                      {savingOrg ? tr("Updating...") : tr("Save Organization Name")}
                     </span>
                   </button>
                 </div>
@@ -631,10 +633,10 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">
-                      Team & Role Permissions
+                      {tr("Team & Role Permissions")}
                     </h4>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Manage workspace members, assign Project Managers, Engineers, and Contractors.
+                      {tr("Manage workspace members, assign Project Managers, Engineers, and Contractors.")}
                     </p>
                   </div>
                 </div>
@@ -642,7 +644,7 @@ export default function SettingsPage() {
                   href="/construction-dashboard/users"
                   className="inline-flex items-center justify-between w-full px-3.5 py-2 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/80 text-xs font-bold transition"
                 >
-                  <span>Open Members & Roles</span>
+                  <span>{tr("Open Members & Roles")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -654,10 +656,10 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">
-                      Project Templates & Categories
+                      {tr("Project Templates & Categories")}
                     </h4>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Standardize construction templates, budgets, and categorization structures.
+                      {tr("Standardize construction templates, budgets, and categorization structures.")}
                     </p>
                   </div>
                 </div>
@@ -665,7 +667,7 @@ export default function SettingsPage() {
                   href="/construction-dashboard/templates"
                   className="inline-flex items-center justify-between w-full px-3.5 py-2 rounded-lg bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200/80 text-xs font-bold transition"
                 >
-                  <span>Manage Templates</span>
+                  <span>{tr("Manage Templates")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -683,17 +685,17 @@ export default function SettingsPage() {
               <div className="pb-3 border-b border-slate-100">
                 <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <Lock className="w-4 h-4 text-blue-600" />
-                  <span>Update Account Password</span>
+                  <span>{tr("Update Account Password")}</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Ensure your account uses a secure password of at least 8 characters.
+                  {tr("Ensure your account uses a secure password of at least 8 characters.")}
                 </p>
               </div>
 
               <div className="space-y-3.5 max-w-xl">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Current Password
+                    {tr("Current Password")}
                   </label>
                   <div className="relative">
                     <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -703,7 +705,7 @@ export default function SettingsPage() {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full pl-9.5 pr-10 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full ps-9.5 pe-10 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                     <button
                       type="button"
@@ -721,7 +723,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    New Password
+                    {tr("New Password")}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -731,8 +733,8 @@ export default function SettingsPage() {
                       minLength={8}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Min. 8 characters"
-                      className="w-full pl-9.5 pr-10 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder={tr("Min. 8 characters")}
+                      className="w-full ps-9.5 pe-10 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                     <button
                       type="button"
@@ -750,7 +752,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Confirm New Password
+                    {tr("Confirm New Password")}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -759,8 +761,8 @@ export default function SettingsPage() {
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-enter new password"
-                      className="w-full pl-9.5 pr-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder={tr("Re-enter new password")}
+                      className="w-full ps-9.5 pe-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
                 </div>
@@ -776,7 +778,7 @@ export default function SettingsPage() {
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   )}
                   <span>
-                    {savingPassword ? 'Updating Password...' : 'Update Password'}
+                    {savingPassword ? tr("Updating Password...") : tr("Update Password")}
                   </span>
                 </button>
               </div>
@@ -786,10 +788,10 @@ export default function SettingsPage() {
             <div className="rounded-xl bg-white border border-slate-300 p-5 space-y-3">
               <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 <Shield className="w-4 h-4 text-emerald-600" />
-                <span>Session & Device Security</span>
+                <span>{tr("Session & Device Security")}</span>
               </h3>
               <p className="text-[11px] text-slate-500">
-                You are currently signed in on this web browser with an active encrypted session.
+                {tr("You are currently signed in on this web browser with an active encrypted session.")}
               </p>
 
               <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-50 border border-slate-200/80">
@@ -799,16 +801,16 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900">
-                      Current Web Session (Active)
+                      {tr("Current Web Session (Active)")}
                     </p>
                     <p className="text-[11px] text-slate-400">
-                      Signed in as {user?.email}
+                      {tr("Signed in as ")}{user?.email}
                     </p>
                   </div>
                 </div>
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Secure
+                  {tr("Secure")}
                 </span>
               </div>
             </div>
@@ -822,22 +824,22 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/10 border border-white/20 text-[10px] font-bold uppercase tracking-wider text-blue-200">
                   <Sparkles className="w-3 h-3 text-yellow-300" />
-                  <span>Subscription Plan</span>
+                  <span>{tr("Subscription Plan")}</span>
                 </div>
                 <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Active Subscription
+                  {tr("Active Subscription")}
                 </span>
               </div>
 
               <div>
                 <h3 className="text-xl font-extrabold tracking-tight">
                   {loadingPlan
-                    ? 'Loading Plan...'
+                    ? tr("Loading Plan...")
                     : `${subscription?.plan || 'Enterprise'} Plan`}
                 </h3>
                 <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                  Your workspace includes full access to BOQs, site drawings, milestone budgets, daily progress logs, and multi-user governance.
+                  {tr("Your workspace includes full access to BOQs, site drawings, milestone budgets, daily progress logs, and multi-user governance.")}
                 </p>
               </div>
 
@@ -846,7 +848,7 @@ export default function SettingsPage() {
                   href="/construction-dashboard/settings/plan-billing"
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white text-slate-900 font-bold text-xs hover:bg-slate-100 transition"
                 >
-                  <span>Manage Plan & Invoices</span>
+                  <span>{tr("Manage Plan & Invoices")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -856,37 +858,37 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
               <div className="rounded-xl bg-white border border-slate-300 p-4">
                 <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
-                  Active Team Members
+                  {tr("Active Team Members")}
                 </p>
                 <p className="text-xl font-extrabold text-slate-900 mt-1">
                   {usageStats.users || 1}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Included in your plan
+                  {tr("Included in your plan")}
                 </p>
               </div>
 
               <div className="rounded-xl bg-white border border-slate-300 p-4">
                 <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
-                  Active Projects
+                  {tr("Active Projects")}
                 </p>
                 <p className="text-xl font-extrabold text-slate-900 mt-1">
                   {usageStats.projects || 0}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Unlimited project tracking
+                  {tr("Unlimited project tracking")}
                 </p>
               </div>
 
               <div className="rounded-xl bg-white border border-slate-300 p-4 sm:col-span-2 md:col-span-1">
                 <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
-                  Storage & Cloud Sync
+                  {tr("Storage & Cloud Sync")}
                 </p>
                 <p className="text-xl font-extrabold text-emerald-600 mt-1">
-                  Active
+                  {tr("Active")}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Real-time mobile & web sync
+                  {tr("Real-time mobile & web sync")}
                 </p>
               </div>
             </div>
@@ -901,10 +903,10 @@ export default function SettingsPage() {
               <div className="pb-3 border-b border-slate-100">
                 <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <Bell className="w-4 h-4 text-blue-600" />
-                  <span>Notification Preferences</span>
+                  <span>{tr("Notification Preferences")}</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Control how and when you receive system alerts and activity updates.
+                  {tr("Control how and when you receive system alerts and activity updates.")}
                 </p>
               </div>
 
@@ -912,10 +914,10 @@ export default function SettingsPage() {
                 <div className="py-3 flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs font-bold text-slate-900">
-                      Push Notifications
+                      {tr("Push Notifications")}
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Receive immediate notifications for critical site events.
+                      {tr("Receive immediate notifications for critical site events.")}
                     </p>
                   </div>
                   <button
@@ -938,10 +940,10 @@ export default function SettingsPage() {
                 <div className="py-3 flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs font-bold text-slate-900">
-                      Project Milestone & Task Alerts
+                      {tr("Project Milestone & Task Alerts")}
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Alerts when milestone statuses change or snag items are assigned.
+                      {tr("Alerts when milestone statuses change or snag items are assigned.")}
                     </p>
                   </div>
                   <button
@@ -964,10 +966,10 @@ export default function SettingsPage() {
                 <div className="py-3 flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs font-bold text-slate-900">
-                      Material Requests & Purchase Updates
+                      {tr("Material Requests & Purchase Updates")}
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Notifies when materials are requested, approved, or received on site.
+                      {tr("Notifies when materials are requested, approved, or received on site.")}
                     </p>
                   </div>
                   <button
@@ -994,43 +996,15 @@ export default function SettingsPage() {
               <div className="pb-3 border-b border-slate-100">
                 <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <Globe className="w-4 h-4 text-blue-600" />
-                  <span>Language & Regional Display</span>
+                  <span>{tr("Language & Regional Display")}</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Select your preferred user interface language.
+                  {tr("Choose the language for the app. Arabic switches the layout to right-to-left.")}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                {[
-                  'English',
-                  'Hindi',
-                  'Spanish',
-                  'French',
-                  'Arabic',
-                  'German',
-                ].map((lang) => {
-                  const isSelected = language === lang;
-                  return (
-                    <button
-                      key={lang}
-                      type="button"
-                      onClick={() => handleSaveLanguage(lang)}
-                      className={cn(
-                        'flex items-center justify-between p-2.5 rounded-lg border text-xs font-bold transition cursor-pointer',
-                        isSelected
-                          ? 'border-blue-600 bg-blue-50/70 text-blue-700'
-                          : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                      )}
-                    >
-                      <span>{lang}</span>
-                      {isSelected && (
-                        <Check className="w-3.5 h-3.5 text-blue-600" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              {/* Real switch (English / Arabic with right-to-left), same as the mobile app */}
+              <LanguageSelector />
             </div>
           </div>
         )}
@@ -1046,10 +1020,10 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">
-                      Application Information
+                      {tr("Application Information")}
                     </h4>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      SkyStruct Lite Construction Management Platform v1.0.0
+                      {tr("SkyStruct Lite Construction Management Platform v1.0.0")}
                     </p>
                   </div>
                 </div>
@@ -1058,7 +1032,7 @@ export default function SettingsPage() {
                   onClick={() => setShowAppInfo(true)}
                   className="inline-flex items-center justify-between w-full px-3.5 py-2 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/80 text-xs font-bold transition cursor-pointer"
                 >
-                  <span>View System Specs</span>
+                  <span>{tr("View System Specs")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -1070,10 +1044,10 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">
-                      Terms & Conditions
+                      {tr("Terms & Conditions")}
                     </h4>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Review service agreements, data protection, and SLA.
+                      {tr("Review service agreements, data protection, and SLA.")}
                     </p>
                   </div>
                 </div>
@@ -1081,7 +1055,7 @@ export default function SettingsPage() {
                   href="/construction-dashboard/settings/terms"
                   className="inline-flex items-center justify-between w-full px-3.5 py-2 rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/80 text-xs font-bold transition"
                 >
-                  <span>Read Terms & Conditions</span>
+                  <span>{tr("Read Terms & Conditions")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -1091,10 +1065,10 @@ export default function SettingsPage() {
             <div className="rounded-xl bg-slate-50 border border-slate-300 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h4 className="text-xs font-bold text-slate-900">
-                  Need help or enterprise onboarding?
+                  {tr("Need help or enterprise onboarding?")}
                 </h4>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Our specialists are available to help you set up BOQs, templates, and permissions.
+                  {tr("Our specialists are available to help you set up BOQs, templates, and permissions.")}
                 </p>
               </div>
               <a
@@ -1102,7 +1076,7 @@ export default function SettingsPage() {
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-slate-800 border border-slate-200 hover:bg-slate-100 text-xs font-bold transition shrink-0"
               >
                 <Mail className="w-3.5 h-3.5 text-blue-600" />
-                <span>Contact Support</span>
+                <span>{tr("Contact Support")}</span>
               </a>
             </div>
           </div>

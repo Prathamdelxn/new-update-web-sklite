@@ -6,46 +6,7 @@ import { useParams } from 'next/navigation';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Loader2,
-  ClipboardList,
-  Ruler,
-  Image as ImageIcon,
-  FileText,
-  Calendar,
-  MapPin,
-  Maximize2,
-  DoorOpen,
-  Columns,
-  Zap,
-  Droplets,
-  Wind,
-  Armchair,
-  AlertTriangle,
-  Layers,
-  Pencil,
-  Plus,
-  Sliders,
-  Palette,
-  Sparkles,
-  Sun,
-  PenTool,
-  DollarSign,
-  Camera,
-  CheckCircle2,
-  ExternalLink,
-  UploadCloud,
-  Share2,
-  Copy,
-  Check,
-  MessageCircle,
-  Mail,
-  Clock,
-  PowerOff,
-  RotateCcw,
-  Settings,
-  Edit3,
-} from 'lucide-react';
+import { Loader2, ClipboardList, Ruler, Image as ImageIcon, FileText, Calendar, MapPin, Maximize2, DoorOpen, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Pencil, Plus, Sliders, Palette, Sparkles, Sun, PenTool, Camera, CheckCircle2, ExternalLink, UploadCloud, Share2, Copy, Check, MessageCircle, Mail, Clock, PowerOff, RotateCcw, Settings, Edit3, Banknote } from 'lucide-react';
 import { uploadToCloudinary } from '@/lib/upload';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
@@ -1022,7 +983,7 @@ export default function InteriorSiteDetailsView() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-[hsl(var(--background))] rounded-xl p-3.5 border border-[hsl(var(--border))] flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold shrink-0">
-                    <DollarSign size={17} />
+                    <Banknote size={17} />
                   </div>
                   <div className="overflow-hidden min-w-0">
                     <p className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Estimated Budget")}</p>

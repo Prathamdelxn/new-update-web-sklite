@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -325,10 +326,10 @@ export const OverviewDashboard = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-slate-900">
-            Good {getGreeting()}, {userFirstName}
+            {tr("Good ")}{getGreeting()}, {tr(userFirstName)}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Here&apos;s the live status of your construction portfolio today.
+            {tr("Here's the live status of your construction portfolio today.")}
           </p>
         </div>
 
@@ -339,10 +340,10 @@ export const OverviewDashboard = () => {
             onChange={(e) => setSelectedProjectId(e.target.value)}
             className="text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-2 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all shadow-xs"
           >
-            <option value="all">All Projects ({allProjects.length})</option>
+            <option value="all">{tr("All Projects (")}{allProjects.length})</option>
             {allProjects.map((p: any) => (
               <option key={p._id} value={p._id}>
-                {p.name} {p.code ? `(${p.code})` : ''}
+                {tr(p.name)} {p.code ? `(${p.code})` : ''}
               </option>
             ))}
           </select>
@@ -355,11 +356,11 @@ export const OverviewDashboard = () => {
             className="border-slate-200/80 hover:bg-slate-50 text-slate-700 shadow-xs"
           >
             {refreshing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin me-1.5" />
             ) : (
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+              <RefreshCw className="w-3.5 h-3.5 me-1.5" />
             )}
-            Refresh
+            {tr("Refresh")}
           </Button>
 
          
@@ -382,7 +383,7 @@ export const OverviewDashboard = () => {
             >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-slate-600 transition-colors">
-                  {kpi.title}
+                  {tr(kpi.title)}
                 </span>
                 <div
                   className={cn(
@@ -395,7 +396,7 @@ export const OverviewDashboard = () => {
               </div>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <span className={cn('text-xl font-extrabold tabular-nums', kpi.valueColor)}>
-                  {kpi.value}
+                  {tr(kpi.value)}
                 </span>
                 <span
                   className={cn(
@@ -403,7 +404,7 @@ export const OverviewDashboard = () => {
                     kpi.badgeColor
                   )}
                 >
-                  {kpi.badge}
+                  {tr(kpi.badge)}
                 </span>
               </div>
             </Link>
@@ -417,7 +418,7 @@ export const OverviewDashboard = () => {
           <div className="lg:col-span-2">
             <Card className="bg-white border border-slate-200/80 rounded-xl shadow-xs">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-semibold text-slate-900">Project Timeline & Progress</CardTitle>
+                <CardTitle className="text-base font-semibold text-slate-900">{tr("Project Timeline & Progress")}</CardTitle>
                 <div className="flex items-center gap-4 text-xs text-slate-500">
                   <div className="flex items-center bg-slate-100 p-0.5 rounded-lg">
                     {(['All', 'Month', 'Week'] as const).map((t) => (
@@ -431,18 +432,18 @@ export const OverviewDashboard = () => {
                             : 'text-slate-500 hover:text-slate-900'
                         )}
                       >
-                        {t === 'All' ? 'All time' : t}
+                        {t === 'All' ? tr("All time") : t}
                       </button>
                     ))}
                   </div>
 
                   <span className="flex items-center gap-1.5 hidden sm:inline-flex">
                     <span className="w-2 h-2 rounded-full bg-blue-600" />
-                    Planned
+                    {tr("Planned")}
                   </span>
                   <span className="flex items-center gap-1.5 hidden sm:inline-flex">
                     <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                    Actual
+                    {tr("Actual")}
                   </span>
                 </div>
               </CardHeader>
@@ -450,9 +451,9 @@ export const OverviewDashboard = () => {
                 {allProjects.length === 0 || !activeTrajectoryList.some((t: any) => (t.delivered || 0) > 0 || (t.planned || 0) > 0) ? (
                   <div className="h-[280px] flex flex-col items-center justify-center text-center p-6 space-y-2">
                     <TrendingUp className="w-8 h-8 text-slate-300" />
-                    <p className="text-sm font-semibold text-slate-700">No project activity recorded yet</p>
+                    <p className="text-sm font-semibold text-slate-700">{tr("No project activity recorded yet")}</p>
                     <p className="text-xs text-slate-400 max-w-sm">
-                      Create a project and schedule work tasks or milestones to begin tracking planned vs actual delivery trends.
+                      {tr("Create a project and schedule work tasks or milestones to begin tracking planned vs actual delivery trends.")}
                     </p>
                   </div>
                 ) : (
@@ -523,7 +524,7 @@ export const OverviewDashboard = () => {
           <div>
             <Card className="h-full bg-white border border-slate-200/80 rounded-xl shadow-xs">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold text-slate-900">Project Health</CardTitle>
+                <CardTitle className="text-base font-semibold text-slate-900">{tr("Project Health")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="relative h-[200px] outline-none focus:outline-none [&_*]:outline-none">
@@ -554,9 +555,9 @@ export const OverviewDashboard = () => {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-bold text-slate-900">{healthTotal}</span>
+                    <span className="text-2xl font-bold text-slate-900">{tr(healthTotal)}</span>
                     <span className="text-[11px] text-slate-500">
-                      {healthTotal === 1 ? 'Project' : 'Projects'}
+                      {healthTotal === 1 ? tr("Project") : tr("Projects")}
                     </span>
                   </div>
                 </div>
@@ -564,7 +565,7 @@ export const OverviewDashboard = () => {
                 <div className="space-y-2 mt-2">
                   {healthTotal === 0 ? (
                     <p className="text-xs text-slate-400 text-center py-2">
-                      No active projects in this workspace
+                      {tr("No active projects in this workspace")}
                     </p>
                   ) : (
                     healthSlices.map((item) => (
@@ -574,9 +575,9 @@ export const OverviewDashboard = () => {
                             className="w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: item.color }}
                           />
-                          <span className="text-slate-500 text-xs">{item.name}</span>
+                          <span className="text-slate-500 text-xs">{tr(item.name)}</span>
                         </span>
-                        <span className="font-semibold text-xs text-slate-900">{item.value}</span>
+                        <span className="font-semibold text-xs text-slate-900">{tr(item.value)}</span>
                       </div>
                     ))
                   )}
@@ -594,20 +595,20 @@ export const OverviewDashboard = () => {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                   <Briefcase className="w-4 h-4 text-slate-700" />
-                  Top Projects
+                  {tr("Top Projects")}
                 </CardTitle>
                 <Link
                   href="/construction-dashboard/projects"
                   className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1"
                 >
-                  View all <ChevronRight className="w-3.5 h-3.5" />
+                  {tr("View all ")}<ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </CardHeader>
               <CardContent className="pt-2">
                 {allProjects.length === 0 ? (
                   <div className="py-8 text-center space-y-2">
                     <FolderKanban className="w-8 h-8 mx-auto text-slate-300" />
-                    <p className="text-xs text-slate-500">No active projects yet</p>
+                    <p className="text-xs text-slate-500">{tr("No active projects yet")}</p>
                   </div>
                 ) : (
                   <div className="space-y-3.5">
@@ -623,9 +624,9 @@ export const OverviewDashboard = () => {
                         <div key={project._id} className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-medium text-slate-800 truncate max-w-[180px]">
-                              {project.name}
+                              {tr(project.name)}
                             </span>
-                            <span className="font-semibold text-slate-500">{progress}%</span>
+                            <span className="font-semibold text-slate-500">{tr(progress)}%</span>
                           </div>
                           <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div
@@ -656,10 +657,10 @@ export const OverviewDashboard = () => {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-amber-500" />
-                  Attention Required & Scheduled Items
+                  {tr("Attention Required & Scheduled Items")}
                 </CardTitle>
                 <span className="text-xs text-slate-500">
-                  {ts.dueTodayList?.length || 0} pending today
+                  {ts.dueTodayList?.length || 0}{tr(" pending today")}
                 </span>
               </CardHeader>
               <CardContent className="pt-2">
@@ -667,10 +668,10 @@ export const OverviewDashboard = () => {
                   <div className="py-6 text-center space-y-2">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
                     <p className="text-sm font-medium text-slate-800">
-                      All deliverables on schedule
+                      {tr("All deliverables on schedule")}
                     </p>
                     <p className="text-xs text-slate-400">
-                      No overdue tasks or critical roadblocks requiring immediate intervention.
+                      {tr("No overdue tasks or critical roadblocks requiring immediate intervention.")}
                     </p>
                   </div>
                 ) : (
@@ -683,11 +684,11 @@ export const OverviewDashboard = () => {
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                           <span className="text-xs font-medium text-slate-800 truncate">
-                            {task.title || task.name || 'Scheduled deliverable'}
+                            {task.title || task.name || tr("Scheduled deliverable")}
                           </span>
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-500 shrink-0 ml-2">
-                          Due today
+                        <span className="text-[11px] font-semibold text-slate-500 shrink-0 ms-2">
+                          {tr("Due today")}
                         </span>
                       </div>
                     ))}
@@ -706,22 +707,22 @@ export const OverviewDashboard = () => {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                   <Flag className="w-4 h-4 text-blue-600" />
-                  Site Delivery Milestones
+                  {tr("Site Delivery Milestones")}
                 </CardTitle>
                 <Link
                   href="/construction-dashboard/projects"
                   className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1"
                 >
-                  View projects <ChevronRight className="w-3.5 h-3.5" />
+                  {tr("View projects ")}<ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </CardHeader>
               <CardContent className="pt-2">
                 {projectMilestones.length === 0 ? (
                   <div className="py-8 text-center space-y-2">
                     <Flag className="w-8 h-8 mx-auto text-slate-300" />
-                    <p className="text-sm font-medium text-slate-800">No project milestones scheduled</p>
+                    <p className="text-sm font-medium text-slate-800">{tr("No project milestones scheduled")}</p>
                     <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                      Define milestone deliverables in your project workspaces to track phased construction progress.
+                      {tr("Define milestone deliverables in your project workspaces to track phased construction progress.")}
                     </p>
                   </div>
                 ) : (
@@ -737,8 +738,8 @@ export const OverviewDashboard = () => {
                         <div key={m._id || idx} className="p-3 rounded-lg border border-slate-100 hover:bg-slate-50/70 transition-all space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="text-xs font-semibold text-slate-900 truncate">{m.name}</p>
-                              <p className="text-[11px] text-slate-500 truncate mt-0.5">{m.projectName}</p>
+                              <p className="text-xs font-semibold text-slate-900 truncate">{tr(m.name)}</p>
+                              <p className="text-[11px] text-slate-500 truncate mt-0.5">{tr(m.projectName)}</p>
                             </div>
                             <span
                               className={cn(
@@ -750,19 +751,19 @@ export const OverviewDashboard = () => {
                                   : 'bg-slate-100 text-slate-600 border-slate-200'
                               )}
                             >
-                              {m.status || (isCompleted ? 'Completed' : 'Pending')}
+                              {m.status || (isCompleted ? tr("Completed") : tr("Pending"))}
                             </span>
                           </div>
 
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-[11px] text-slate-500">
                               <span>
-                                {m.totalTasks > 0 ? `${m.completedTasks || 0} of ${m.totalTasks} tasks` : `${m.progress || 0}% complete`}
+                                {m.totalTasks > 0 ? tr("{{value}} of {{totalTasks}} tasks", { value: m.completedTasks || 0, totalTasks: m.totalTasks }) : tr("{{value}}% complete", { value: m.progress || 0 })}
                               </span>
                               {formattedDate && (
                                 <span className="flex items-center gap-1 text-slate-400">
                                   <Calendar className="w-3 h-3" />
-                                  {formattedDate}
+                                  {tr(formattedDate)}
                                 </span>
                               )}
                             </div>
@@ -791,14 +792,14 @@ export const OverviewDashboard = () => {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  Site Risks & Snags Watch
+                  {tr("Site Risks & Snags Watch")}
                 </CardTitle>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full font-medium">
-                    {snags.open || 0} Snags
+                    {snags.open || 0}{tr(" Snags")}
                   </span>
                   <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
-                    {rs.criticalRisks?.length || 0} Critical
+                    {rs.criticalRisks?.length || 0}{tr(" Critical")}
                   </span>
                 </div>
               </CardHeader>
@@ -806,9 +807,9 @@ export const OverviewDashboard = () => {
                 {siteIssuesAndRisks.length === 0 ? (
                   <div className="py-8 text-center space-y-2">
                     <ShieldCheck className="w-8 h-8 mx-auto text-emerald-500" />
-                    <p className="text-sm font-medium text-slate-800">Job sites operating smoothly</p>
+                    <p className="text-sm font-medium text-slate-800">{tr("Job sites operating smoothly")}</p>
                     <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                      Zero critical risks or unresolved snags reported across your active construction portfolio.
+                      {tr("Zero critical risks or unresolved snags reported across your active construction portfolio.")}
                     </p>
                   </div>
                 ) : (
@@ -827,16 +828,16 @@ export const OverviewDashboard = () => {
                           )}
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
-                              {item.title}
+                              {tr(item.title)}
                             </p>
                             <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                              {item.projectName}
+                              {tr(item.projectName)}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                        <div className="flex items-center gap-2 shrink-0 ms-2">
                           <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold border', item.badgeStyle)}>
-                            {item.badgeText}
+                            {tr(item.badgeText)}
                           </span>
                           <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
                         </div>

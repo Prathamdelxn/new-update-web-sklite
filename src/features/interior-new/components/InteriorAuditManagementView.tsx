@@ -10,38 +10,7 @@ import { tr } from '@/i18n';
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import {
-  ShieldCheck,
-  Search,
-  RefreshCw,
-  Download,
-  Clock,
-  Users,
-  AlertTriangle,
-  Lock,
-  Eye,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Layers,
-  FileText,
-  CheckCircle2,
-  XCircle,
-  LogIn,
-  LogOut,
-  FolderKanban,
-  FileSpreadsheet,
-  Globe,
-  Copy,
-  Check,
-  Activity,
-  Building2,
-  DollarSign,
-  TrendingUp,
-  FileCode,
-} from 'lucide-react';
+import { ShieldCheck, Search, RefreshCw, Download, Clock, Users, AlertTriangle, Lock, Eye, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Layers, FileText, CheckCircle2, XCircle, LogIn, LogOut, FolderKanban, FileSpreadsheet, Globe, Copy, Check, Activity, Building2, TrendingUp, FileCode, Banknote } from 'lucide-react';
 import { Card, CardContent, Button, Input } from '@/components/interior/ui';
 import { useToast } from '@/providers/ToastContext';
 import { cn } from '@/lib/utils';
@@ -136,12 +105,12 @@ const ENTITY_ICONS: Record<string, React.ElementType> = {
   User: Users,
   Authentication: Lock,
   CRM: Users,
-  Quotation: DollarSign,
+  Quotation: Banknote,
   BOQ: FileSpreadsheet,
   Milestone: Clock,
   Procurement: Building2,
   Drawing: FileText,
-  Financials: DollarSign,
+  Financials: Banknote,
 };
 
 const QUICK_SEGMENTS = [

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -79,10 +80,10 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
       await api.put(`/projects/${projectId}/folders/${folder._id}`, {
         url, name: file.name, mimeType: file.type, size: file.size,
       });
-      toast.success('Plan uploaded');
+      toast.success(tr("Plan uploaded"));
       onUpdate();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Upload failed');
+      toast.error(err.response?.data?.message || tr("Upload failed"));
     } finally {
       setIsUploading(false);
     }
@@ -92,10 +93,10 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
     setIsProcessing(true);
     try {
       await api.patch(`/projects/${projectId}/folders/${folder._id}`, { docId, action, ...extra });
-      toast.success('Done');
+      toast.success(tr("Done"));
       onUpdate();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Action failed');
+      toast.error(err.response?.data?.message || tr("Action failed"));
     } finally {
       setIsProcessing(false);
     }
@@ -125,13 +126,13 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
             className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors cursor-pointer mb-1"
           >
             <ArrowLeft className="w-3 h-3" />
-            <span>All Folders</span>
+            <span>{tr("All Folders")}</span>
           </button>
-          <h3 className="text-lg font-semibold text-slate-900 truncate">{folder.name}</h3>
+          <h3 className="text-lg font-semibold text-slate-900 truncate">{tr(folder.name)}</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            {folder.documents?.length || 0} plan{folder.documents?.length !== 1 ? 's' : ''}
+            {folder.documents?.length || 0}{tr(" plan")}{folder.documents?.length !== 1 ? 's' : ''}
             {Object.keys(annotationCounts).length > 0 && (
-              <> · <span className="text-blue-600 font-medium">{Object.values(annotationCounts).reduce((a, b) => a + b, 0)} annotations</span></>
+              <> · <span className="text-blue-600 font-medium">{Object.values(annotationCounts).reduce((a, b) => a + b, 0)}{tr(" annotations")}</span></>
             )}
           </p>
         </div>
@@ -144,7 +145,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
               : 'bg-blue-600 hover:bg-blue-500 text-white'
           )}>
             {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            <span>{isUploading ? 'Uploading…' : 'Upload Document'}</span>
+            <span>{isUploading ? tr("Uploading…") : tr("Upload Document")}</span>
             <input type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
           </label>
         )}
@@ -174,15 +175,15 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-sm font-semibold text-slate-900 truncate group-hover/doc:text-blue-600 transition-colors">
-                      {doc.name}
+                      {tr(doc.name)}
                     </h4>
                     <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0', statusStyle)}>
-                      {doc.approvalStatus}
+                      {tr(doc.approvalStatus)}
                     </span>
                     {annCount > 0 && (
                       <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[10px] font-medium text-blue-700 shrink-0">
                         <MessageSquare className="w-2.5 h-2.5" />
-                        {annCount}
+                        {tr(annCount)}
                       </span>
                     )}
                   </div>
@@ -194,14 +195,14 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                       <>
                         <span className="w-1 h-1 bg-slate-300 rounded-full" />
                         <span className="text-[11px] text-slate-400">
-                          {(doc.size / 1024 / 1024).toFixed(2)} MB
+                          {(doc.size / 1024 / 1024).toFixed(2)}{tr(" MB")}
                         </span>
                       </>
                     )}
                     {doc.versionNumber && (
                       <>
                         <span className="w-1 h-1 bg-slate-300 rounded-full" />
-                        <span className="text-[11px] text-slate-400">v{doc.versionNumber}</span>
+                        <span className="text-[11px] text-slate-400">v{tr(doc.versionNumber)}</span>
                       </>
                     )}
                   </div>
@@ -214,7 +215,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                     <button
                       onClick={() => setApproverDocId(doc._id)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                      title="Send for Approval"
+                      title={tr("Send for Approval")}
                     >
                       <Send className="w-3.5 h-3.5" />
                     </button>
@@ -228,7 +229,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                         onClick={() => handleAction(doc._id, 'respond', { response: 'Approved', versionId: doc.versionId })}
                         disabled={isProcessing}
                         className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Approve"
+                        title={tr("Approve")}
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                       </button>
@@ -236,7 +237,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                         onClick={() => handleAction(doc._id, 'respond', { response: 'Rejected', versionId: doc.versionId })}
                         disabled={isProcessing}
                         className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Reject"
+                        title={tr("Reject")}
                       >
                         <XCircle className="w-3.5 h-3.5" />
                       </button>
@@ -249,7 +250,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                   <button
                     onClick={() => setViewingDoc(doc)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                    title="View plan"
+                    title={tr("View plan")}
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </button>
@@ -264,10 +265,10 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                           ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
                           : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
                       )}
-                      title="Open annotations"
+                      title={tr("Open annotations")}
                     >
                       <PenLine className="w-3.5 h-3.5" />
-                      Annotate
+                      {tr("Annotate")}
                     </button>
                   )}
 
@@ -278,7 +279,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                         onClick={() => handleAction(doc._id, 'deleteDocument')}
                         disabled={isProcessing}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Delete"
+                        title={tr("Delete")}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -299,12 +300,12 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
                       )}>
                         {app.status === 'Approved' ? <UserCheck className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                       </div>
-                      <span className="text-[11px] font-medium text-slate-400">{app.userName}</span>
+                      <span className="text-[11px] font-medium text-slate-400">{tr(app.userName)}</span>
                       <span className={cn(
                         'text-[10px] font-medium',
                         app.status === 'Approved' ? 'text-emerald-600' :
                           app.status === 'Rejected' ? 'text-red-600' : 'text-amber-600'
-                      )}>{app.status}</span>
+                      )}>{tr(app.status)}</span>
                     </div>
                   ))}
                 </div>
@@ -318,9 +319,9 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
             <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
               <Upload className="w-7 h-7 text-blue-600" />
             </div>
-            <h4 className="text-base font-bold text-slate-900">No plans uploaded yet</h4>
+            <h4 className="text-base font-bold text-slate-900">{tr("No plans uploaded yet")}</h4>
             <p className="text-xs text-slate-500 mt-1.5 max-w-sm leading-relaxed">
-              Upload your first drawing or plan using the button above.
+              {tr("Upload your first drawing or plan using the button above.")}
             </p>
           </div>
         )}
@@ -353,8 +354,8 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
           if (approverDocId) handleAction(approverDocId, 'sendForApproval', { approverIds: userIds });
           setApproverDocId(null);
         }}
-        title="Select Approvers"
-        description="Choose who must review and approve this plan."
+        title={tr("Select Approvers")}
+        description={tr("Choose who must review and approve this plan.")}
         confirmLabel="Send for Approval"
         accentColor="blue"
         endpoint={`/projects/${projectId}/plan-approvers`}

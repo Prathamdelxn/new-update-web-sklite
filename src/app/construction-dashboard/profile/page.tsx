@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -44,9 +45,9 @@ export default function ProfilePage() {
     try {
       await api.patch(`/users/${user.id}`, { name: profileForm.name, phoneNumber: profileForm.phone });
       refreshUser({ name: profileForm.name });
-      toast.success('Profile updated successfully');
+      toast.success(tr("Profile updated successfully"));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      toast.error(error.response?.data?.message || tr("Failed to update profile"));
     } finally {
       setSaving(false);
     }
@@ -55,11 +56,11 @@ export default function ProfilePage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error(tr("New passwords do not match"));
       return;
     }
     if (passwordForm.newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error(tr("Password must be at least 8 characters"));
       return;
     }
     setSavingPwd(true);
@@ -68,10 +69,10 @@ export default function ProfilePage() {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      toast.success('Password changed successfully');
+      toast.success(tr("Password changed successfully"));
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to change password');
+      toast.error(error.response?.data?.message || tr("Failed to change password"));
     } finally {
       setSavingPwd(false);
     }
@@ -80,8 +81,8 @@ export default function ProfilePage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Profile & Settings</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage your personal information and account security.</p>
+          <h1 className="text-2xl font-bold text-gray-900">{tr("Profile & Settings")}</h1>
+          <p className="text-sm text-slate-500 mt-1">{tr("Manage your personal information and account security.")}</p>
         </div>
 
         {/* Profile Card */}
@@ -91,8 +92,8 @@ export default function ProfilePage() {
               <User className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Personal Information</h2>
-              <p className="text-xs text-slate-500">Update your name, phone and avatar.</p>
+              <h2 className="text-lg font-bold text-gray-900">{tr("Personal Information")}</h2>
+              <p className="text-xs text-slate-500">{tr("Update your name, phone and avatar.")}</p>
             </div>
           </div>
 
@@ -100,7 +101,7 @@ export default function ProfilePage() {
           <div className="flex items-center space-x-6 mb-8 pb-8 border-b border-gray-100">
             <div className="relative shrink-0">
               {avatar ? (
-                <img src={avatar} alt="Avatar" className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-200" />
+                <img src={avatar} alt={tr("Avatar")} className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-200" />
               ) : (
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-3xl font-extrabold border-2 border-blue-200">
                   {user?.name?.[0]?.toUpperCase() || 'U'}
@@ -108,8 +109,8 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900 mb-1">Profile Photo</p>
-              <p className="text-xs text-slate-500 mb-3">Upload a new avatar. Recommended: 200×200px, max 5MB.</p>
+              <p className="text-sm font-semibold text-gray-900 mb-1">{tr("Profile Photo")}</p>
+              <p className="text-xs text-slate-500 mb-3">{tr("Upload a new avatar. Recommended: 200×200px, max 5MB.")}</p>
               <CloudinaryUpload
                 onUpload={(url) => setAvatar(url)}
                 accept="image/*"
@@ -122,9 +123,9 @@ export default function ProfilePage() {
           <form onSubmit={handleSaveProfile} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600 ml-1 flex items-center space-x-1.5">
+                <label className="text-sm font-medium text-slate-600 ms-1 flex items-center space-x-1.5">
                   <User className="w-3.5 h-3.5" />
-                  <span>Full Name</span>
+                  <span>{tr("Full Name")}</span>
                 </label>
                 <input
                   type="text"
@@ -135,9 +136,9 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600 ml-1 flex items-center space-x-1.5">
+                <label className="text-sm font-medium text-slate-600 ms-1 flex items-center space-x-1.5">
                   <Mail className="w-3.5 h-3.5" />
-                  <span>Email Address</span>
+                  <span>{tr("Email Address")}</span>
                 </label>
                 <input
                   type="email"
@@ -147,7 +148,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600 ml-1">Phone (Optional)</label>
+                <label className="text-sm font-medium text-slate-600 ms-1">{tr("Phone (Optional)")}</label>
                 <input
                   type="tel"
                   value={profileForm.phone}
@@ -157,9 +158,9 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600 ml-1 flex items-center space-x-1.5">
+                <label className="text-sm font-medium text-slate-600 ms-1 flex items-center space-x-1.5">
                   <Shield className="w-3.5 h-3.5" />
-                  <span>Role</span>
+                  <span>{tr("Role")}</span>
                 </label>
                 <input
                   disabled
@@ -176,7 +177,7 @@ export default function ProfilePage() {
                 className="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-lg shadow-blue-600/20"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                <span>Save Profile</span>
+                <span>{tr("Save Profile")}</span>
               </button>
             </div>
           </form>
@@ -189,8 +190,8 @@ export default function ProfilePage() {
               <Lock className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Change Password</h2>
-              <p className="text-xs text-slate-500">Use a strong password with at least 8 characters.</p>
+              <h2 className="text-lg font-bold text-gray-900">{tr("Change Password")}</h2>
+              <p className="text-xs text-slate-500">{tr("Use a strong password with at least 8 characters.")}</p>
             </div>
           </div>
 
@@ -201,14 +202,14 @@ export default function ProfilePage() {
               { label: 'Confirm New Password', field: 'confirmPassword' as const },
             ].map(({ label, field }) => (
               <div key={field} className="space-y-2">
-                <label className="text-sm font-medium text-slate-600 ml-1">{label}</label>
+                <label className="text-sm font-medium text-slate-600 ms-1">{tr(label)}</label>
                 <div className="relative">
                   <input
                     type={showPwd ? 'text' : 'password'}
                     required
                     value={passwordForm[field]}
                     onChange={e => setPasswordForm(f => ({ ...f, [field]: e.target.value }))}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 pr-12 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 pe-12 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm"
                     placeholder="••••••••"
                   />
                   {field === 'confirmPassword' && passwordForm.newPassword && passwordForm.confirmPassword && (
@@ -238,7 +239,7 @@ export default function ProfilePage() {
                 className="flex items-center space-x-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-lg shadow-amber-500/20"
               >
                 {savingPwd ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                <span>Change Password</span>
+                <span>{tr("Change Password")}</span>
               </button>
             </div>
           </form>

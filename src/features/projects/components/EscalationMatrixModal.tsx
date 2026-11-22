@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -36,7 +37,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
       .then(res => res.data)
       .catch(err => {
         console.error("Error fetching escalation matrix:", err);
-        toast.error("Failed to load escalation matrix");
+        toast.error(tr("Failed to load escalation matrix"));
         return null;
       });
 
@@ -44,7 +45,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
       .then(res => res.data)
       .catch(err => {
         console.error("Error fetching project members:", err);
-        toast.error("Failed to load project members");
+        toast.error(tr("Failed to load project members"));
         return [];
       });
 
@@ -106,11 +107,11 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
   };
 
   const handleSave = async () => {
-    if (isLocked) { toast.error('This project is locked and can no longer be modified.'); return; }
+    if (isLocked) { toast.error(tr("This project is locked and can no longer be modified.")); return; }
     // Validate: make sure every escalation level has a person assigned
     for (let i = 0; i < rules.length; i++) {
       if (!rules[i].user) {
-        toast.error(`Please assign the person for the Escalation Level ${rules[i].level}`);
+        toast.error(tr("Please assign the person for the Escalation Level {{level}}", { level: rules[i].level }));
         return;
       }
     }
@@ -124,10 +125,10 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
       }));
 
       await api.post(`/projects/${projectId}/escalation-matrix`, { levels: payloadLevels });
-      toast.success('Escalation matrix saved');
+      toast.success(tr("Escalation matrix saved"));
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to save escalation matrix');
+      toast.error(error.response?.data?.message || tr("Failed to save escalation matrix"));
     } finally {
       setSaving(false);
     }
@@ -155,8 +156,8 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                     <GitBranch className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-gray-900">Escalation Matrix</h2>
-                    <p className="text-xs text-slate-500 mt-0.5">Configure sequential roles/members for issue escalations.</p>
+                    <h2 className="text-base font-bold text-gray-900">{tr("Escalation Matrix")}</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr("Configure sequential roles/members for issue escalations.")}</p>
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -174,13 +175,13 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                       >
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-xs font-black uppercase tracking-widest text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
-                            Escalation Level {rule.level}
+                            {tr("Escalation Level ")}{tr(rule.level)}
                           </span>
                           {!isLocked && (
                             <button
                               onClick={() => removeLevel(i)}
                               className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                              title="Remove level"
+                              title={tr("Remove level")}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -189,7 +190,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
 
                         <div className="grid grid-cols-1 gap-3">
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Assign Person</label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">{tr("Assign Person")}</label>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                               <div className="relative flex-1">
                                 <select
@@ -198,16 +199,16 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                                   disabled={isLocked}
                                   className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-all shadow-sm"
                                 >
-                                  <option value="">Select Member</option>
+                                  <option value="">{tr("Select Member")}</option>
                                   {members.map(m => (
-                                    <option key={m._id} value={m._id}>{m.name}</option>
+                                    <option key={m._id} value={m._id}>{tr(m.name)}</option>
                                   ))}
                                 </select>
                               </div>
                               {rule.role && (
                                 <div className="shrink-0">
                                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-100">
-                                    {rule.role}
+                                    {tr(rule.role)}
                                   </span>
                                 </div>
                               )}
@@ -223,13 +224,13 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                         className="w-full py-3 border-2 border-dashed border-gray-300 rounded-2xl text-sm font-bold text-slate-500 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 transition-all flex items-center justify-center space-x-2"
                       >
                         <Plus className="w-4 h-4" />
-                        <span>Add Escalation Level</span>
+                        <span>{tr("Add Escalation Level")}</span>
                       </button>
                     )}
 
                     <div className="p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
                       <p className="text-xs text-slate-600 leading-relaxed">
-                        <span className="font-bold text-orange-800">How it works:</span> Escalation levels are sequential. When an issue is escalated, it progresses through the levels (Level 1, Level 2, Level 3, etc.) notifying and assigning the corresponding configured team member.
+                        <span className="font-bold text-orange-800">{tr("How it works:")}</span>{tr(" Escalation levels are sequential. When an issue is escalated, it progresses through the levels (Level 1, Level 2, Level 3, etc.) notifying and assigning the corresponding configured team member.")}
                       </p>
                     </div>
                   </div>
@@ -241,7 +242,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                   onClick={onClose}
                   className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-gray-100 transition-all"
                 >
-                  {isLocked ? 'Close' : 'Cancel'}
+                  {isLocked ? tr("Close") : tr("Cancel")}
                 </button>
                 {!isLocked && (
                   <button
@@ -250,7 +251,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                     className="flex items-center space-x-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-sm shadow-orange-600/20"
                   >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    <span>Save Matrix</span>
+                    <span>{tr("Save Matrix")}</span>
                   </button>
                 )}
               </div>

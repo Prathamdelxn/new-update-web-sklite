@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -185,10 +186,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         const saved = res.data;
         setAnnotations(prev => [{ ...saved, x: saved.position?.x ?? 0, y: saved.position?.y ?? 0 }, ...prev]);
       }
-      toast.success('Annotation saved');
+      toast.success(tr("Annotation saved"));
       setNewText(''); setNewImageUri(''); setNewVoiceUri(''); setPendingPos(null);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to save annotation');
+      toast.error(err.response?.data?.error || tr("Failed to save annotation"));
     } finally {
       setIsSaving(false);
     }
@@ -211,7 +212,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       }
       if (activePin === id) setActivePin(null);
     } catch {
-      toast.error('Failed to delete annotation');
+      toast.error(tr("Failed to delete annotation"));
     }
   };
 
@@ -227,13 +228,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         try {
           const url = await uploadToCloudinary(new File([blob], 'voice.webm', { type: 'audio/webm' }));
           setNewVoiceUri(url);
-          toast.success('Voice note recorded');
-        } catch { toast.error('Failed to upload voice note'); }
+          toast.success(tr("Voice note recorded"));
+        } catch { toast.error(tr("Failed to upload voice note")); }
       };
       mediaRecorderRef.current = recorder;
       recorder.start();
       setIsRecording(true);
-    } catch { toast.error('Microphone access denied'); }
+    } catch { toast.error(tr("Microphone access denied")); }
   };
 
   const handleStopRecording = () => {
@@ -248,7 +249,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     try {
       const url = await uploadToCloudinary(file);
       setNewImageUri(url);
-    } catch { toast.error('Image upload failed'); }
+    } catch { toast.error(tr("Image upload failed")); }
     finally { setIsUploadingImg(false); e.target.value = ''; }
   };
 
@@ -292,7 +293,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <X className="w-4 h-4" />
                   </button>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">{document?.name}</p>
+                    <p className="text-sm font-bold text-gray-900 truncate">{tr(document?.name)}</p>
                     {document?.approvalStatus && (
                       <span className={cn(
                         'text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border',
@@ -301,7 +302,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                         document.approvalStatus === 'Pending'  ? 'text-amber-700 bg-amber-50 border-amber-200' :
                         'text-slate-500 bg-gray-100 border-gray-200'
                       )}>
-                        {document.approvalStatus}
+                        {tr(document.approvalStatus)}
                       </span>
                     )}
                   </div>
@@ -313,12 +314,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <button onClick={() => setZoom(z => Math.max(25, z - 25))} className="p-1 text-slate-400 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100">
                       <ZoomOut className="w-3.5 h-3.5" />
                     </button>
-                    <span className="text-[11px] font-bold text-gray-700 w-9 text-center">{zoom}%</span>
+                    <span className="text-[11px] font-bold text-gray-700 w-9 text-center">{tr(zoom)}%</span>
                     <button onClick={() => setZoom(z => Math.min(300, z + 25))} className="p-1 text-slate-400 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100">
                       <ZoomIn className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <button onClick={() => setZoom(100)} title="Reset zoom" className="p-1.5 rounded-xl border border-gray-200 text-slate-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                  <button onClick={() => setZoom(100)} title={tr("Reset zoom")} className="p-1.5 rounded-xl border border-gray-200 text-slate-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
 
@@ -334,7 +335,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                       )}
                     >
                       <MapPin className="w-3.5 h-3.5" />
-                      {pinMode ? 'Click to pin' : 'Add Pin'}
+                      {pinMode ? tr("Click to pin") : tr("Add Pin")}
                     </button>
                   )}
 
@@ -342,10 +343,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   <button
                     onClick={() => setPanelOpen(p => !p)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-200 text-slate-500 hover:text-gray-800 bg-white hover:bg-gray-50 transition-all"
-                    title={panelOpen ? 'Hide annotations' : 'Show annotations'}
+                    title={panelOpen ? tr("Hide annotations") : tr("Show annotations")}
                   >
                     {panelOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
-                    <span className="hidden sm:inline">Notes</span>
+                    <span className="hidden sm:inline">{tr("Notes")}</span>
                     {annotations.length > 0 && (
                       <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">
                         {annotations.length}
@@ -367,7 +368,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
                     <div className="flex items-center gap-2 bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg animate-pulse">
                       <MapPin className="w-3.5 h-3.5" />
-                      Click anywhere on the plan to place a pin
+                      {tr("Click anywhere on the plan to place a pin")}
                     </div>
                   </div>
                 )}
@@ -427,7 +428,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                       {activePin === ann._id && (
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0.5 pointer-events-none z-30">
                           <div className="bg-gray-900 text-white text-[11px] font-medium px-2.5 py-1 rounded-lg whitespace-nowrap max-w-[200px] truncate shadow-xl">
-                            {ann.text}
+                            {tr(ann.text)}
                           </div>
                           <div className="w-2 h-2 bg-gray-900 rotate-45 mx-auto -mt-1" />
                         </div>
@@ -455,13 +456,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   animate={{ width: 290, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.18, ease: 'easeInOut' }}
-                  className="flex flex-col border-l border-gray-100 bg-white overflow-hidden shrink-0"
+                  className="flex flex-col border-s border-gray-100 bg-white overflow-hidden shrink-0"
                   style={{ minWidth: 0 }}
                 >
                   {/* Panel header */}
                   <div className="px-4 py-3 border-b border-gray-100 shrink-0 flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-blue-600 shrink-0" />
-                    <span className="text-sm font-bold text-gray-900 flex-1">Annotations</span>
+                    <span className="text-sm font-bold text-gray-900 flex-1">{tr("Annotations")}</span>
                     {annotations.length > 0 && (
                       <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[10px] font-black">
                         {annotations.length}
@@ -485,10 +486,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                               <MapPin className="w-2.5 h-2.5 text-white" />
                             </div>
-                            <p className="text-[10px] font-black text-blue-700 uppercase tracking-wider">New Pin</p>
+                            <p className="text-[10px] font-black text-blue-700 uppercase tracking-wider">{tr("New Pin")}</p>
                             <button
                               onClick={() => setPendingPos(null)}
-                              className="ml-auto p-0.5 rounded text-blue-400 hover:text-blue-700 transition-colors"
+                              className="ms-auto p-0.5 rounded text-blue-400 hover:text-blue-700 transition-colors"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -500,12 +501,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             onChange={e => setNewText(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setPendingPos(null); }}
                             className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
-                            placeholder="Add a note..."
+                            placeholder={tr("Add a note...")}
                           />
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={isRecording ? handleStopRecording : handleStartRecording}
-                              title={isRecording ? 'Stop recording' : newVoiceUri ? 'Voice recorded' : 'Record voice'}
+                              title={isRecording ? tr("Stop recording") : newVoiceUri ? tr("Voice recorded") : tr("Record voice")}
                               className={cn(
                                 'p-2 rounded-lg border transition-all shrink-0',
                                 isRecording  ? 'bg-red-50 border-red-200 text-red-600 animate-pulse' :
@@ -517,7 +518,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             </button>
                             <button
                               onClick={() => imgInputRef.current?.click()}
-                              title={newImageUri ? 'Image attached' : 'Attach image'}
+                              title={newImageUri ? tr("Image attached") : tr("Attach image")}
                               className={cn(
                                 'p-2 rounded-lg border transition-all shrink-0',
                                 newImageUri ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-white border-gray-200 text-slate-500 hover:border-gray-300'
@@ -533,12 +534,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                               className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-500 disabled:opacity-50 transition-all"
                             >
                               {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                              Save
+                              {tr("Save")}
                             </button>
                           </div>
                           {newImageUri && (
                             <div className="relative rounded-xl overflow-hidden border border-emerald-200">
-                              <img src={newImageUri} alt="attached" className="w-full h-20 object-cover" />
+                              <img src={newImageUri} alt={tr("attached")} className="w-full h-20 object-cover" />
                               <button onClick={() => setNewImageUri('')} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-bold">✕</button>
                             </div>
                           )}
@@ -554,9 +555,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                         <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
                           <MapPin className="w-5 h-5 text-gray-300" />
                         </div>
-                        <p className="text-sm font-bold text-slate-400">No annotations yet</p>
+                        <p className="text-sm font-bold text-slate-400">{tr("No annotations yet")}</p>
                         {canAnnotate && (
-                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">Use "Add Pin" above to mark important points on this plan</p>
+                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">{tr("Use \"Add Pin\" above to mark important points on this plan")}</p>
                         )}
                       </div>
                     ) : (
@@ -582,14 +583,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                                   {idx + 1}
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-xs font-semibold text-gray-900 break-words leading-relaxed">{ann.text}</p>
+                                  <p className="text-xs font-semibold text-gray-900 break-words leading-relaxed">{tr(ann.text)}</p>
                                   {ann.createdByName && (
-                                    <p className="text-[10px] text-slate-400 mt-0.5 font-medium">{ann.createdByName}</p>
+                                    <p className="text-[10px] text-slate-400 mt-0.5 font-medium">{tr(ann.createdByName)}</p>
                                   )}
                                   {(ann.imageUri || ann.voiceNoteUri) && (
                                     <div className="flex flex-col gap-1.5 mt-2">
                                       {ann.imageUri && (
-                                        <img src={ann.imageUri} alt="attached" className="w-full h-16 rounded-lg object-cover border border-gray-200" />
+                                        <img src={ann.imageUri} alt={tr("attached")} className="w-full h-16 rounded-lg object-cover border border-gray-200" />
                                       )}
                                       {ann.voiceNoteUri && (
                                         <audio controls src={ann.voiceNoteUri} className="w-full h-7" />
@@ -626,7 +627,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                         )}
                       >
                         <MapPin className="w-3.5 h-3.5" />
-                        {pinMode ? 'Click on the plan to place a pin' : 'Place New Pin'}
+                        {pinMode ? tr("Click on the plan to place a pin") : tr("Place New Pin")}
                       </button>
                     </div>
                   )}

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,7 +49,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
       const roles = rolesRes.data?.roles || rolesRes.data || [];
       setAvailableRoles(roles.filter((r: any) => r.name !== 'Admin'));
     }).catch(() => {
-      toast.error('Failed to load data for team management');
+      toast.error(tr("Failed to load data for team management"));
     }).finally(() => {
       setLoading(false);
     });
@@ -69,7 +70,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
 
   const handleSave = async () => {
     if (selectedNewMembers.length === 0 || !selectedRoleId) {
-      toast.error('Please select at least one user and a role');
+      toast.error(tr("Please select at least one user and a role"));
       return;
     }
     
@@ -79,11 +80,11 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
         userIds: selectedNewMembers,
         roleId: selectedRoleId,
       });
-      toast.success('Team members added successfully');
+      toast.success(tr("Team members added successfully"));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to add members');
+      toast.error(error.response?.data?.message || tr("Failed to add members"));
     } finally {
       setSaving(false);
     }
@@ -92,7 +93,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
   // Render role permissions beautifully
   const renderPermissions = (permissions: string[]) => {
     if (!permissions || permissions.length === 0) {
-      return <p className="text-[11px] text-slate-400 font-medium italic mb-4">No specific permissions defined.</p>;
+      return <p className="text-[11px] text-slate-400 font-medium italic mb-4">{tr("No specific permissions defined.")}</p>;
     }
 
     const grouped: Record<string, string[]> = {};
@@ -112,7 +113,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
       <div className="flex flex-wrap gap-2 mb-4">
         {Object.keys(grouped).map((mod, idx) => (
           <div key={idx} className="bg-white px-2.5 py-1.5 rounded-lg border border-slate-200">
-            <div className="text-[10px] font-bold text-slate-700">{mod}</div>
+            <div className="text-[10px] font-bold text-slate-700">{tr(mod)}</div>
             <div className="text-[9px] font-medium text-slate-500">{grouped[mod].join(', ')}</div>
           </div>
         ))}
@@ -142,7 +143,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                   {wizardStep === 2 && (
                     <button 
                       onClick={() => setWizardStep(1)}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors mr-1"
+                      className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors me-1"
                     >
                       <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -151,9 +152,9 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                     <Users className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900">Add Team Member</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{tr("Add Team Member")}</h2>
                     <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
-                      {wizardStep === 1 ? 'Step 1: Select Role' : 'Step 2: Assign Users'}
+                      {wizardStep === 1 ? tr("Step 1: Select Role") : tr("Step 2: Assign Users")}
                     </p>
                   </div>
                 </div>
@@ -167,7 +168,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-                    <p className="text-sm font-medium text-slate-500">Loading data...</p>
+                    <p className="text-sm font-medium text-slate-500">{tr("Loading data...")}</p>
                   </div>
                 ) : (
                   <>
@@ -189,12 +190,12 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                                 className="p-4 flex items-center justify-between cursor-pointer"
                                 onClick={() => setExpandedRole(isExpanded ? null : r._id)}
                               >
-                                <div className="flex-1 pr-4">
+                                <div className="flex-1 pe-4">
                                   <h3 className={cn("text-base font-bold", isSelected ? "text-blue-700" : "text-slate-900")}>
-                                    {r.name}
+                                    {tr(r.name)}
                                   </h3>
                                   <p className="text-[11px] text-slate-500 mt-1 leading-relaxed line-clamp-2">
-                                    {r.description || 'No description available.'}
+                                    {r.description || tr("No description available.")}
                                   </p>
                                 </div>
                                 <div className="p-1.5 rounded-lg bg-slate-50 text-slate-400 shrink-0">
@@ -220,7 +221,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                                         }}
                                         className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center space-x-2"
                                       >
-                                        <span>Choose {r.name}</span>
+                                        <span>{tr("Choose ")}{tr(r.name)}</span>
                                         <ArrowRight className="w-4 h-4" />
                                       </button>
                                     </div>
@@ -238,16 +239,16 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                       <div className="space-y-4 pb-20">
                         <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-wider block">Selected Role</span>
+                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-wider block">{tr("Selected Role")}</span>
                             <span className="text-sm font-bold text-blue-900 block mt-0.5">
-                              {availableRoles.find(r => r._id === selectedRoleId)?.name || 'Role'}
+                              {availableRoles.find(r => r._id === selectedRoleId)?.name || tr("Role")}
                             </span>
                           </div>
                           <button 
                             onClick={() => setWizardStep(1)}
                             className="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline"
                           >
-                            Change
+                            {tr("Change")}
                           </button>
                         </div>
                         
@@ -255,10 +256,10 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                           <input
                             type="text"
-                            placeholder="Search users by name or email..."
+                            placeholder={tr("Search users by name or email...")}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-11 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+                            className="w-full bg-white border border-slate-200 rounded-xl py-3 ps-11 pe-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                           />
                         </div>
 
@@ -268,8 +269,8 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                               <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
                                 <Search className="w-5 h-5 text-slate-400" />
                               </div>
-                              <p className="text-sm font-semibold text-slate-700">No available users found</p>
-                              <p className="text-xs text-slate-500 mt-1">Try adjusting your search or they might already be in the project.</p>
+                              <p className="text-sm font-semibold text-slate-700">{tr("No available users found")}</p>
+                              <p className="text-xs text-slate-500 mt-1">{tr("Try adjusting your search or they might already be in the project.")}</p>
                             </div>
                           ) : (
                             filteredUsers.map(u => {
@@ -284,14 +285,14 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                                   )}
                                 >
                                   <div className={cn(
-                                    "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mr-3 transition-colors",
+                                    "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 me-3 transition-colors",
                                     isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
                                   )}>
                                     {u.name?.[0]?.toUpperCase() || 'U'}
                                   </div>
-                                  <div className="flex-1 min-w-0 pr-3">
+                                  <div className="flex-1 min-w-0 pe-3">
                                     <p className={cn("text-sm font-bold truncate transition-colors", isSelected ? "text-blue-900" : "text-slate-900")}>
-                                      {u.name}
+                                      {tr(u.name)}
                                     </p>
                                     <p className="text-[11px] text-slate-500 truncate mt-0.5">
                                       {u.email}
@@ -333,7 +334,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                       <>
                         <UserPlus className="w-4.5 h-4.5" />
                         <span>
-                          Assign {selectedNewMembers.length > 0 ? selectedNewMembers.length : ''} {selectedNewMembers.length === 1 ? 'User' : 'Users'}
+                          {tr("Assign ")}{selectedNewMembers.length > 0 ? selectedNewMembers.length : ''} {selectedNewMembers.length === 1 ? tr("User") : tr("Users")}
                         </span>
                       </>
                     )}

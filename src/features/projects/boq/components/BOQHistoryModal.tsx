@@ -1,6 +1,7 @@
 'use client';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -123,11 +124,11 @@ export const BOQHistoryModal: React.FC<BOQHistoryModalProps> = ({ isOpen, onClos
                               </div>
                               <div>
                                 <span className="text-slate-400">Rate: </span>
-                                <span className="font-semibold text-gray-700">{formatCurrency(Number(ver.unitCost), project?.currency || '$')}</span>
+                                <span className="font-semibold text-gray-700">{formatCurrency(Number(ver.unitCost), projectCurrency(project))}</span>
                               </div>
                               <div>
                                 <span className="text-slate-400">Total: </span>
-                                <span className="font-bold text-blue-600">{formatCurrency(Number(ver.totalCost), project?.currency || '$')}</span>
+                                <span className="font-bold text-blue-600">{formatCurrency(Number(ver.totalCost), projectCurrency(project))}</span>
                               </div>
                             </div>
                             {ver.createdByName && (

@@ -1,12 +1,10 @@
 'use client';
+import { tr } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Calendar, Users, DollarSign, TrendingUp, AlertCircle, ShieldAlert,
-  CheckCircle2, Clock, MessageSquare, FileText, Map, Package,
-  ChevronRight, Activity, Building2, Zap,
-} from 'lucide-react';
+import { Calendar, Users, TrendingUp, AlertCircle, ShieldAlert, CheckCircle2, Clock, MessageSquare, FileText, Map, Package, ChevronRight, Activity, Building2, Zap, Banknote } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn, formatCurrency } from '@/lib/utils';
 import api from '@/services/api.client';
@@ -127,34 +125,34 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-xl font-black text-gray-900">{project.name}</h2>
+                <h2 className="text-xl font-black text-gray-900">{tr(project.name)}</h2>
                 <span className={cn(
                   'px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border',
                   statusBadgeColor[project.status] || 'bg-blue-100 text-blue-700 border-blue-200'
                 )}>
-                  {project.status}
+                  {tr(project.status)}
                 </span>
                 {project.projectType && (
                   <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border bg-gray-100 text-slate-600 border-gray-200">
-                    {project.projectType}
+                    {tr(project.projectType)}
                   </span>
                 )}
               </div>
               <p className="text-sm text-slate-500 line-clamp-2 max-w-xl">
-                {project.description || 'No description provided.'}
+                {project.description || tr("No description provided.")}
               </p>
             </div>
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-2xl font-black text-gray-900">{formatCurrency(currentBudget, project.currency || '$')}</p>
+          <div className="text-end shrink-0">
+            <p className="text-2xl font-black text-gray-900">{formatCurrency(currentBudget, projectCurrency(project))}</p>
           </div>
         </div>
 
         {/* Overall Progress */}
         <div className="mt-6 space-y-2">
           <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider">
-            <span>Overall Progress</span>
-            <span className="text-gray-900">{progress}%</span>
+            <span>{tr("Overall Progress")}</span>
+            <span className="text-gray-900">{tr(progress)}%</span>
           </div>
           <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200">
             <div
@@ -175,7 +173,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
         {/* Milestones */}
         <button
           onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones`)}
-          className="text-left"
+          className="text-start"
         >
           <GlassCard className="p-5 border-gray-200 hover:border-blue-500/50 transition-all cursor-pointer h-full">
             <div className="flex items-start justify-between mb-3">
@@ -184,21 +182,21 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               </div>
               {!stats.loading && (
                 <span className="text-xs font-bold text-blue-600">
-                  {stats.milestones.completed}/{stats.milestones.total}
+                  {tr(stats.milestones.completed)}/{stats.milestones.total}
                 </span>
               )}
             </div>
             <p className="text-2xl font-black text-gray-900">
               {stats.loading ? '—' : `${stats.milestones.total === 0 ? 0 : Math.round((stats.milestones.completed / stats.milestones.total) * 100)}%`}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">Milestones Done</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Milestones Done")}</p>
           </GlassCard>
         </button>
 
         {/* Issues */}
         <button
           onClick={() => router.push(`/construction-dashboard/projects/${projectId}/issues`)}
-          className="text-left"
+          className="text-start"
         >
           <GlassCard className="p-5 border-gray-200 hover:border-amber-500/50 transition-all cursor-pointer h-full">
             <div className="flex items-start justify-between mb-3">
@@ -206,18 +204,18 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <AlertCircle className="w-5 h-5 text-amber-600" />
               </div>
               {!stats.loading && stats.issues.open > 0 && (
-                <span className="text-xs font-bold text-amber-600">{stats.issues.open} open</span>
+                <span className="text-xs font-bold text-amber-600">{tr(stats.issues.open)}{tr(" open")}</span>
               )}
             </div>
             <p className="text-2xl font-black text-gray-900">{stats.loading ? '—' : stats.issues.total}</p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">Issues & Snags</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Issues & Snags")}</p>
           </GlassCard>
         </button>
 
         {/* Risks */}
         <button
           onClick={() => router.push(`/construction-dashboard/projects/${projectId}/risks`)}
-          className="text-left"
+          className="text-start"
         >
           <GlassCard className="p-5 border-gray-200 hover:border-rose-500/50 transition-all cursor-pointer h-full">
             <div className="flex items-start justify-between mb-3">
@@ -225,18 +223,18 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <ShieldAlert className="w-5 h-5 text-rose-600" />
               </div>
               {!stats.loading && stats.risks.active > 0 && (
-                <span className="text-xs font-bold text-rose-600">{stats.risks.active} active</span>
+                <span className="text-xs font-bold text-rose-600">{tr(stats.risks.active)}{tr(" active")}</span>
               )}
             </div>
             <p className="text-2xl font-black text-gray-900">{stats.loading ? '—' : stats.risks.total}</p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">Risks Logged</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Risks Logged")}</p>
           </GlassCard>
         </button>
 
         {/* Team */}
         <button
           onClick={() => router.push(`/construction-dashboard/projects/${projectId}/details`)}
-          className="text-left"
+          className="text-start"
         >
           <GlassCard className="p-5 border-gray-200 hover:border-purple-500/50 transition-all cursor-pointer h-full">
             <div className="flex items-start justify-between mb-3">
@@ -245,7 +243,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               </div>
             </div>
             <p className="text-2xl font-black text-gray-900">{project.members?.length || 0}</p>
-            <p className="text-xs text-slate-500 mt-0.5 font-medium">Team Members</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Team Members")}</p>
           </GlassCard>
         </button>
       </div>
@@ -258,24 +256,24 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               <div className="p-2 rounded-xl bg-cyan-50 border border-cyan-200">
                 <Calendar className="w-4 h-4 text-cyan-600" />
               </div>
-              <h4 className="text-sm font-bold text-gray-900">Timeline</h4>
+              <h4 className="text-sm font-bold text-gray-900">{tr("Timeline")}</h4>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Start</span>
+                <span className="text-slate-500">{tr("Start")}</span>
                 <span className="font-bold text-gray-900">
-                  {startDate ? startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'}
+                  {startDate ? startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : tr("Not set")}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">End</span>
+                <span className="text-slate-500">{tr("End")}</span>
                 <span className={cn('font-bold', daysRemaining !== null && daysRemaining < 0 ? 'text-red-600' : 'text-gray-900')}>
-                  {endDate ? endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'}
+                  {endDate ? endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : tr("Not set")}
                 </span>
               </div>
               {daysRemaining !== null && (
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Days Remaining</span>
+                  <span className="text-slate-500">{tr("Days Remaining")}</span>
                   <span className={cn('font-bold', daysRemaining < 0 ? 'text-red-600' : daysRemaining < 14 ? 'text-amber-600' : 'text-emerald-600')}>
                     {daysRemaining < 0 ? `${Math.abs(daysRemaining)} overdue` : `${daysRemaining} days`}
                   </span>
@@ -284,8 +282,8 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               {totalDays && (
                 <div className="mt-2 space-y-1.5">
                   <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <span>Time Elapsed</span>
-                    <span>{timeProgress}%</span>
+                    <span>{tr("Time Elapsed")}</span>
+                    <span>{tr(timeProgress)}%</span>
                   </div>
                   <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -303,19 +301,19 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
             <div className="space-y-3">
 
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500 font-medium">Type</span>
-                <span className="font-bold text-gray-900">{project.projectType || 'Construction'}</span>
+                <span className="text-slate-500 font-medium">{tr("Type")}</span>
+                <span className="font-bold text-gray-900">{project.projectType || tr("Construction")}</span>
               </div>
               {(project as any).clientName && (
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500 font-medium">Client</span>
-                  <span className="font-bold text-gray-900 truncate max-w-[120px]">{(project as any).clientName}</span>
+                  <span className="text-slate-500 font-medium">{tr("Client")}</span>
+                  <span className="font-bold text-gray-900 truncate max-w-[120px]">{tr((project as any).clientName)}</span>
                 </div>
               )}
               {currentBudget > 0 && (
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500 font-medium">Budget</span>
-                  <span className="font-bold text-emerald-700">{formatCurrency(currentBudget, project.currency || '$')}</span>
+                  <span className="text-slate-500 font-medium">{tr("Budget")}</span>
+                  <span className="font-bold text-emerald-700">{formatCurrency(currentBudget, projectCurrency(project))}</span>
                 </div>
               )}
             </div>
@@ -325,12 +323,12 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
           {(project.members?.length ?? 0) > 0 && (
             <GlassCard className="p-5 border-gray-200">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-bold text-gray-900">Team</h4>
+                <h4 className="text-sm font-bold text-gray-900">{tr("Team")}</h4>
                 <button
                   onClick={() => router.push(`/construction-dashboard/projects/${projectId}/details`)}
                   className="text-[10px] font-bold text-blue-600 hover:text-blue-500"
                 >
-                  Manage
+                  {tr("Manage")}
                 </button>
               </div>
               <div className="space-y-2">
@@ -342,12 +340,12 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                       <div className="w-7 h-7 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center text-[10px] font-bold text-blue-700 shrink-0">
                         {name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-xs font-medium text-gray-700 truncate">{name}</span>
+                      <span className="text-xs font-medium text-gray-700 truncate">{tr(name)}</span>
                     </div>
                   );
                 })}
                 {(project.members?.length ?? 0) > 5 && (
-                  <p className="text-[10px] text-slate-400 italic">+{(project.members?.length ?? 0) - 5} more</p>
+                  <p className="text-[10px] text-slate-400 italic">+{(project.members?.length ?? 0) - 5}{tr(" more")}</p>
                 )}
               </div>
             </GlassCard>
@@ -362,7 +360,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               <div className="p-2 rounded-xl bg-blue-50 border border-blue-200">
                 <Zap className="w-4 h-4 text-blue-600" />
               </div>
-              <h4 className="text-sm font-bold text-gray-900">Quick Access</h4>
+              <h4 className="text-sm font-bold text-gray-900">{tr("Quick Access")}</h4>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {quickLinks.map(({ label, icon: Icon, tab, color }) => (
@@ -375,7 +373,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                   )}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{tr(label)}</span>
                 </button>
               ))}
             </div>
@@ -388,19 +386,19 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <div className="p-2 rounded-xl bg-slate-50 border border-gray-200">
                   <Activity className="w-4 h-4 text-slate-600" />
                 </div>
-                <h4 className="text-sm font-bold text-gray-900">Recent Activity</h4>
+                <h4 className="text-sm font-bold text-gray-900">{tr("Recent Activity")}</h4>
               </div>
               {isAdmin && (
                 <button
                   onClick={() => router.push(`/construction-dashboard/projects/${projectId}/audit`)}
                   className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-500"
                 >
-                  View All <ChevronRight className="w-3 h-3" />
+                  {tr("View All ")}<ChevronRight className="w-3 h-3" />
                 </button>
               )}
             </div>
             {recentActivity.length === 0 ? (
-              <p className="text-xs text-slate-400 italic py-4 text-center">No activity recorded yet.</p>
+              <p className="text-xs text-slate-400 italic py-4 text-center">{tr("No activity recorded yet.")}</p>
             ) : (
               <div className="space-y-3">
                 {recentActivity.map((entry: any, i: number) => (
@@ -410,8 +408,8 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-gray-700 line-clamp-1">
-                        <span className="font-bold">{entry.userName}</span>{' '}
-                        <span className="text-slate-500">{entry.details}</span>
+                        <span className="font-bold">{tr(entry.userName)}</span>{' '}
+                        <span className="text-slate-500">{tr(entry.details)}</span>
                       </p>
                       <p className="text-[10px] text-slate-400 mt-0.5">
                         {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : ''}
@@ -429,22 +427,22 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200">
-                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                    <Banknote className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <h4 className="text-sm font-bold text-gray-900">Budget Overview</h4>
+                  <h4 className="text-sm font-bold text-gray-900">{tr("Budget Overview")}</h4>
                 </div>
                 <button
                   onClick={() => router.push(`/construction-dashboard/projects/${projectId}/budget`)}
                   className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-500"
                 >
-                  Details <ChevronRight className="w-3 h-3" />
+                  {tr("Details ")}<ChevronRight className="w-3 h-3" />
                 </button>
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-3xl font-black text-gray-900">{formatCurrency(currentBudget, project.currency || '$')}</p>
+                  <p className="text-3xl font-black text-gray-900">{formatCurrency(currentBudget, projectCurrency(project))}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {project.budgetHistory?.length || 0} revision{(project.budgetHistory?.length || 0) !== 1 ? 's' : ''} recorded
+                    {project.budgetHistory?.length || 0}{tr(" revision")}{(project.budgetHistory?.length || 0) !== 1 ? 's' : ''}{tr(" recorded")}
                   </p>
                 </div>
                 {(project.budgetHistory?.length ?? 0) >= 2 && (() => {
@@ -457,7 +455,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                       diff >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'
                     )}>
                       <TrendingUp className="w-3.5 h-3.5" />
-                      {diff >= 0 ? '+' : ''}{pct}%
+                      {diff >= 0 ? '+' : ''}{tr(pct)}%
                     </div>
                   );
                 })()}

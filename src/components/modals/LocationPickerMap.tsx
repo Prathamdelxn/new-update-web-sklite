@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
@@ -49,7 +50,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     if (!isOpen || mapRef.current) return;
 
     if (!MAPBOX_TOKEN) {
-      setLoadError('Missing Mapbox access token.');
+      setLoadError(tr("Missing Mapbox access token."));
       return;
     }
     if (!mapContainerRef.current) return;
@@ -72,7 +73,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     });
 
     map.on('load', () => setIsLoaded(true));
-    map.on('error', () => setLoadError('Please check that your Mapbox token is valid.'));
+    map.on('error', () => setLoadError(tr("Please check that your Mapbox token is valid.")));
 
     if (geocoderContainerRef.current) {
       const geocoder = new MapboxGeocoder({
@@ -139,7 +140,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   const handleLocate = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
+      alert(tr("Geolocation is not supported by your browser"));
       return;
     }
 
@@ -177,7 +178,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
             className="w-full max-w-3xl relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col h-[80vh]"
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h3 className="text-lg font-black text-gray-900">Pinpoint Location</h3>
+              <h3 className="text-lg font-black text-gray-900">{tr("Pinpoint Location")}</h3>
               <button type="button" onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -186,8 +187,8 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
             <div className="flex-1 relative">
               {loadError && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-100/90 text-red-600 p-6 text-center">
-                  <p className="font-bold text-lg mb-2">Error Loading Map</p>
-                  <p className="text-sm">{loadError}</p>
+                  <p className="font-bold text-lg mb-2">{tr("Error Loading Map")}</p>
+                  <p className="text-sm">{tr(loadError)}</p>
                 </div>
               )}
 
@@ -203,7 +204,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
                 <div className="absolute top-4 left-4 right-20 z-[400]">
                   <div className="relative [&_.mapboxgl-ctrl-geocoder]:w-full [&_.mapboxgl-ctrl-geocoder]:max-w-none [&_.mapboxgl-ctrl-geocoder]:rounded-xl [&_.mapboxgl-ctrl-geocoder]:shadow-md [&_.mapboxgl-ctrl-geocoder]:border [&_.mapboxgl-ctrl-geocoder]:border-gray-200">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10 pointer-events-none" />
-                    <div ref={geocoderContainerRef} className="[&_input]:!pl-10" />
+                    <div ref={geocoderContainerRef} className="[&_input]:!ps-10" />
                   </div>
                 </div>
               )}
@@ -214,17 +215,17 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
                   onClick={handleLocate}
                   disabled={isLocating}
                   className="flex items-center gap-2 px-4 h-12 bg-white rounded-xl shadow-md border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  title="My Location"
+                  title={tr("My Location")}
                 >
                   {isLocating ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-                      <span className="text-sm font-bold text-blue-600">Locating...</span>
+                      <span className="text-sm font-bold text-blue-600">{tr("Locating...")}</span>
                     </>
                   ) : (
                     <>
                       <Navigation className="w-5 h-5 text-blue-600" />
-                      <span className="text-sm font-bold text-blue-600 hidden sm:inline-block">Get Current Location</span>
+                      <span className="text-sm font-bold text-blue-600 hidden sm:inline-block">{tr("Get Current Location")}</span>
                     </>
                   )}
                 </button>
@@ -235,11 +236,11 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
               <div>
                 {position ? (
                   <>
-                    <p className="text-xs font-bold text-slate-500">Selected Coordinates</p>
+                    <p className="text-xs font-bold text-slate-500">{tr("Selected Coordinates")}</p>
                     <p className="text-sm font-semibold text-blue-600">{position.lat.toFixed(5)}, {position.lng.toFixed(5)}</p>
                   </>
                 ) : (
-                  <p className="text-sm font-medium text-slate-500">Click on the map to drop a pin</p>
+                  <p className="text-sm font-medium text-slate-500">{tr("Click on the map to drop a pin")}</p>
                 )}
               </div>
               <button
@@ -248,7 +249,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
                 disabled={!position}
                 className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-600/20"
               >
-                Confirm Location
+                {tr("Confirm Location")}
               </button>
             </div>
           </motion.div>

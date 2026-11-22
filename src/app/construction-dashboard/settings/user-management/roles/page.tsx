@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -19,11 +20,11 @@ export default function RolesPage() {
 
         <div>
           <h1 className="text-3xl font-bold">
-            Role Management
+            {tr("Role Management")}
           </h1>
 
           <p className="text-gray-500 mt-1">
-            Manage all organization roles and permissions.
+            {tr("Manage all organization roles and permissions.")}
           </p>
         </div>
       </div>

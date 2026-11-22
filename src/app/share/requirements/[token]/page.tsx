@@ -10,42 +10,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  PenTool,
-  Home,
-  Plus,
-  Trash2,
-  Copy,
-  CheckCircle2,
-  Sparkles,
-  Palette,
-  Armchair,
-  Layers,
-  Zap,
-  Droplets,
-  DollarSign,
-  Calendar,
-  MessageSquare,
-  ShieldCheck,
-  AlertCircle,
-  Phone,
-  Send,
-  Building2,
-  Briefcase,
-  Utensils,
-  Store,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  Eye,
-  Sliders,
-  Sun,
-  Clock,
-  ArrowRight,
-  Edit3,
-  X,
-} from 'lucide-react';
+import { PenTool, Home, Plus, Trash2, Copy, CheckCircle2, Sparkles, Palette, Armchair, Layers, Zap, Droplets, Calendar, MessageSquare, ShieldCheck, AlertCircle, Phone, Send, Building2, Briefcase, Utensils, Store, Check, ChevronDown, ChevronUp, ExternalLink, Eye, Sliders, Sun, Clock, ArrowRight, Edit3, X, Banknote } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { cn } from '@/lib/utils';
 
@@ -519,7 +484,7 @@ export default function ClientRequirementSharePage() {
                     <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1">
                       <span className="text-[10px] font-bold text-slate-400 uppercase">Target Budget Range</span>
                       <p className="text-sm font-black text-slate-900 flex items-center gap-1.5">
-                        <DollarSign size={14} className="text-amber-500" />
+                        <Banknote size={14} className="text-amber-500" />
                         {overallBudget || lead.budgetRange}
                       </p>
                     </div>
@@ -931,7 +896,7 @@ export default function ClientRequirementSharePage() {
               <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
                   <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
-                    <DollarSign size={16} />
+                    <Banknote size={16} />
                   </div>
                   <div>
                     <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
@@ -945,7 +910,7 @@ export default function ClientRequirementSharePage() {
 
                 <div className="space-y-3">
                   <div className="relative">
-                    <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                    <Banknote className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
                     <input
                       type="text"
                       value={overallBudget}
@@ -1476,7 +1441,7 @@ export default function ClientRequirementSharePage() {
                     <div className="bg-white p-3 rounded-xl border border-slate-200/70 space-y-0.5">
                       <span className="text-[10px] text-slate-400 font-semibold block">Target Budget</span>
                       <p className="text-sm font-black text-slate-900 flex items-center gap-1.5 truncate">
-                        <DollarSign size={13} className="text-amber-500" />
+                        <Banknote size={13} className="text-amber-500" />
                         {overallBudget || 'Not specified'}
                       </p>
                     </div>

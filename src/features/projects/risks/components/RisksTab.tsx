@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import React, { useState, useEffect } from 'react';
@@ -97,11 +98,11 @@ const StatCard = ({
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">{label}</p>
+      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">{tr(label)}</p>
       <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-        <p className="min-w-0 flex-1 text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{value}</p>
+        <p className="min-w-0 flex-1 text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{tr(value)}</p>
       </div>
-      {sub && <p className="text-xs text-slate-400 mt-0.5 font-medium">{sub}</p>}
+      {sub && <p className="text-xs text-slate-400 mt-0.5 font-medium">{tr(sub)}</p>}
     </div>
   </div>
 );
@@ -145,23 +146,23 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
 
   const handleDeleteRisk = async (riskId: string) => {
     const ok = await confirm({
-      title: 'Delete Risk',
-      message: 'Delete this risk? This cannot be undone.',
-      confirmText: 'Delete Risk',
+      title: tr("Delete Risk"),
+      message: tr("Delete this risk? This cannot be undone."),
+      confirmText: tr("Delete Risk"),
       type: 'danger',
     });
     if (!ok) return;
     setDeletingId(riskId);
     try {
       await api.delete(`/risks/${riskId}`);
-      toast.success('Risk deleted');
+      toast.success(tr("Risk deleted"));
       fetchRisks();
     } catch (error: any) {
       if (error.response?.status >= 500) {
-        toast.success('Risk deleted');
+        toast.success(tr("Risk deleted"));
         fetchRisks();
       } else {
-        toast.error(error.response?.data?.message || 'Failed to delete risk');
+        toast.error(error.response?.data?.message || tr("Failed to delete risk"));
       }
     } finally {
       setDeletingId(null);
@@ -178,9 +179,9 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
           <Lock className="w-8 h-8 text-slate-400" />
         </div>
-        <h3 className="text-lg font-bold text-slate-900 mb-1">Access Restricted</h3>
+        <h3 className="text-lg font-bold text-slate-900 mb-1">{tr("Access Restricted")}</h3>
         <p className="text-xs text-slate-500 max-w-sm">
-          You don't have permission to view the Risk Management module.
+          {tr("You don't have permission to view the Risk Management module.")}
         </p>
       </div>
     );
@@ -192,7 +193,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
         {/* Statistics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Total Risks"
+            label={tr("Total Risks")}
             value={risks.length}
             icon={ShieldAlert}
             accent="text-blue-600"
@@ -200,7 +201,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
             sub={`${risks.filter(r => r.status === 'Critical').length} critical incidents`}
           />
           <StatCard
-            label="Critical Risks"
+            label={tr("Critical Risks")}
             value={risks.filter(r => r.status === 'Critical').length}
             icon={AlertTriangle}
             accent="text-red-600"
@@ -208,7 +209,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
             sub={risks.filter(r => r.status === 'Critical').length > 0 ? 'requires immediate action' : 'none detected'}
           />
           <StatCard
-            label="Active Risks"
+            label={tr("Active Risks")}
             value={risks.filter(r => r.status === 'Active').length}
             icon={Clock}
             accent="text-amber-600"
@@ -216,7 +217,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
             sub="under active review"
           />
           <StatCard
-            label="Resolved Risks"
+            label={tr("Resolved Risks")}
             value={risks.filter(r => r.status === 'Resolved').length}
             icon={ShieldCheck}
             accent="text-emerald-600"
@@ -228,8 +229,8 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
         {/* Filters and Header Action Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Risk Registry</h3>
-            <p className="text-xs text-slate-500 mt-0.5">{filteredRisks.length} incidents tracked across active phases</p>
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">{tr("Risk Registry")}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{filteredRisks.length}{tr(" incidents tracked across active phases")}</p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -249,9 +250,9 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                       : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900'
                   )}
                 >
-                  {f}
+                  {tr(f)}
                   {f !== 'All' && (
-                    <span className="ml-1.5 opacity-70">
+                    <span className="ms-1.5 opacity-70">
                       ({risks.filter(r => r.status === f).length})
                     </span>
                   )}
@@ -265,7 +266,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                 className="flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>New Risk</span>
+                <span>{tr("New Risk")}</span>
               </button>
             )}
           </div>
@@ -277,11 +278,11 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
             <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
               <ShieldCheck className="w-7 h-7 text-blue-600" />
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">No Risks Detected</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-1">{tr("No Risks Detected")}</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
               {statusFilter !== 'All'
-                ? `No risk records match the filter "${statusFilter}".`
-                : 'No risk events or safety hazards recorded for this project.'}
+                ? tr("No risk records match the filter \"{{statusFilter}}\".", { statusFilter: statusFilter })
+                : tr("No risk events or safety hazards recorded for this project.")}
             </p>
           </div>
         ) : (
@@ -302,28 +303,28 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                       <div className="flex items-center space-x-1.5" style={{ color: statusColor }}>
                         <CategoryIcon className="w-4 h-4" />
                         <span className="text-[10px] font-bold uppercase tracking-wider">
-                          {risk.category}
+                          {tr(risk.category)}
                         </span>
                       </div>
                       <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', getImpactBadgeClass(risk.impact))}>
-                        {risk.impact}
+                        {tr(risk.impact)}
                       </span>
                     </div>
 
                     <h4 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2 mb-2">
-                      {risk.title}
+                      {tr(risk.title)}
                     </h4>
 
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
-                      {risk.description || 'No description provided.'}
+                      {risk.description || tr("No description provided.")}
                     </p>
                   </div>
 
                   {/* Mid card progress */}
                   <div className="space-y-2 mb-4 border-t border-slate-100 pt-4">
                     <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
-                      <span>Mitigation Progress</span>
-                      <span className="text-slate-900 font-extrabold">{risk.mitigationProgress}%</span>
+                      <span>{tr("Mitigation Progress")}</span>
+                      <span className="text-slate-900 font-extrabold">{tr(risk.mitigationProgress)}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                       <div
@@ -339,7 +340,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                   {/* Bottom card footer */}
                   <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                     <p className="text-[10px] font-semibold text-slate-400">
-                      Updated {new Date(risk.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {tr("Updated ")}{new Date(risk.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
 
                     <div className="flex items-center space-x-1 shrink-0">
@@ -348,7 +349,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                           setSelectedRisk(risk);
                           setIsDetailOpen(true);
                         }}
-                        title="View Details"
+                        title={tr("View Details")}
                         className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
@@ -360,7 +361,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                             setSelectedMitigateRisk(risk);
                             setIsMitigateOpen(true);
                           }}
-                          title="Update Mitigation"
+                          title={tr("Update Mitigation")}
                           className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-100 rounded-xl transition-all cursor-pointer"
                         >
                           <Pencil className="w-3.5 h-3.5" />
@@ -372,7 +373,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                         <button
                           onClick={() => handleDeleteRisk(risk._id)}
                           disabled={deletingId === risk._id}
-                          title="Delete Risk"
+                          title={tr("Delete Risk")}
                           className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-xl transition-all disabled:opacity-40 cursor-pointer"
                         >
                           {deletingId === risk._id ? (

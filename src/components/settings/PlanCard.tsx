@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 import { Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '@/services/api.client';
@@ -87,20 +88,20 @@ const handlePlanRequest = async () => {
     // Immediately update button
     setPending(true);
 
-    toast.success(`${title} plan request submitted successfully.`);
+    toast.success(tr("{{title}} plan request submitted successfully.", { title: title }));
   } catch (error: any) {
     console.error(error);
 
     // If a pending request already exists
     if (error?.response?.status === 409) {
       setPending(true);
-      toast.success('Request is already pending.');
+      toast.success(tr("Request is already pending."));
       return;
     }
 
     toast.error(
       error?.response?.data?.message ||
-      'Failed to submit plan request.'
+      tr("Failed to submit plan request.")
     );
   } finally {
     setLoading(false);
@@ -117,12 +118,12 @@ const handlePlanRequest = async () => {
         className={`${color} text-white px-6 py-5 flex justify-between items-center`}
       >
         <h2 className="text-xl font-bold">
-          {title}
+          {tr(title)}
         </h2>
 
         {current && (
           <span className="bg-white/20 px-3 py-1 rounded-full text-xs">
-            Current
+            {tr("Current")}
           </span>
         )}
       </div>
@@ -140,7 +141,7 @@ const handlePlanRequest = async () => {
                 <Check className="w-4 h-4 text-green-600" />
               </div>
 
-              <span>{item}</span>
+              <span>{tr(item)}</span>
             </div>
           ))}
 
@@ -157,9 +158,9 @@ const handlePlanRequest = async () => {
               }`}
           >
             {loading
-            ? 'Requesting...'
+            ? tr("Requesting...")
             : pending
-            ? 'Request Pending'
+            ? tr("Request Pending")
             : buttonText}
           </button>
         )}

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { Users, Shield } from 'lucide-react';
@@ -18,11 +19,11 @@ export default function UsersPage() {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                Organisation <span className="text-blue-600">Members</span>
+                {tr("Organisation ")}<span className="text-blue-600">{tr("Members")}</span>
               </h1>
             </div>
             <p className="text-xs font-semibold text-slate-500 mt-0.5">
-              Manage organisation-level team members, access tiers, and governance role permissions.
+              {tr("Manage organisation-level team members, access tiers, and governance role permissions.")}
             </p>
           </div>
 
@@ -39,7 +40,7 @@ export default function UsersPage() {
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span>{label}</span>
+                <span>{tr(label)}</span>
               </button>
             ))}
           </div>

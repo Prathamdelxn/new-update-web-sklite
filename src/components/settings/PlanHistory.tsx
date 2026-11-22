@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 interface HistoryEntry {
   plan: string;
@@ -19,11 +20,11 @@ export default function PlanHistory({ history }: PlanHistoryProps) {
     <div className="bg-white rounded-3xl border border-slate-200 p-6">
 
       <h3 className="text-xs tracking-[4px] uppercase font-bold text-blue-600 mb-6">
-        Plan History
+        {tr("Plan History")}
       </h3>
 
       {entries.length === 0 ? (
-        <p className="text-slate-400">No plan changes yet.</p>
+        <p className="text-slate-400">{tr("No plan changes yet.")}</p>
       ) : (
         <div className="space-y-6">
           {entries.map((entry, i) => (
@@ -34,11 +35,11 @@ export default function PlanHistory({ history }: PlanHistoryProps) {
               <div>
 
                 <h4 className="font-semibold">
-                  {entry.plan} — {entry.status}
+                  {tr(entry.plan)} — {tr(entry.status)}
                 </h4>
 
                 <p className="text-slate-500 mt-1">
-                  {entry.reason}
+                  {tr(entry.reason)}
                 </p>
 
                 <p className="text-sm text-slate-400 mt-1">

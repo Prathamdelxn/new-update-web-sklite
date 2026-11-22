@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useRouter } from 'next/navigation';
@@ -28,11 +29,11 @@ export default function UserManagementPage() {
 
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              User Management
+              {tr("User Management")}
             </h1>
 
             <p className="text-gray-500 mt-1">
-              Manage organization members and roles.
+              {tr("Manage organization members and roles.")}
             </p>
           </div>
 
@@ -57,14 +58,14 @@ export default function UserManagementPage() {
 
                 </div>
 
-                <div className="text-left">
+                <div className="text-start">
 
                   <h2 className="text-xl font-semibold text-gray-900">
-                    Role Management
+                    {tr("Role Management")}
                   </h2>
 
                   <p className="text-gray-500 mt-1">
-                    Create roles, assign permissions and manage system access.
+                    {tr("Create roles, assign permissions and manage system access.")}
                   </p>
 
                 </div>
@@ -94,14 +95,14 @@ export default function UserManagementPage() {
 
                 </div>
 
-                <div className="text-left">
+                <div className="text-start">
 
                   <h2 className="text-xl font-semibold text-gray-900">
-                    Member Management
+                    {tr("Member Management")}
                   </h2>
 
                   <p className="text-gray-500 mt-1">
-                    Invite members and assign them to roles.
+                    {tr("Invite members and assign them to roles.")}
                   </p>
 
                 </div>

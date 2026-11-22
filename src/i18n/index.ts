@@ -8,12 +8,14 @@
 // =============================================================================
 
 import arInterior from './ar.interior.json';
+import arConstruction from './ar.construction.json';
 
 export type Lang = 'en' | 'ar';
 export const LANG_STORAGE_KEY = 'skylite.lang';
 
 const DICTIONARIES: Record<Exclude<Lang, 'en'>, Record<string, string>> = {
-  ar: arInterior as Record<string, string>,
+  // interior wording wins where both define the same English text
+  ar: { ...(arConstruction as Record<string, string>), ...(arInterior as Record<string, string>) },
 };
 
 let current: Lang = 'en';

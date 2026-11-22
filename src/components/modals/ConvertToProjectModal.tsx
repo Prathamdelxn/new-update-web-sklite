@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Trophy, DollarSign, Receipt, CalendarClock } from 'lucide-react';
+import { X, Trophy, Receipt, CalendarClock, Banknote } from 'lucide-react';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
 

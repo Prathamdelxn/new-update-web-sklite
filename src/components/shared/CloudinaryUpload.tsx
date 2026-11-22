@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useRef, useState } from 'react';
 import { Upload, X, Loader2, CheckCircle2, Image, FileText } from 'lucide-react';
@@ -42,7 +43,7 @@ export const CloudinaryUpload: React.FC<CloudinaryUploadProps> = ({
   const handleFile = async (file: File) => {
     setError(null);
     if (file.size > maxSizeMB * 1024 * 1024) {
-      setError(`File exceeds ${maxSizeMB}MB limit`);
+      setError(tr("File exceeds {{maxSizeMB}}MB limit", { maxSizeMB: maxSizeMB }));
       return;
     }
 
@@ -75,19 +76,19 @@ export const CloudinaryUpload: React.FC<CloudinaryUploadProps> = ({
           onUpload(data.secure_url, data.public_id);
         } else {
           const err = JSON.parse(xhr.responseText || '{}');
-          setError(err?.error?.message || 'Upload failed.');
+          setError(err?.error?.message || tr("Upload failed."));
         }
         setUploading(false);
       };
 
       xhr.onerror = () => {
-        setError('Network error during upload.');
+        setError(tr("Network error during upload."));
         setUploading(false);
       };
 
       xhr.send(formData);
     } catch {
-      setError('Upload failed.');
+      setError(tr("Upload failed."));
       setUploading(false);
     }
   };
@@ -131,7 +132,7 @@ export const CloudinaryUpload: React.FC<CloudinaryUploadProps> = ({
         {uploading ? (
           <div className="flex flex-col items-center space-y-3">
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            <p className="text-sm font-semibold text-blue-600">Uploading... {progress}%</p>
+            <p className="text-sm font-semibold text-blue-600">{tr("Uploading... ")}{tr(progress)}%</p>
             <div className="w-full max-w-xs h-1.5 bg-blue-100 rounded-full overflow-hidden">
               <div className="h-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
             </div>
@@ -139,16 +140,16 @@ export const CloudinaryUpload: React.FC<CloudinaryUploadProps> = ({
         ) : uploadedUrl ? (
           <div className="flex flex-col items-center space-y-3">
             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-            <p className="text-sm font-semibold text-emerald-600">Uploaded successfully</p>
+            <p className="text-sm font-semibold text-emerald-600">{tr("Uploaded successfully")}</p>
             {isImage ? (
-              <img loading="lazy" decoding="async" src={uploadedUrl} alt="Preview" className="w-24 h-24 rounded-xl object-cover border border-gray-200 mt-1" />
+              <img loading="lazy" decoding="async" src={uploadedUrl} alt={tr("Preview")} className="w-24 h-24 rounded-xl object-cover border border-gray-200 mt-1" />
             ) : (
               <div className="flex items-center space-x-2 px-3 py-2 bg-white rounded-xl border border-gray-200">
                 <FileText className="w-4 h-4 text-blue-600" />
                 <span className="text-xs text-slate-600 truncate max-w-[200px]">{uploadedUrl.split('/').pop()}</span>
               </div>
             )}
-            <p className="text-[11px] text-slate-400">Click to replace</p>
+            <p className="text-[11px] text-slate-400">{tr("Click to replace")}</p>
           </div>
         ) : (
           <div className="flex flex-col items-center space-y-3">
@@ -156,9 +157,9 @@ export const CloudinaryUpload: React.FC<CloudinaryUploadProps> = ({
               <Upload className="w-6 h-6 text-slate-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">{label}</p>
-              <p className="text-xs text-slate-400 mt-0.5">Drag & drop or click to browse</p>
-              <p className="text-[11px] text-slate-400 mt-1">Max {maxSizeMB}MB</p>
+              <p className="text-sm font-semibold text-gray-900">{tr(label)}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{tr("Drag & drop or click to browse")}</p>
+              <p className="text-[11px] text-slate-400 mt-1">{tr("Max ")}{tr(maxSizeMB)}{tr("MB")}</p>
             </div>
           </div>
         )}
@@ -167,7 +168,7 @@ export const CloudinaryUpload: React.FC<CloudinaryUploadProps> = ({
       {error && (
         <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl">
           <X className="w-4 h-4 text-red-500 shrink-0" />
-          <p className="text-xs text-red-600 font-medium">{error}</p>
+          <p className="text-xs text-red-600 font-medium">{tr(error)}</p>
         </div>
       )}
     </div>

@@ -1,11 +1,9 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X, Loader2, Map, Zap, Droplets, Mountain,
-  DollarSign, Home, Wind, Ruler, Camera, Image as ImageIcon, Trash2, Plus, Info
-} from 'lucide-react';
+import { X, Loader2, Map, Zap, Droplets, Mountain, Home, Wind, Ruler, Camera, Image as ImageIcon, Trash2, Plus, Info, Banknote } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { cn } from '@/lib/utils';
@@ -44,9 +42,9 @@ const Switch = ({ checked, onChange, activeColor = 'bg-blue-600' }: { checked: b
 
 const ToggleRow = ({ label, subLabel, checked, onChange, activeColor = 'bg-blue-600' }: any) => (
   <div className="flex items-center justify-between py-2">
-    <div className="pr-4">
-      <span className="text-xs font-semibold text-slate-800 block">{label}</span>
-      {subLabel && <span className="text-[11px] text-slate-500 block mt-0.5">{subLabel}</span>}
+    <div className="pe-4">
+      <span className="text-xs font-semibold text-slate-800 block">{tr(label)}</span>
+      {subLabel && <span className="text-[11px] text-slate-500 block mt-0.5">{tr(subLabel)}</span>}
     </div>
     <Switch checked={checked} onChange={onChange} activeColor={activeColor} />
   </div>
@@ -248,18 +246,18 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
         // PATCH update mode
         payload.action = 'UpdateDetails';
         await api.patch(`/projects/${projectId}/survey`, payload);
-        toast.success('Site survey updated!');
+        toast.success(tr("Site survey updated!"));
       } else {
         // POST create mode
         await api.post(`/projects/${projectId}/survey`, payload);
-        toast.success('Site survey report lodged!');
+        toast.success(tr("Site survey report lodged!"));
       }
 
       onSuccess();
       onClose();
       reset();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to submit survey');
+      toast.error(error.response?.data?.message || tr("Failed to submit survey"));
     } finally {
       setIsLoading(false);
     }
@@ -296,11 +294,11 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 <div>
                   <h2 className="text-base font-bold text-slate-900 leading-tight">
                     {existingSurvey
-                      ? `Edit ${isInterior ? 'Interior' : 'Site'} Survey`
-                      : (isInterior ? 'Record Interior Survey' : 'Record Site Survey')}
+                      ? tr("Edit {{value}} Survey", { value: isInterior ? 'Interior' : 'Site' })
+                      : (isInterior ? tr("Record Interior Survey") : tr("Record Site Survey"))}
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {isInterior ? 'Space condition, MEP & architectural diagnostics' : 'Physical terrain, MEP points & site conditions'}
+                    {isInterior ? tr("Space condition, MEP & architectural diagnostics") : tr("Physical terrain, MEP points & site conditions")}
                   </p>
                 </div>
               </div>
@@ -321,12 +319,12 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      {isInterior ? 'Space & Condition Assessment' : 'Conditions & Utilities'}
+                      {isInterior ? tr("Space & Condition Assessment") : tr("Conditions & Utilities")}
                     </span>
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700 mb-2 block">
-                      {isInterior ? 'Overall Space Condition' : 'Overall Accessibility'}
+                      {isInterior ? tr("Overall Space Condition") : tr("Overall Accessibility")}
                     </label>
                     <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-1 border border-slate-200/50">
                       {accessibilityOptions.map(o => (
@@ -341,7 +339,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                               : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                           )}
                         >
-                          {o}
+                          {tr(o)}
                         </button>
                       ))}
                     </div>
@@ -350,7 +348,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   <div className="border-t border-slate-100 pt-1" />
 
                   <ToggleRow
-                    label={isInterior ? 'Electrical Points Accessible' : 'Power Infrastructure Available'}
+                    label={isInterior ? tr("Electrical Points Accessible") : tr("Power Infrastructure Available")}
                     subLabel={isInterior ? 'Existing outlets and wiring in place' : 'Existing grid connections'}
                     checked={powerAvailable}
                     onChange={setPowerAvailable}
@@ -359,7 +357,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   <div className="border-t border-slate-100 pt-1" />
 
                   <ToggleRow
-                    label={isInterior ? 'Plumbing Accessible' : 'Water Connection Available'}
+                    label={isInterior ? tr("Plumbing Accessible") : tr("Water Connection Available")}
                     subLabel={isInterior ? 'Kitchen/bathroom plumbing lines' : 'Municipal or well connection'}
                     checked={waterAvailable}
                     onChange={setWaterAvailable}
@@ -371,18 +369,18 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                       <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                        Terrain & Soil
+                        {tr("Terrain & Soil")}
                       </span>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-slate-700 block mb-1.5">Terrain / Soil Notes</label>
+                      <label className="text-xs font-semibold text-slate-700 block mb-1.5">{tr("Terrain / Soil Notes")}</label>
                       <textarea
                         required
                         rows={2.5}
                         value={terrainNotes}
                         onChange={e => setTerrainNotes(e.target.value)}
                         className={`${inputCls} resize-none`}
-                        placeholder="Soil type, slope, clearing needed..."
+                        placeholder={tr("Soil type, slope, clearing needed...")}
                       />
                     </div>
                   </div>
@@ -395,12 +393,12 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                          Room Details
+                          {tr("Room Details")}
                         </span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Room Count</label>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{tr("Room Count")}</label>
                           <input
                             type="number"
                             min="1"
@@ -411,7 +409,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Ceiling Height</label>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{tr("Ceiling Height")}</label>
                           <div className="flex gap-2">
                             <input
                               type="text"
@@ -425,17 +423,17 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                               onChange={e => setCeilingHeightUnit(e.target.value as any)}
                               className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer"
                             >
-                              <option value="ft">ft</option>
+                              <option value="ft">{tr("ft")}</option>
                               <option value="m">m</option>
-                              <option value="in">in</option>
-                              <option value="mm">mm</option>
-                              <option value="cm">cm</option>
+                              <option value="in">{tr("in")}</option>
+                              <option value="mm">{tr("mm")}</option>
+                              <option value="cm">{tr("cm")}</option>
                             </select>
                           </div>
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-slate-700 mb-2 block">Natural Lighting</label>
+                        <label className="text-xs font-semibold text-slate-700 mb-2 block">{tr("Natural Lighting")}</label>
                         <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-1 border border-slate-200/50">
                           {['Excellent', 'Good', 'Limited', 'None'].map(o => (
                             <button
@@ -449,7 +447,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                               )}
                             >
-                              {o}
+                              {tr(o)}
                             </button>
                           ))}
                         </div>
@@ -458,7 +456,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       <div className="border-t border-slate-100 pt-1" />
 
                       <ToggleRow
-                        label="Ventilation / AC Available"
+                        label={tr("Ventilation / AC Available")}
                         subLabel="Existing ducting or split unit points"
                         checked={ventilationAvailable}
                         onChange={setVentilationAvailable}
@@ -469,11 +467,11 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                          Wall & Moisture Diagnostics
+                          {tr("Wall & Moisture Diagnostics")}
                         </span>
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-slate-700 mb-2 block">Wall Construction Type</label>
+                        <label className="text-xs font-semibold text-slate-700 mb-2 block">{tr("Wall Construction Type")}</label>
                         <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-1 border border-slate-200/50">
                           {(['Solid Brick', 'Gypsum Drywall', 'RCC Concrete', 'Mixed'] as const).map(w => (
                             <button
@@ -487,7 +485,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                               )}
                             >
-                              {w}
+                              {tr(w)}
                             </button>
                           ))}
                         </div>
@@ -496,7 +494,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       <div className="border-t border-slate-100 pt-1" />
 
                       <ToggleRow
-                        label="Dampness / Water Seepage Observed"
+                        label={tr("Dampness / Water Seepage Observed")}
                         subLabel="Check for water stains or damp walls before woodwork"
                         checked={dampnessObserved}
                         onChange={setDampnessObserved}
@@ -505,13 +503,13 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
 
                       {dampnessObserved && (
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Dampness & Leakage Details</label>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{tr("Dampness & Leakage Details")}</label>
                           <textarea
                             rows={2}
                             value={dampnessNotes}
                             onChange={e => setDampnessNotes(e.target.value)}
                             className={`${inputCls} resize-none`}
-                            placeholder="e.g. Seepage observed on Bedroom 2 outer wall..."
+                            placeholder={tr("e.g. Seepage observed on Bedroom 2 outer wall...")}
                           />
                         </div>
                       )}
@@ -521,12 +519,12 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                          MEP & Services Readiness
+                          {tr("MEP & Services Readiness")}
                         </span>
                       </div>
                       
                       <div>
-                        <label className="text-xs font-semibold text-slate-700 mb-2 block">Electrical Supply Phase</label>
+                        <label className="text-xs font-semibold text-slate-700 mb-2 block">{tr("Electrical Supply Phase")}</label>
                         <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-3 gap-1 border border-slate-200/50">
                           {(['Single Phase', 'Three Phase', 'Unsure'] as const).map(phase => (
                             <button
@@ -540,7 +538,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                               )}
                             >
-                              {phase}
+                              {tr(phase)}
                             </button>
                           ))}
                         </div>
@@ -549,14 +547,14 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       <div className="border-t border-slate-100 pt-1" />
 
                       <ToggleRow
-                        label="AC Copper Piping Laid"
+                        label={tr("AC Copper Piping Laid")}
                         subLabel="Internal refrigerant pipes pre-installed"
                         checked={acPipingReady}
                         onChange={setAcPipingReady}
                       />
 
                       <ToggleRow
-                        label="Plumbing & Waste Outlets Positioned"
+                        label={tr("Plumbing & Waste Outlets Positioned")}
                         subLabel="Drainage points ready for kitchen/baths"
                         checked={plumbingDrainReady}
                         onChange={setPlumbingDrainReady}
@@ -567,12 +565,12 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                          Material Access & Freight Logistics
+                          {tr("Material Access & Freight Logistics")}
                         </span>
                       </div>
                       
                       <div>
-                        <label className="text-xs font-semibold text-slate-700 mb-2 block">Elevator / Stair Access</label>
+                        <label className="text-xs font-semibold text-slate-700 mb-2 block">{tr("Elevator / Stair Access")}</label>
                         <div className="p-1 bg-slate-100/90 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-1 border border-slate-200/50">
                           {(['Service Elevator Available', 'Passenger Elevator Only', 'Stairs Only'] as const).map(opt => (
                             <button
@@ -586,7 +584,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                               )}
                             >
-                              {opt}
+                              {tr(opt)}
                             </button>
                           ))}
                         </div>
@@ -594,7 +592,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
 
                       {elevatorAccessibility !== 'Stairs Only' && (
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Elevator Capacity (kg)</label>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{tr("Elevator Capacity (kg)")}</label>
                           <input
                             type="number"
                             value={elevatorCapacityKg}
@@ -610,12 +608,12 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                          Structural & Design
+                          {tr("Structural & Design")}
                         </span>
                       </div>
                       
                       <ToggleRow
-                        label="Structural Modifications Needed"
+                        label={tr("Structural Modifications Needed")}
                         subLabel="Wall removal, partition additions, beam work"
                         checked={structuralModification}
                         onChange={setStructuralModification}
@@ -624,13 +622,13 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       
                       {structuralModification && (
                         <div className="mt-2">
-                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Structural Notes</label>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{tr("Structural Notes")}</label>
                           <textarea
                             rows={2.5}
                             value={structuralNotes}
                             onChange={e => setStructuralNotes(e.target.value)}
                             className={`${inputCls} resize-none`}
-                            placeholder="Describe required structural changes..."
+                            placeholder={tr("Describe required structural changes...")}
                           />
                         </div>
                       )}
@@ -638,13 +636,13 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       <div className="border-t border-slate-100 pt-1 mt-2" />
 
                       <div>
-                        <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Client Style Preference</label>
+                        <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{tr("Client Style Preference")}</label>
                         <textarea
                           rows={3}
                           value={clientStylePreference}
                           onChange={e => setClientStylePreference(e.target.value)}
                           className={`${inputCls} resize-none`}
-                          placeholder="e.g. Modern minimalist, warm tones, open-plan kitchen preferred..."
+                          placeholder={tr("e.g. Modern minimalist, warm tones, open-plan kitchen preferred...")}
                         />
                       </div>
                     </div>
@@ -655,14 +653,14 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Site Observation Media
+                      {tr("Site Observation Media")}
                     </span>
                   </div>
                   
                   {/* Main Observation Image */}
                   <div>
                     <label className="text-xs font-semibold text-slate-700 mb-2 block">
-                      {isInterior ? 'Primary Space Photo (Key Observation)' : 'Primary Site Photo (Key Observation)'}
+                      {isInterior ? tr("Primary Space Photo (Key Observation)") : tr("Primary Site Photo (Key Observation)")}
                     </label>
                     <input type="file" accept="image/*" className="hidden" ref={obsInputRef} onChange={handleObsImageSelect} />
                     
@@ -671,14 +669,14 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       className="w-full h-40 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/60 hover:bg-blue-50/20 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 overflow-hidden group transition-all"
                     >
                       {observationFile ? (
-                        <img loading="lazy" decoding="async" src={URL.createObjectURL(observationFile)} alt="Obs preview" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={URL.createObjectURL(observationFile)} alt={tr("Obs preview")} className="w-full h-full object-cover" />
                       ) : observationImage ? (
-                        <img loading="lazy" decoding="async" src={observationImage} alt="Obs source" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={observationImage} alt={tr("Obs source")} className="w-full h-full object-cover" />
                       ) : (
                         <div className="text-center p-4">
                           <Camera className="w-7 h-7 text-slate-400 mx-auto mb-1 group-hover:text-blue-600 transition-colors" />
-                          <p className="text-xs font-semibold text-slate-600">Select {isInterior ? 'space' : 'site'} observation image</p>
-                          <p className="text-[11px] text-slate-400 mt-0.5">PNG, JPG, or WEBP up to 10MB</p>
+                          <p className="text-xs font-semibold text-slate-600">{tr("Select ")}{isInterior ? tr("space") : tr("site")}{tr(" observation image")}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{tr("PNG, JPG, or WEBP up to 10MB")}</p>
                         </div>
                       )}
                     </div>
@@ -691,7 +689,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                         }}
                         className="mt-2.5 text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5" /> Remove Image
+                        <Trash2 className="w-3.5 h-3.5" />{tr(" Remove Image")}
                       </button>
                     )}
                   </div>
@@ -699,7 +697,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   {/* Additional Room Photos (Interior-only) */}
                   {isInterior && (
                     <div className="border-t border-slate-100 pt-4">
-                      <label className="text-xs font-semibold text-slate-700 mb-2.5 block">Additional Space Photos</label>
+                      <label className="text-xs font-semibold text-slate-700 mb-2.5 block">{tr("Additional Space Photos")}</label>
                       <input type="file" accept="image/*" multiple className="hidden" ref={addInputRef} onChange={handleAddPhotosSelect} />
                       
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
@@ -709,13 +707,13 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                           className="h-24 border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/60 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-1 group transition-all"
                         >
                           <Plus className="w-5 h-5 text-slate-400 group-hover:text-blue-600" />
-                          <span className="text-[10px] font-semibold text-slate-500">Add Photo</span>
+                          <span className="text-[10px] font-semibold text-slate-500">{tr("Add Photo")}</span>
                         </div>
 
                         {/* Existing Photos URLs */}
                         {additionalPhotos.map((url, idx) => (
                           <div key={`url-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative group">
-                            <img loading="lazy" decoding="async" src={url} alt="Space attachment" className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={url} alt={tr("Space attachment")} className="w-full h-full object-cover" />
                             <button
                               type="button"
                               onClick={() => removeAdditionalPhotoUrl(idx)}
@@ -729,7 +727,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                         {/* New Photos Files */}
                         {additionalFiles.map((file, idx) => (
                           <div key={`file-${idx}`} className="h-24 bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative group">
-                            <img loading="lazy" decoding="async" src={URL.createObjectURL(file)} alt="File attachment" className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={URL.createObjectURL(file)} alt={tr("File attachment")} className="w-full h-full object-cover" />
                             <button
                               type="button"
                               onClick={() => removeAdditionalFile(idx)}
@@ -748,17 +746,17 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Surveyor Comments
+                      {tr("Surveyor Comments")}
                     </span>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1.5">Observations & Remarks</label>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1.5">{tr("Observations & Remarks")}</label>
                     <textarea
                       rows={2.5}
                       value={notes}
                       onChange={e => setNotes(e.target.value)}
                       className={`${inputCls} resize-none`}
-                      placeholder="General observations, access notes, or site constraints..."
+                      placeholder={tr("General observations, access notes, or site constraints...")}
                     />
                   </div>
                 </div>
@@ -769,7 +767,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   affectsBudget ? 'bg-amber-50/40 border-amber-200' : 'bg-white border-slate-200'
                 )}>
                   <ToggleRow
-                    label="Affects Initial Budget?"
+                    label={tr("Affects Initial Budget?")}
                     subLabel="Does this survey identify scope changes requiring budget adjustment?"
                     checked={affectsBudget}
                     onChange={setAffectsBudget}
@@ -780,7 +778,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       <div className="flex items-center gap-2 p-2.5 bg-blue-50/80 border border-blue-200/80 rounded-lg">
                         <Info className="w-4 h-4 text-blue-600 shrink-0" />
                         <p className="text-xs text-blue-900">
-                          Current Active Budget:{' '}
+                          {tr("Current Active Budget:")}{' '}
                           <span className="font-bold">
                             {formatCurrency(currentBudgetAmount, project?.currency)}
                           </span>
@@ -789,7 +787,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
-                            New Estimated Budget ({project?.currency || 'AED'})
+                            {tr("New Estimated Budget (")}{project?.currency || tr("AED")})
                           </label>
                           <input
                             type="number"
@@ -801,14 +799,14 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Reason</label>
+                          <label className="text-xs font-semibold text-slate-700 mb-1.5 block">{tr("Reason")}</label>
                           <input
                             type="text"
                             required
                             value={budgetReason}
                             onChange={e => setBudgetReason(e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 font-medium transition-all"
-                            placeholder="e.g. Structural modifications required"
+                            placeholder={tr("e.g. Structural modifications required")}
                           />
                         </div>
                       </div>
@@ -824,7 +822,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   onClick={onClose}
                   className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl border border-slate-200 transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -834,10 +832,10 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                   {isLoading ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Submitting...</span>
+                      <span>{tr("Submitting...")}</span>
                     </>
                   ) : (
-                    <span>{existingSurvey ? 'Update Survey Report' : 'Submit Survey Report'}</span>
+                    <span>{existingSurvey ? tr("Update Survey Report") : tr("Submit Survey Report")}</span>
                   )}
                 </button>
               </div>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,11 +67,11 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
     e.preventDefault();
 
     if (items.some(item => !item.materialId || item.quantity <= 0)) {
-      toast.error('Please fill in all items correctly');
+      toast.error(tr("Please fill in all items correctly"));
       return;
     }
     if (items.some(item => item.quantity > MAX_INPUT_VALUE)) {
-      toast.error('Quantity is too large');
+      toast.error(tr("Quantity is too large"));
       return;
     }
 
@@ -80,13 +81,13 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
         ...formData,
         items
       });
-      toast.success('Material receipt recorded successfully!');
+      toast.success(tr("Material receipt recorded successfully!"));
       onSuccess();
       onClose();
       setFormData({ vendorName: '', challanNumber: '', invoiceNumber: '', commonNote: '' });
       setItems([{ materialId: '', quantity: 0, unit: '' }]);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to record receipt');
+      toast.error(error.response?.data?.message || tr("Failed to record receipt"));
     } finally {
       setIsLoading(false);
     }
@@ -117,8 +118,8 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                     <FileCheck className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Record Material Receipt</h2>
-                    <p className="text-xs text-slate-500 mt-0.5">Log incoming supplies and challan details.</p>
+                    <h2 className="text-xl font-bold text-gray-900">{tr("Record Material Receipt")}</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr("Log incoming supplies and challan details.")}</p>
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -130,24 +131,24 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                 {/* Vendor & Document Details */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Vendor Name</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Vendor Name")}</label>
                     <div className="relative group">
                       <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                       <select
                         required
                         value={formData.vendorName}
                         onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm appearance-none"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 ps-10 pe-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm appearance-none"
                       >
-                        <option value="" disabled>Select Vendor</option>
+                        <option value="" disabled>{tr("Select Vendor")}</option>
                         {vendors.map(v => (
-                          <option key={v._id} value={v.name}>{v.name}</option>
+                          <option key={v._id} value={v.name}>{tr(v.name)}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Delivery Slip / Ref #</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Delivery Slip / Ref #")}</label>
                     <div className="relative group">
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                       <input
@@ -155,45 +156,45 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                         required
                         value={formData.challanNumber}
                         onChange={(e) => setFormData({ ...formData, challanNumber: e.target.value })}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
-                        placeholder="Delivery Slip / Ref #"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 ps-10 pe-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                        placeholder={tr("Delivery Slip / Ref #")}
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Invoice #</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Invoice #")}</label>
                     <div className="relative group">
                       <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                       <input
                         type="text"
                         value={formData.invoiceNumber}
                         onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
-                        placeholder="Invoice #"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 ps-10 pe-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                        placeholder={tr("Invoice #")}
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Items List */}
-                <div className="space-y-4 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-4 max-h-[30vh] overflow-y-auto pe-2 custom-scrollbar">
                   {items.map((item, index) => (
                     <div key={index} className="flex gap-4 items-end p-4 rounded-2xl bg-gray-50 border border-gray-200 relative group">
                       <div className="flex-1 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Material</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
                         <select
                           value={item.materialId}
                           onChange={(e) => handleItemChange(index, 'materialId', e.target.value)}
                           className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
                         >
-                          <option value="">Select Material</option>
+                          <option value="">{tr("Select Material")}</option>
                           {materials.map(m => (
-                            <option key={m._id} value={m._id}>{m.name} ({m.unit})</option>
+                            <option key={m._id} value={m._id}>{tr(m.name)} ({tr(m.unit)})</option>
                           ))}
                         </select>
                       </div>
                       <div className="w-24 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Qty</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Qty")}</label>
                         <input
                           type="number"
                           min="1"
@@ -205,7 +206,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                         />
                       </div>
                       <div className="w-20 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Unit</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Unit")}</label>
                         <input
                           type="text"
                           readOnly
@@ -231,20 +232,20 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                     className="w-full py-3 border-2 border-dashed border-gray-200 rounded-2xl text-slate-500 hover:text-emerald-600 hover:border-emerald-400 transition-all flex items-center justify-center space-x-2 text-sm font-bold"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add Another Item</span>
+                    <span>{tr("Add Another Item")}</span>
                   </button>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600 ml-1">Common Note / Description</label>
+                  <label className="text-sm font-medium text-slate-600 ms-1">{tr("Common Note / Description")}</label>
                   <div className="relative group">
                     <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                     <textarea
                       rows={2}
                       value={formData.commonNote}
                       onChange={(e) => setFormData({ ...formData, commonNote: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm resize-none"
-                      placeholder="Any additional observations or damage reports..."
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 ps-10 pe-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm resize-none"
+                      placeholder={tr("Any additional observations or damage reports...")}
                     />
                   </div>
                 </div>
@@ -255,7 +256,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                     onClick={onClose}
                     className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all active:scale-[0.98]"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -265,10 +266,10 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                     {isLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Recording...</span>
+                        <span>{tr("Recording...")}</span>
                       </>
                     ) : (
-                      <span>Complete Receipt</span>
+                      <span>{tr("Complete Receipt")}</span>
                     )}
                   </button>
                 </div>

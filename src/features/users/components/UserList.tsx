@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -56,7 +57,7 @@ export const UserList = () => {
       setUsers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load team members');
+      toast.error(tr("Failed to load team members"));
     } finally {
       setLoading(false);
     }
@@ -82,11 +83,11 @@ export const UserList = () => {
     setIsDeleting(true);
     try {
       await api.delete(`/users/${deletingUser._id}`);
-      toast.success(`${deletingUser.name} has been removed`);
+      toast.success(tr("{{name}} has been removed", { name: deletingUser.name }));
       setDeletingUser(null);
       fetchUsers();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to remove user');
+      toast.error(error.response?.data?.message || tr("Failed to remove user"));
     } finally {
       setIsDeleting(false);
     }
@@ -105,7 +106,7 @@ export const UserList = () => {
       ));
 
     if (isAdmin) {
-      toast.error('Admin accounts are system-protected and cannot be edited.');
+      toast.error(tr("Admin accounts are system-protected and cannot be edited."));
       return;
     }
     setEditingUser(user);
@@ -125,12 +126,12 @@ export const UserList = () => {
       ));
 
     if (isAdmin) {
-      toast.error('Admin accounts are system-protected and cannot be removed.');
+      toast.error(tr("Admin accounts are system-protected and cannot be removed."));
       return;
     }
     const isSelf = !!currentUser && (currentUser._id === user._id || (currentUser as any).id === user._id);
     if (isSelf) {
-      toast.error("You cannot delete your own account");
+      toast.error(tr("You cannot delete your own account"));
       return;
     }
     setDeletingUser(user);
@@ -206,10 +207,10 @@ export const UserList = () => {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by name, email or phone..."
+                placeholder={tr("Search by name, email or phone...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full ps-9 pe-8 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
               {searchQuery && (
                 <button
@@ -236,20 +237,20 @@ export const UserList = () => {
                   )}
                 >
                   <Filter className={cn("w-3.5 h-3.5", roleFilter !== 'All' ? "text-blue-600" : "text-slate-500")} />
-                  <span>{roleFilter === 'All' ? 'Filter Role' : roleFilter}</span>
+                  <span>{roleFilter === 'All' ? tr("Filter Role") : roleFilter}</span>
                   {roleFilter !== 'All' && roleCounts[roleFilter] !== undefined && (
                     <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-blue-200/80 text-blue-800 tabular-nums">
-                      {roleCounts[roleFilter]}
+                      {tr(roleCounts[roleFilter])}
                     </span>
                   )}
                   <ChevronDown className={cn("w-3.5 h-3.5 transition-transform text-slate-400", isFilterOpen && "rotate-180")} />
                 </button>
 
                 {isFilterOpen && (
-                  <div className="absolute right-0 sm:right-auto sm:left-0 mt-1.5 w-52 bg-white rounded-xl border border-slate-200 py-1.5 z-30 max-h-64 overflow-y-auto custom-scrollbar">
+                  <div className="absolute end-0 sm:right-auto sm:start-0 mt-1.5 w-52 bg-white rounded-xl border border-slate-200 py-1.5 z-30 max-h-64 overflow-y-auto custom-scrollbar">
                     <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        Filter by Role
+                        {tr("Filter by Role")}
                       </span>
                       {roleFilter !== 'All' && (
                         <button
@@ -260,7 +261,7 @@ export const UserList = () => {
                           }}
                           className="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                         >
-                          Reset
+                          {tr("Reset")}
                         </button>
                       )}
                     </div>
@@ -276,7 +277,7 @@ export const UserList = () => {
                             setIsFilterOpen(false);
                           }}
                           className={cn(
-                            "w-full px-3 py-1.5 text-xs text-left flex items-center justify-between transition-colors cursor-pointer",
+                            "w-full px-3 py-1.5 text-xs text-start flex items-center justify-between transition-colors cursor-pointer",
                             isSelected
                               ? "bg-blue-50/80 text-blue-700 font-bold"
                               : "text-slate-700 hover:bg-slate-50 font-medium"
@@ -286,10 +287,10 @@ export const UserList = () => {
                             <span className={cn("w-3.5 h-3.5 flex items-center justify-center shrink-0", isSelected ? "text-blue-600" : "opacity-0")}>
                               <Check className="w-3.5 h-3.5" />
                             </span>
-                            <span className="truncate">{role}</span>
+                            <span className="truncate">{tr(role)}</span>
                           </div>
                           <span className={cn(
-                            "px-1.5 py-0.2 rounded text-[10px] tabular-nums shrink-0 ml-2",
+                            "px-1.5 py-0.2 rounded text-[10px] tabular-nums shrink-0 ms-2",
                             isSelected ? "bg-blue-200/70 text-blue-800 font-bold" : "bg-slate-100 text-slate-500 font-semibold"
                           )}>
                             {count}
@@ -312,7 +313,7 @@ export const UserList = () => {
                       ? "bg-white text-blue-600 border border-slate-300"
                       : "text-slate-400 hover:text-slate-700"
                   )}
-                  title="Grid view"
+                  title={tr("Grid view")}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
                 </button>
@@ -325,7 +326,7 @@ export const UserList = () => {
                       ? "bg-white text-blue-600 border border-slate-300"
                       : "text-slate-400 hover:text-slate-700"
                   )}
-                  title="Table view"
+                  title={tr("Table view")}
                 >
                   <List className="w-3.5 h-3.5" />
                 </button>
@@ -338,7 +339,7 @@ export const UserList = () => {
                   className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                 >
                   <UserPlus className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Add New Member</span>
+                  <span>{tr("Add New Member")}</span>
                 </button>
               )}
             </div>
@@ -389,7 +390,7 @@ export const UserList = () => {
                     className="group relative bg-white rounded-xl border border-slate-300 hover:border-blue-400 transition-all duration-200 p-4 overflow-hidden flex flex-col justify-between"
                   >
                     {/* Top Accent Stripe on hover */}
-                    <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity absolute top-0 left-0" />
+                    <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity absolute top-0 start-0" />
 
                     <div>
                       {/* Top Header: Avatar + Info + Actions */}
@@ -398,7 +399,7 @@ export const UserList = () => {
                           {/* Avatar */}
                           <div className="relative shrink-0">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-extrabold text-xs flex items-center justify-center">
-                              {initials}
+                              {tr(initials)}
                             </div>
                             <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white", rStyle.dot)} />
                           </div>
@@ -406,7 +407,7 @@ export const UserList = () => {
                           {/* Name & Email */}
                           <div className="min-w-0 flex-1">
                             <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
-                              {user.name}
+                              {tr(user.name)}
                             </h4>
                             <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5" title={user.email}>
                               {user.email}
@@ -421,7 +422,7 @@ export const UserList = () => {
                               <button
                                 onClick={() => openEdit(user)}
                                 className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer"
-                                title="Edit Member"
+                                title={tr("Edit Member")}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
@@ -430,7 +431,7 @@ export const UserList = () => {
                               <button
                                 onClick={() => openDelete(user)}
                                 className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition-colors cursor-pointer"
-                                title="Remove Member"
+                                title={tr("Remove Member")}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -452,12 +453,12 @@ export const UserList = () => {
                     <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between">
                       <div className={cn("inline-flex items-center px-2 py-0.5 rounded-md border", rStyle.bg, rStyle.border)}>
                         <span className={cn("text-[10px] font-bold uppercase tracking-wider", rStyle.text)}>
-                          {roleLabel}
+                          {tr(roleLabel)}
                         </span>
                       </div>
                       
                       <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                        Active Account
+                        {tr("Active Account")}
                       </span>
                     </div>
                   </div>
@@ -468,14 +469,14 @@ export const UserList = () => {
             /* ── Table View ── */
             <div className="bg-white border border-slate-300 rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-start border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      <th className="py-3 px-4">Member Name & Email</th>
-                      <th className="py-3 px-4">Role Tier</th>
-                      <th className="py-3 px-4">Phone / Contact</th>
-                      <th className="py-3 px-4">Account Status</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
+                      <th className="py-3 px-4">{tr("Member Name & Email")}</th>
+                      <th className="py-3 px-4">{tr("Role Tier")}</th>
+                      <th className="py-3 px-4">{tr("Phone / Contact")}</th>
+                      <th className="py-3 px-4">{tr("Account Status")}</th>
+                      <th className="py-3 px-4 text-end">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs">
@@ -519,13 +520,13 @@ export const UserList = () => {
                             <div className="flex items-center gap-3">
                               <div className="relative shrink-0">
                                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white font-extrabold text-xs flex items-center justify-center">
-                                  {initials}
+                                  {tr(initials)}
                                 </div>
                                 <div className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white", rStyle.dot)} />
                               </div>
                               <div className="min-w-0">
                                 <h5 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
-                                  {user.name}
+                                  {tr(user.name)}
                                 </h5>
                                 <p className="text-[10.5px] font-medium text-slate-400 truncate" title={user.email}>
                                   {user.email}
@@ -538,7 +539,7 @@ export const UserList = () => {
                           <td className="py-3 px-4">
                             <div className={cn("inline-flex items-center px-2 py-0.5 rounded-md border", rStyle.bg, rStyle.border)}>
                               <span className={cn("text-[10px] font-bold uppercase tracking-wider", rStyle.text)}>
-                                {roleLabel}
+                                {tr(roleLabel)}
                               </span>
                             </div>
                           </td>
@@ -554,19 +555,19 @@ export const UserList = () => {
                           <td className="py-3 px-4">
                             <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                              Active
+                              {tr("Active")}
                             </span>
                           </td>
 
                           {/* Actions */}
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3 px-4 text-end">
                             {(showEdit || showDelete) ? (
                               <div className="flex items-center justify-end gap-1">
                                 {showEdit && (
                                   <button
                                     onClick={() => openEdit(user)}
                                     className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                                    title="Edit Member"
+                                    title={tr("Edit Member")}
                                   >
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
@@ -575,7 +576,7 @@ export const UserList = () => {
                                   <button
                                     onClick={() => openDelete(user)}
                                     className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                    title="Remove Member"
+                                    title={tr("Remove Member")}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -600,12 +601,12 @@ export const UserList = () => {
               <UsersIcon className="w-6 h-6 stroke-[1.5]" />
             </div>
             <h3 className="text-sm font-bold text-slate-800">
-              {searchQuery || roleFilter !== 'All' ? 'No matching members found' : 'No team members added yet'}
+              {searchQuery || roleFilter !== 'All' ? tr("No matching members found") : tr("No team members added yet")}
             </h3>
             <p className="text-xs text-slate-500 mt-1 max-w-sm">
               {searchQuery || roleFilter !== 'All'
-                ? 'Try modifying your search query or resetting the role filter.'
-                : 'Start onboarding your organisation team members to collaborate on projects.'}
+                ? tr("Try modifying your search query or resetting the role filter.")
+                : tr("Start onboarding your organisation team members to collaborate on projects.")}
             </p>
             {canCreate && (
               <button
@@ -613,7 +614,7 @@ export const UserList = () => {
                 className="mt-4 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <UserPlus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Add First Member</span>
+                <span>{tr("Add First Member")}</span>
               </button>
             )}
           </div>
@@ -632,9 +633,9 @@ export const UserList = () => {
           isOpen={!!deletingUser}
           onClose={() => setDeletingUser(null)}
           onConfirm={handleDelete}
-          title="Remove Team Member"
+          title={tr("Remove Team Member")}
           message={`Are you sure you want to remove ${deletingUser?.name}? This action cannot be undone.`}
-          confirmText="Remove"
+          confirmText={tr("Remove")}
           type="danger"
           isLoading={isDeleting}
         />

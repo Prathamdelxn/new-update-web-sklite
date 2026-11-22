@@ -1,4 +1,6 @@
 'use client';
+import { tr } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,9 +46,9 @@ const StatCard = ({
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0">
-      <div className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{value}</div>
-      <div className="text-xs text-slate-500 font-medium truncate">{label}</div>
-      {sub && <div className="text-[11px] text-slate-400 font-normal truncate mt-0.5">{sub}</div>}
+      <div className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{tr(value)}</div>
+      <div className="text-xs text-slate-500 font-medium truncate">{tr(label)}</div>
+      {sub && <div className="text-[11px] text-slate-400 font-normal truncate mt-0.5">{tr(sub)}</div>}
     </div>
   </div>
 );
@@ -265,12 +267,12 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         auditDetails: `${selectedSnagIds.length} snags updated to In Progress.`
       });
 
-      toast.success(`${selectedSnagIds.length} snags sent for fixing successfully!`);
+      toast.success(tr("{{selectedSnagIdsCount}} snags sent for fixing successfully!", { selectedSnagIdsCount: selectedSnagIds.length }));
       setSelectedSnagIds([]);
       fetchSnags();
       onUpdate();
     } catch (err) {
-      toast.error('Failed to send snags for fixing');
+      toast.error(tr("Failed to send snags for fixing"));
     } finally {
       setSubmitting(false);
     }
@@ -289,12 +291,12 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         auditAction: 'StatusChange',
         auditDetails: `Snag "${assigningSnag.title}" sent for fixing.`
       });
-      toast.success('Snag assigned successfully!');
+      toast.success(tr("Snag assigned successfully!"));
       setAssigningSnag(null);
       fetchSnags();
       onUpdate();
     } catch (error) {
-      toast.error('Failed to assign snag');
+      toast.error(tr("Failed to assign snag"));
     } finally {
       setSubmitting(false);
     }
@@ -310,12 +312,12 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         resolutionDate: new Date(),
         resolutionDetails: details || 'Snag rectified by assignee.'
       });
-      toast.success('Snag completed successfully!');
+      toast.success(tr("Snag completed successfully!"));
       setCompletingSnag(null);
       fetchSnags();
       onUpdate();
     } catch (error) {
-      toast.error('Failed to complete snag');
+      toast.error(tr("Failed to complete snag"));
     } finally {
       setSubmitting(false);
     }
@@ -330,11 +332,11 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         auditAction: 'StatusChange',
         auditDetails: `Handover completion requested from ${selectedUser.name}.`
       });
-      toast.success('Handover requested successfully!');
+      toast.success(tr("Handover requested successfully!"));
       setIsApproverModalOpen(false);
       onUpdate();
     } catch (e) {
-      toast.error('Failed to request handover');
+      toast.error(tr("Failed to request handover"));
     } finally {
       setSubmitting(false);
     }
@@ -350,10 +352,10 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         auditAction: 'StatusChange',
         auditDetails: `Handover validation re-initialized by ${user?.name}. Status reverted to Ongoing.`
       });
-      toast.success('Handover validation re-initialized!');
+      toast.success(tr("Handover validation re-initialized!"));
       onUpdate();
     } catch (e) {
-      toast.error('Failed to re-initialize handover');
+      toast.error(tr("Failed to re-initialize handover"));
     } finally {
       setSubmitting(false);
     }
@@ -365,7 +367,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
       return;
     }
     if (!rejectionReason.trim()) {
-      toast.error('Please provide a rejection reason');
+      toast.error(tr("Please provide a rejection reason"));
       return;
     }
 
@@ -378,12 +380,12 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         auditAction: 'StatusChange',
         auditDetails: `Handover rejected by ${user?.name}. Reason: ${rejectionReason}. Project reverted.`
       });
-      toast.success('Handover Rejected!');
+      toast.success(tr("Handover Rejected!"));
       setRejectionReason('');
       setIsRejectionModalOpen(false);
       onUpdate();
     } catch (e) {
-      toast.error('Failed to reject handover');
+      toast.error(tr("Failed to reject handover"));
     } finally {
       setSubmitting(false);
     }
@@ -415,11 +417,11 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
 
   const handleConfirmCompletion = async () => {
     if (!clientRepName.trim()) {
-      toast.error('Please enter the client representative name');
+      toast.error(tr("Please enter the client representative name"));
       return;
     }
     if (!handoverDate) {
-      toast.error('Please select the handover date');
+      toast.error(tr("Please select the handover date"));
       return;
     }
 
@@ -443,7 +445,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         auditAction: 'StatusChange',
         auditDetails: `Handover verified and approved by ${user?.name}. Client representative: ${clientRepName.trim()}. Project is ready for closure.`
       });
-      toast.success('Handover Approved!');
+      toast.success(tr("Handover Approved!"));
       setIsCompletionFormOpen(false);
       setClientRepName('');
       setHandoverNotes('');
@@ -451,7 +453,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
       onUpdate();
     } catch (e: any) {
       console.error('Handover completion failed:', e);
-      toast.error(e?.response?.data?.message || e?.message || 'Failed to approve handover');
+      toast.error(e?.response?.data?.message || e?.message || tr("Failed to approve handover"));
     } finally {
       setSubmitting(false);
       setUploadingCertificate(false);
@@ -467,9 +469,9 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         <div className="w-12 h-12 bg-red-50 border border-red-200 text-red-500 rounded-xl flex items-center justify-center mb-3">
           <XOctagon className="w-6 h-6" />
         </div>
-        <h2 className="text-base font-bold text-slate-900 mb-1">Access Denied</h2>
+        <h2 className="text-base font-bold text-slate-900 mb-1">{tr("Access Denied")}</h2>
         <p className="text-slate-500 text-xs max-w-sm text-center">
-          You do not have the required "Handover Management" permission to view this tab.
+          {tr("You do not have the required \"Handover Management\" permission to view this tab.")}
         </p>
       </div>
     );
@@ -479,7 +481,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-2xl shadow-none">
         <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-        <p className="text-slate-500 mt-2 text-xs font-medium">Verifying project handover checklist...</p>
+        <p className="text-slate-500 mt-2 text-xs font-medium">{tr("Verifying project handover checklist...")}</p>
       </div>
     );
   }
@@ -510,7 +512,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
         <button
           type="button"
           onClick={() => toggleSection(key)}
-          className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50/70 transition-colors cursor-pointer select-none text-left"
+          className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50/70 transition-colors cursor-pointer select-none text-start"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className={cn(
@@ -520,9 +522,9 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
               <Icon className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h5 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight truncate">{title}</h5>
+              <h5 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight truncate">{tr(title)}</h5>
               <p className={cn('text-xs mt-0.5 font-medium truncate', isOk ? 'text-emerald-600' : 'text-amber-600')}>
-                {countMessage}
+                {tr(countMessage)}
               </p>
             </div>
           </div>
@@ -533,7 +535,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
               isOk ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-amber-50 text-amber-700 border-amber-200/60'
             )}>
               {isOk ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-              <span>{isOk ? 'PASSED' : 'PENDING'}</span>
+              <span>{isOk ? tr("PASSED") : tr("PENDING")}</span>
             </span>
             <div className="w-7 h-7 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-400">
               {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -556,7 +558,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                 ) : (
                   <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold py-1">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>All validation criteria in this section have passed successfully.</span>
+                    <span>{tr("All validation criteria in this section have passed successfully.")}</span>
                   </div>
                 )}
               </div>
@@ -583,27 +585,27 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-bold text-slate-900">Project Handover Completed</h3>
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900">{tr("Project Handover Completed")}</h3>
           <p className="text-emerald-700 font-medium text-xs sm:text-sm mt-1 max-w-md mx-auto">
-            This project has successfully completed the structured handover process and is now verified and archived.
+            {tr("This project has successfully completed the structured handover process and is now verified and archived.")}
           </p>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-100 text-left">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-100 text-start">
             <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status</span>
-              <span className="text-emerald-700 font-bold text-xs sm:text-sm mt-0.5 block">COMPLETED</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Status")}</span>
+              <span className="text-emerald-700 font-bold text-xs sm:text-sm mt-0.5 block">{tr("COMPLETED")}</span>
             </div>
             <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Handover Date</span>
-              <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block">{savedHandoverDate}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Handover Date")}</span>
+              <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block">{tr(savedHandoverDate)}</span>
             </div>
             <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Client Rep</span>
-              <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block truncate">{savedClientRep}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Client Rep")}</span>
+              <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block truncate">{tr(savedClientRep)}</span>
             </div>
             <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Certificate</span>
-              <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block">{savedCertUrls.length > 0 ? `ARCHIVED (${savedCertUrls.length})` : 'NONE'}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Certificate")}</span>
+              <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block">{savedCertUrls.length > 0 ? tr("ARCHIVED ({{savedCertUrlsCount}})", { savedCertUrlsCount: savedCertUrls.length }) : tr("NONE")}</span>
             </div>
           </div>
         </div>
@@ -612,7 +614,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
           <div className="p-5 bg-white border border-slate-200/80 rounded-xl shadow-none">
             <h4 className="text-xs sm:text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
               <FileText className="w-4 h-4 text-blue-600" />
-              Completion Sign-Off
+              {tr("Completion Sign-Off")}
             </h4>
             <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 flex flex-col items-center justify-center py-6 gap-2.5">
               <Award className="w-10 h-10 text-slate-400" />
@@ -626,11 +628,11 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-none w-full justify-center"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    {savedCertUrls.length > 1 ? `Certificate ${i + 1}` : 'Download Certificate'}
+                    {savedCertUrls.length > 1 ? `Certificate ${i + 1}` : tr("Download Certificate")}
                   </a>
                 ))
               ) : (
-                <span className="text-xs text-slate-400 italic">No document attached</span>
+                <span className="text-xs text-slate-400 italic">{tr("No document attached")}</span>
               )}
             </div>
           </div>
@@ -638,7 +640,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
           <div className="p-5 md:col-span-2 bg-white border border-slate-200/80 rounded-xl shadow-none">
             <h4 className="text-xs sm:text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
               <ClipboardCheck className="w-4 h-4 text-emerald-600" />
-              Handover Execution Log
+              {tr("Handover Execution Log")}
             </h4>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -646,8 +648,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   <User className="w-4 h-4 text-slate-500" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Client Representative</span>
-                  <span className="text-xs sm:text-sm font-semibold text-slate-800">{savedClientRep}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Client Representative")}</span>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-800">{tr(savedClientRep)}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -655,8 +657,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   <Calendar className="w-4 h-4 text-slate-500" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Handover Date</span>
-                  <span className="text-xs sm:text-sm font-semibold text-slate-800">{savedHandoverDate}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Handover Date")}</span>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-800">{tr(savedHandoverDate)}</span>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -664,8 +666,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   <MessageSquare className="w-4 h-4 text-slate-500" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Feedback / Comments</span>
-                  <span className="text-xs sm:text-sm text-slate-600 italic leading-relaxed">"{savedNotes}"</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Feedback / Comments")}</span>
+                  <span className="text-xs sm:text-sm text-slate-600 italic leading-relaxed">"{tr(savedNotes)}"</span>
                 </div>
               </div>
             </div>
@@ -696,8 +698,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             )}
           </div>
           <div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">Project Handover</h2>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Sequential checklist verification and sign-off pathway</p>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">{tr("Project Handover")}</h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{tr("Sequential checklist verification and sign-off pathway")}</p>
           </div>
         </div>
 
@@ -708,7 +710,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             currentStatus === 'Handover Rejected' ? 'bg-red-50 text-red-700 border-red-200/80' :
             'bg-slate-100 text-slate-700 border-slate-200/60'
           )}>
-            Status: <span className="font-bold">{currentStatus || 'In Progress'}</span>
+            {tr("Status: ")}<span className="font-bold">{currentStatus || tr("In Progress")}</span>
           </span>
 
           {validationData && (
@@ -716,7 +718,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
               'text-xs font-semibold px-2.5 py-1 rounded-md border',
               checksPassedCount === 5 ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80' : 'bg-blue-50 text-blue-700 border-blue-200/80'
             )}>
-              {checksPassedCount}/5 Checks Passed
+              {tr(checksPassedCount)}{tr("/5 Checks Passed")}
             </span>
           )}
         </div>
@@ -726,7 +728,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
       {validationData && currentStatus !== 'Under Snagging' && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatCard
-            label="Readiness Score"
+            label={tr("Readiness Score")}
             value={`${Math.round((checksPassedCount / 5) * 100)}%`}
             icon={ClipboardCheck}
             accent={checksPassedCount === 5 ? "text-emerald-600" : "text-blue-600"}
@@ -734,7 +736,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             sub={`${checksPassedCount} of 5 criteria met`}
           />
           <StatCard
-            label="Issues & Snags"
+            label={tr("Issues & Snags")}
             value={validationData.openIssuesList.length}
             icon={AlertTriangle}
             accent={validationData.openIssuesList.length === 0 ? "text-emerald-600" : "text-amber-600"}
@@ -742,7 +744,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             sub={validationData.openIssuesList.length === 0 ? "all issues resolved" : "unresolved remaining"}
           />
           <StatCard
-            label="Incomplete Milestones"
+            label={tr("Incomplete Milestones")}
             value={validationData.incompleteMilestonesCount}
             icon={Calendar}
             accent={validationData.incompleteMilestonesCount === 0 && validationData.incompleteTasksCount === 0 ? "text-emerald-600" : "text-blue-600"}
@@ -750,7 +752,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             sub={`${validationData.incompleteTasksCount} incomplete tasks`}
           />
           <StatCard
-            label="Pending Approvals"
+            label={tr("Pending Approvals")}
             value={validationData.pendingBoqsList.length + validationData.pendingPlansList.length}
             icon={FileText}
             accent={validationData.pendingBoqsList.length + validationData.pendingPlansList.length === 0 ? "text-emerald-600" : "text-purple-600"}
@@ -768,7 +770,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
                 <h4 className="text-sm font-bold text-slate-800">
-                  Project Under Snagging
+                  {tr("Project Under Snagging")}
                 </h4>
               </div>
               {snags.length > 0 && !isAssignedToMe && !isLocked && selectedSnagIds.length > 0 && (
@@ -778,7 +780,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 text-xs font-semibold shadow-none transition-colors cursor-pointer"
                 >
                   <Wrench className="w-3.5 h-3.5" />
-                  <span>Send {selectedSnagIds.length} Snags for Fixing</span>
+                  <span>{tr("Send ")}{selectedSnagIds.length}{tr(" Snags for Fixing")}</span>
                 </button>
               )}
             </div>
@@ -786,21 +788,21 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             {/* List of Snags */}
             {snags.length === 0 ? (
               <div className="text-center py-10 text-slate-400 text-xs italic bg-slate-50 border border-slate-100 rounded-xl">
-                No pending snags found.
+                {tr("No pending snags found.")}
               </div>
             ) : isAssignedToMe ? (
               <div className="text-center py-10 text-slate-500 text-xs font-semibold bg-slate-50 border border-slate-100 rounded-xl px-6">
-                Snagging lists are managed by the inspector. Please complete your tasks in the Snags tab.
+                {tr("Snagging lists are managed by the inspector. Please complete your tasks in the Snags tab.")}
               </div>
             ) : (
               <div className="space-y-3 bg-white border border-slate-200/80 rounded-xl p-4 max-h-[450px] overflow-y-auto">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-2.5">
-                  <span className="text-xs font-bold text-slate-600">Pending Snags ({snags.length})</span>
+                  <span className="text-xs font-bold text-slate-600">{tr("Pending Snags (")}{snags.length})</span>
                   <button
                     onClick={handleSelectAllSnags}
                     className="text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
                   >
-                    {selectedSnagIds.length === snags.length ? 'Deselect All' : 'Select All'}
+                    {selectedSnagIds.length === snags.length ? tr("Deselect All") : tr("Select All")}
                   </button>
                 </div>
 
@@ -824,12 +826,12 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
                       />
                       {snag.images && snag.images.length > 0 && (
-                        <img loading="lazy" decoding="async" src={snag.images[0]} alt="Snag" className="w-10 h-10 object-cover rounded-lg border shrink-0" />
+                        <img loading="lazy" decoding="async" src={snag.images[0]} alt={tr("Snag")} className="w-10 h-10 object-cover rounded-lg border shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">{snag.title}</p>
+                        <p className="text-xs font-bold text-slate-900 truncate">{tr(snag.title)}</p>
                         <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                          Priority: {snag.priority} | Status: {snag.status}
+                          {tr("Priority: ")}{tr(snag.priority)}{tr(" | Status: ")}{tr(snag.status)}
                         </p>
                       </div>
 
@@ -840,7 +842,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                             onClick={() => setAssigningSnag(snag)}
                             className="bg-blue-50 hover:bg-blue-100 text-blue-600 px-2.5 py-1 rounded-md text-[10.5px] font-semibold border border-blue-200/60 cursor-pointer"
                           >
-                            Assign
+                            {tr("Assign")}
                           </button>
                         )}
                         {snag.status === 'In Progress' && !isLocked && (isAssignee || canCompleteSnag) && (
@@ -848,7 +850,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                             onClick={() => setCompletingSnag(snag)}
                             className="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-2.5 py-1 rounded-md text-[10.5px] font-semibold border border-emerald-200/60 cursor-pointer"
                           >
-                            Resolve
+                            {tr("Resolve")}
                           </button>
                         )}
                       </div>
@@ -871,17 +873,17 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     <AlertTriangle className="w-4 h-4" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="font-bold text-sm text-amber-900">Project Not Ready for Handover</p>
+                    <p className="font-bold text-sm text-amber-900">{tr("Project Not Ready for Handover")}</p>
                     <p className="text-amber-700 leading-relaxed font-normal">
-                      Resolve all open issues, complete remaining milestones/tasks, and approve drawings, BOQ items, and active risks to initiate the handover sign-off process.
+                      {tr("Resolve all open issues, complete remaining milestones/tasks, and approve drawings, BOQ items, and active risks to initiate the handover sign-off process.")}
                     </p>
                   </div>
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-1">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-0.5">Handover Validation Checks</h4>
-                <span className="text-xs text-slate-400 font-medium">{checksPassedCount} of 5 passed</span>
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider ms-0.5">{tr("Handover Validation Checks")}</h4>
+                <span className="text-xs text-slate-400 font-medium">{tr(checksPassedCount)}{tr(" of 5 passed")}</span>
               </div>
 
               {/* Checklist Group Cards */}
@@ -897,8 +899,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     {items.map((i: any) => (
                       <div key={i._id} className="flex items-center space-x-2 text-xs bg-white border border-slate-100 rounded-xl p-2.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                        <span className="font-bold text-slate-700 flex-1 truncate">{i.title}</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">P: {i.priority} | S: {i.status}</span>
+                        <span className="font-bold text-slate-700 flex-1 truncate">{tr(i.title)}</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">P: {tr(i.priority)} | S: {tr(i.status)}</span>
                       </div>
                     ))}
                   </div>
@@ -920,12 +922,12 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       return (
                         <div key={m._id} className="bg-white border border-slate-100 rounded-xl p-3 text-xs space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-slate-800">{m.name}</span>
-                            <span className="text-[9px] font-bold uppercase text-slate-400 bg-slate-50 px-2 py-0.5 rounded border">{m.status}</span>
+                            <span className="font-bold text-slate-800">{tr(m.name)}</span>
+                            <span className="text-[9px] font-bold uppercase text-slate-400 bg-slate-50 px-2 py-0.5 rounded border">{tr(m.status)}</span>
                           </div>
-                          <div className="pl-1 space-y-1.5">
+                          <div className="ps-1 space-y-1.5">
                             <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold">
-                              <span>Tasks: {completedCount}/{totalCount} Completed</span>
+                              <span>{tr("Tasks: ")}{tr(completedCount)}/{tr(totalCount)}{tr(" Completed")}</span>
                             </div>
                             <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
                               <div className="h-full bg-blue-500 rounded-full" style={{ width: totalCount > 0 ? `${(completedCount / totalCount) * 100}%` : '0%' }} />
@@ -935,7 +937,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                                 {m.tasks.map((task: any, idx: number) => (
                                   <div key={idx} className="flex items-center space-x-1.5 text-[10px] text-slate-500 font-medium">
                                     <span className={cn('w-1 h-1 rounded-full shrink-0', task.isCompleted ? 'bg-blue-500' : 'bg-slate-300')} />
-                                    <span className={cn(task.isCompleted && 'line-through opacity-70')}>{task.title}</span>
+                                    <span className={cn(task.isCompleted && 'line-through opacity-70')}>{tr(task.title)}</span>
                                   </div>
                                 ))}
                               </div>
@@ -961,10 +963,10 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       <div key={b._id} className="flex items-center justify-between text-xs bg-white border border-slate-100 rounded-xl p-2.5">
                         <div className="flex items-center space-x-2 min-w-0">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                          <span className="font-bold text-slate-700 truncate">{b.itemDescription}</span>
+                          <span className="font-bold text-slate-700 truncate">{tr(b.itemDescription)}</span>
                         </div>
-                        <span className="text-[10px] font-bold text-slate-900 shrink-0 pl-2">
-                          {formatCurrency(b.totalCost || 0, project?.currency || '$')}
+                        <span className="text-[10px] font-bold text-slate-900 shrink-0 ps-2">
+                          {formatCurrency(b.totalCost || 0, projectCurrency(project))}
                         </span>
                       </div>
                     ))}
@@ -986,8 +988,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       return (
                         <div key={p._id} className="flex items-center space-x-2 text-xs bg-white border border-slate-100 rounded-xl p-2.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
-                          <span className="font-bold text-slate-700 flex-1 truncate">{p.name}</span>
-                          <span className="text-[9px] font-bold text-slate-400">Ver: v{latestVer?.versionNumber}</span>
+                          <span className="font-bold text-slate-700 flex-1 truncate">{tr(p.name)}</span>
+                          <span className="text-[9px] font-bold text-slate-400">{tr("Ver: v")}{tr(latestVer?.versionNumber)}</span>
                         </div>
                       );
                     })}
@@ -1007,8 +1009,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     {items.map((r: any) => (
                       <div key={r._id} className="flex items-center space-x-2 text-xs bg-white border border-slate-100 rounded-xl p-2.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                        <span className="font-bold text-slate-700 flex-1 truncate">{r.title}</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Impact: {r.impact} | Progress: {r.mitigationProgress}%</span>
+                        <span className="font-bold text-slate-700 flex-1 truncate">{tr(r.title)}</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">{tr("Impact: ")}{tr(r.impact)}{tr(" | Progress: ")}{tr(r.mitigationProgress)}%</span>
                       </div>
                     ))}
                   </div>
@@ -1028,9 +1030,9 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     <Clock className="w-5 h-5 animate-pulse" />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-slate-900">Approve Handover Request</h4>
+                    <h4 className="text-sm font-bold text-slate-900">{tr("Approve Handover Request")}</h4>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                      You have been requested to verify and approve this handover. Make sure all work deliverables meet expectations.
+                      {tr("You have been requested to verify and approve this handover. Make sure all work deliverables meet expectations.")}
                     </p>
                   </div>
                   <div className="flex items-center justify-center gap-3 max-w-xs mx-auto pt-1">
@@ -1039,14 +1041,14 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       disabled={submitting}
                       className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-none cursor-pointer"
                     >
-                      Reject
+                      {tr("Reject")}
                     </button>
                     <button
                       onClick={() => setIsCompletionFormOpen(true)}
                       disabled={submitting}
                       className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-none cursor-pointer"
                     >
-                      Approve
+                      {tr("Approve")}
                     </button>
                   </div>
                 </div>
@@ -1056,11 +1058,11 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   <div className="p-2.5 bg-slate-50 border border-slate-200/80 text-slate-500 rounded-xl w-fit mx-auto">
                     <Clock className="w-5 h-5 animate-pulse" />
                   </div>
-                  <h4 className="text-sm font-bold text-slate-900">Handover Requested</h4>
+                  <h4 className="text-sm font-bold text-slate-900">{tr("Handover Requested")}</h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Handover completion has been requested. Currently waiting for review from{' '}
+                    {tr("Handover completion has been requested. Currently waiting for review from")}{' '}
                     <span className="font-bold text-slate-800">
-                      {project.handoverApprover?.name || 'Authorized Contact'}
+                      {project.handoverApprover?.name || tr("Authorized Contact")}
                     </span>
                     .
                   </p>
@@ -1072,10 +1074,10 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                 <div className="bg-red-50/70 border border-red-200/80 rounded-xl p-4 space-y-2 shadow-none">
                   <div className="flex items-center gap-2 text-red-700">
                     <XOctagon className="w-4 h-4 shrink-0" />
-                    <h4 className="text-xs sm:text-sm font-bold">Handover Request Rejected</h4>
+                    <h4 className="text-xs sm:text-sm font-bold">{tr("Handover Request Rejected")}</h4>
                   </div>
                   <p className="text-xs text-red-700 font-medium bg-white/90 rounded-lg p-3 border border-red-100 leading-relaxed italic">
-                    "{(project as any).handoverRejectionReason || 'No details provided.'}"
+                    "{(project as any).handoverRejectionReason || tr("No details provided.")}"
                   </p>
                 </div>
 
@@ -1085,7 +1087,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-none flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Briefcase className="w-4 h-4" />
-                  <span>Re-initialize Handover Validation</span>
+                  <span>{tr("Re-initialize Handover Validation")}</span>
                 </button>
               </div>
             ) : (
@@ -1095,11 +1097,11 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   <button
                     onClick={() => {
                       if (isLocked || !hasProjectPermission(user, project, 'handover:create')) {
-                        toast.error("You don't have permission to initialize handover completion.");
+                        toast.error(tr("You don't have permission to initialize handover completion."));
                         return;
                       }
                       if (!hasProjectPermission(user, project, 'handover:assign')) {
-                        toast.error("You don't have permission to assign a handover approver.");
+                        toast.error(tr("You don't have permission to assign a handover approver."));
                         return;
                       }
                       setIsApproverModalOpen(true);
@@ -1108,7 +1110,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-none flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <ClipboardCheck className="w-4 h-4" />
-                    <span>Request Project Handover</span>
+                    <span>{tr("Request Project Handover")}</span>
                   </button>
                 ) : (
                   <button
@@ -1116,7 +1118,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     className="w-full py-3 bg-slate-100 text-slate-400 rounded-xl text-xs sm:text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-2 border border-slate-200 shadow-none"
                   >
                     <ClipboardCheck className="w-4 h-4 text-slate-400" />
-                    <span>Request Project Handover (Pending {5 - checksPassedCount} Checks)</span>
+                    <span>{tr("Request Project Handover (Pending ")}{5 - checksPassedCount}{tr(" Checks)")}</span>
                   </button>
                 )}
               </div>
@@ -1143,8 +1145,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
               <div className="bg-white rounded-2xl border border-slate-200 shadow-none overflow-hidden flex flex-col max-h-[80vh]">
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Select Handover Approver</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Pick a project member to review and approve this handover.</p>
+                    <h3 className="text-base font-bold text-slate-900">{tr("Select Handover Approver")}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr("Pick a project member to review and approve this handover.")}</p>
                   </div>
                   <button onClick={() => setIsApproverModalOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
                     <X className="w-4 h-4" />
@@ -1155,11 +1157,11 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   {loadingApprovers ? (
                     <div className="flex flex-col items-center justify-center py-12">
                       <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-                      <span className="text-xs text-slate-500 mt-2 font-medium">Loading members...</span>
+                      <span className="text-xs text-slate-500 mt-2 font-medium">{tr("Loading members...")}</span>
                     </div>
                   ) : approvers.length === 0 ? (
                     <div className="text-center py-12 text-slate-400 text-xs italic">
-                      No project members found.
+                      {tr("No project members found.")}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1173,14 +1175,14 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                             key={approver._id}
                             type="button"
                             onClick={() => handleRequestHandover(approver)}
-                            className="w-full flex items-center space-x-3 p-3 bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-200 rounded-xl text-left transition-all group cursor-pointer"
+                            className="w-full flex items-center space-x-3 p-3 bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-200 rounded-xl text-start transition-all group cursor-pointer"
                           >
                             <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
                               {approver.name?.[0]?.toUpperCase() || 'U'}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs sm:text-sm font-semibold text-slate-900 truncate group-hover:text-blue-600 transition-colors">{approver.name}</p>
-                              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{roleName}</p>
+                              <p className="text-xs sm:text-sm font-semibold text-slate-900 truncate group-hover:text-blue-600 transition-colors">{tr(approver.name)}</p>
+                              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{tr(roleName)}</p>
                             </div>
                           </button>
                         );
@@ -1211,7 +1213,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             >
               <div className="bg-white rounded-2xl border border-slate-200 shadow-none overflow-hidden flex flex-col">
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-                  <h3 className="text-base font-bold text-slate-900">Rejection Details</h3>
+                  <h3 className="text-base font-bold text-slate-900">{tr("Rejection Details")}</h3>
                   <button onClick={() => setIsRejectionModalOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
                     <X className="w-4 h-4" />
                   </button>
@@ -1219,14 +1221,14 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                 <div className="p-5 space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Rejection Reason *
+                      {tr("Rejection Reason *")}
                     </label>
                     <textarea
                       rows={3}
                       required
                       value={rejectionReason}
                       onChange={e => setRejectionReason(e.target.value)}
-                      placeholder="Explain why this handover request is being rejected..."
+                      placeholder={tr("Explain why this handover request is being rejected...")}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
                     />
                   </div>
@@ -1237,7 +1239,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       onClick={() => setIsRejectionModalOpen(false)}
                       className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
                     >
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     <button
                       type="button"
@@ -1245,7 +1247,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       disabled={!rejectionReason.trim()}
                       className="flex-[2] py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                     >
-                      Submit Rejection
+                      {tr("Submit Rejection")}
                     </button>
                   </div>
                 </div>
@@ -1273,8 +1275,8 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
               <div className="bg-white rounded-2xl border border-slate-200 shadow-none overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Handover Completion Sign-Off</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Record who accepted the handover and archive a certificate.</p>
+                    <h3 className="text-base font-bold text-slate-900">{tr("Handover Completion Sign-Off")}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr("Record who accepted the handover and archive a certificate.")}</p>
                   </div>
                   <button onClick={() => setIsCompletionFormOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors shrink-0">
                     <X className="w-4 h-4" />
@@ -1283,21 +1285,21 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                 <div className="p-5 space-y-4 overflow-y-auto">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Client Representative *
+                      {tr("Client Representative *")}
                     </label>
                     <input
                       type="text"
                       required
                       value={clientRepName}
                       onChange={e => setClientRepName(e.target.value)}
-                      placeholder="Name of the person accepting the handover"
+                      placeholder={tr("Name of the person accepting the handover")}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Handover Date *
+                      {tr("Handover Date *")}
                     </label>
                     <input
                       type="date"
@@ -1310,20 +1312,20 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
 
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Feedback / Comments
+                      {tr("Feedback / Comments")}
                     </label>
                     <textarea
                       rows={3}
                       value={handoverNotes}
                       onChange={e => setHandoverNotes(e.target.value)}
-                      placeholder="Any closing notes from the client or the team..."
+                      placeholder={tr("Any closing notes from the client or the team...")}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Completion Certificates (optional)
+                      {tr("Completion Certificates (optional)")}
                     </label>
 
                     {certificateFiles.length > 0 && (
@@ -1331,18 +1333,18 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                         {certificateFiles.map((c, i) => (
                           <div key={i} className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-xl bg-slate-50">
                             {c.previewUrl ? (
-                              <img loading="lazy" decoding="async" src={c.previewUrl} alt="Certificate preview" className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />
+                              <img loading="lazy" decoding="async" src={c.previewUrl} alt={tr("Certificate preview")} className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />
                             ) : (
                               <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
                                 <FileText className="w-4 h-4 text-slate-400" />
                               </div>
                             )}
-                            <span className="text-xs text-slate-700 truncate flex-1 font-medium">{c.file.name}</span>
+                            <span className="text-xs text-slate-700 truncate flex-1 font-medium">{tr(c.file.name)}</span>
                             <button
                               type="button"
                               onClick={() => removeCertificateAt(i)}
                               className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
-                              title="Remove"
+                              title={tr("Remove")}
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -1361,7 +1363,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       />
                       <FileText className="w-4 h-4 text-slate-400 shrink-0" />
                       <span className="text-xs text-slate-500">
-                        {certificateFiles.length > 0 ? 'Click to attach more (image or PDF)' : 'Click to attach certificates (image or PDF) — multiple allowed'}
+                        {certificateFiles.length > 0 ? tr("Click to attach more (image or PDF)") : tr("Click to attach certificates (image or PDF) — multiple allowed")}
                       </span>
                     </label>
                   </div>
@@ -1372,7 +1374,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       onClick={() => setIsCompletionFormOpen(false)}
                       className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
                     >
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     <button
                       type="button"
@@ -1381,7 +1383,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {(submitting || uploadingCertificate) && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                      {uploadingCertificate ? 'Uploading…' : 'Confirm & Complete Handover'}
+                      {uploadingCertificate ? tr("Uploading…") : tr("Confirm & Complete Handover")}
                     </button>
                   </div>
                 </div>

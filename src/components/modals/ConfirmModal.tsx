@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -73,8 +74,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 <div className="mb-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-150 shadow-2xs">
                   {getIcon()}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1.5 tracking-tight">{title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed max-w-xs">{message}</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-1.5 tracking-tight">{tr(title)}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed max-w-xs">{tr(message)}</p>
               </div>
 
               <div className="flex space-x-3">
@@ -83,14 +84,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                   disabled={isLoading}
                   className="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
                 >
-                  {cancelText}
+                  {tr(cancelText)}
                 </button>
                 <button
                   onClick={onConfirm}
                   disabled={isLoading}
                   className={`flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 shadow-md ${getConfirmButtonStyles()}`}
                 >
-                  {isLoading ? 'Processing...' : confirmText}
+                  {isLoading ? tr("Processing...") : confirmText}
                 </button>
               </div>
             </div>

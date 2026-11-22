@@ -1,4 +1,6 @@
 'use client';
+import { tr, getLang } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -111,7 +113,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
       setTransactions(txRes.data);
       setPurchases(purchaseRes.data);
     } catch {
-      toast.error('Failed to load financial data');
+      toast.error(tr("Failed to load financial data"));
     } finally {
       setLoading(false);
     }
@@ -189,11 +191,11 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
 
   const handleSave = async () => {
     if (!amount || isNaN(parseFloat(amount)) || !partyName.trim()) {
-      toast.error('Amount and party name are required');
+      toast.error(tr("Amount and party name are required"));
       return;
     }
     if (parseFloat(amount) > MAX_INPUT_VALUE) {
-      toast.error('Amount is too large');
+      toast.error(tr("Amount is too large"));
       return;
     }
     setSubmitting(true);
@@ -205,7 +207,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           partyName,
           description,
         });
-        toast.success('Transaction updated successfully');
+        toast.success(tr("Transaction updated successfully"));
       } else {
         await api.post(`/projects/${projectId}/transactions`, {
           type: txType,
@@ -213,12 +215,12 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           partyName,
           description,
         });
-        toast.success('Transaction recorded successfully');
+        toast.success(tr("Transaction recorded successfully"));
       }
       setShowFormModal(false);
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to save transaction');
+      toast.error(err.response?.data?.message || tr("Failed to save transaction"));
     } finally {
       setSubmitting(false);
     }
@@ -232,16 +234,16 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
         ? `/material-purchase/${deleteTarget}`
         : `/transactions/${deleteTarget}`;
       await api.delete(endpoint);
-      toast.success(deleteIsPurchase ? 'Purchase deleted' : 'Transaction deleted');
+      toast.success(deleteIsPurchase ? tr("Purchase deleted") : tr("Transaction deleted"));
       setDeleteTarget(null);
       fetchData();
     } catch (err: any) {
       if (err.response?.status >= 500) {
-        toast.success(deleteIsPurchase ? 'Purchase deleted' : 'Transaction deleted');
+        toast.success(deleteIsPurchase ? tr("Purchase deleted") : tr("Transaction deleted"));
         setDeleteTarget(null);
         fetchData();
       } else {
-        toast.error(err.response?.data?.message || 'Failed to delete record');
+        toast.error(err.response?.data?.message || tr("Failed to delete record"));
       }
     } finally {
       setDeleting(false);
@@ -252,7 +254,8 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
     const isIncoming = txData.type === 'Incoming';
     const mainColor = isIncoming ? '#10B981' : '#EF4444';
     const bgColor = isIncoming ? '#ECFDF5' : '#FEF2F2';
-    const title = isIncoming ? 'OFFICIAL RECEIPT' : 'PAYMENT VOUCHER';
+    const rtl = getLang() === 'ar';
+    const title = isIncoming ? tr('OFFICIAL RECEIPT') : tr('PAYMENT VOUCHER');
     
     // Formatting numbers for the HTML
     const formatNumber = (num: number) => {
@@ -262,12 +265,13 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
     };
 
     return `
-      <html>
+      <html lang="${rtl ? 'ar' : 'en'}" dir="${rtl ? 'rtl' : 'ltr'}">
         <head>
           <style>
-            body { font-family: 'Helvetica', sans-serif; padding: 40px; color: #333; }
+            body { font-family: ${rtl ? "var(--font-arabic), 'Segoe UI', Tahoma, Arial, sans-serif" : "'Helvetica', sans-serif"}; padding: 40px; color: #333; direction: ${rtl ? 'rtl' : 'ltr'}; }
+            ${rtl ? '.doc-type, .label { letter-spacing: normal !important; text-transform: none !important; }' : ''}
             .header { display: flex; justify-content: space-between; border-bottom: 3px solid ${mainColor}; padding-bottom: 20px; }
-            .title-box { text-align: right; }
+            .title-box { text-align: end; }
             .company-name { color: ${mainColor}; font-size: 28px; font-weight: bold; margin-bottom: 4px; }
             .doc-type { font-size: 20px; font-weight: 800; color: #1E293B; letter-spacing: 1px; }
             .info-section { display: flex; justify-content: space-between; margin-top: 40px; }
@@ -286,45 +290,45 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           <div class="header">
             <div>
               <div class="company-name">SkyStruct Lite</div>
-              <div style="font-size: 13px; color: #64748B;">Construction Management Solutions</div>
+              <div style="font-size: 13px; color: #64748B;">${tr('Construction Management Solutions')}</div>
             </div>
             <div class="title-box">
               <div class="doc-type">${title}</div>
-              <div style="font-size: 13px; color: #64748B; margin-top: 5px;">Date: ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+              <div style="font-size: 13px; color: #64748B; margin-top: 5px;">${tr('Date:')} ${new Date().toLocaleDateString(rtl ? 'ar' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
             </div>
           </div>
           <div class="info-section">
             <div class="info-block">
-              <div class="label">Project Site</div>
-              <div class="value">${project?.name || 'N/A'}</div>
+              <div class="label">${tr('Project Site')}</div>
+              <div class="value">${project?.name || tr('N/A')}</div>
             </div>
             <div class="info-block" style="text-align: center;">
-              <div class="label">Reference No.</div>
-              <div class="value">${txData.referenceNumber || 'N/A'}</div>
+              <div class="label">${tr('Reference No.')}</div>
+              <div class="value">${txData.referenceNumber || tr('N/A')}</div>
             </div>
-            <div class="info-block" style="text-align: right;">
-              <div class="label">${isIncoming ? 'Received From' : 'Paid To'}</div>
+            <div class="info-block" style="text-align: end;">
+              <div class="label">${isIncoming ? tr('Received From') : tr('Paid To')}</div>
               <div class="value">${txData.partyName}</div>
             </div>
           </div>
           <div class="amount-card">
-            <div class="amount-label">TOTAL TRANSACTION VALUE</div>
-            <div class="amount-value">${project?.currency || '$'} ${formatNumber(txData.amount)}</div>
-            <div class="stamp">${isIncoming ? 'FUNDS RECEIVED' : 'PAYMENT RELEASED'}</div>
+            <div class="amount-label">${tr('TOTAL TRANSACTION VALUE')}</div>
+            <div class="amount-value">${projectCurrency(project)} ${formatNumber(txData.amount)}</div>
+            <div class="stamp">${isIncoming ? tr('FUNDS RECEIVED') : tr('PAYMENT RELEASED')}</div>
           </div>
           <div class="details-section">
-            <div class="label">Transaction Particulars</div>
+            <div class="label">${tr('Transaction Particulars')}</div>
             <div style="font-size: 14px; color: #334155; line-height: 1.6; min-height: 60px;">
-              ${txData.description || 'General transaction recorded for project expenditures/receipts.'}
+              ${txData.description || tr('General transaction recorded for project expenditures/receipts.')}
             </div>
             <div style="margin-top: 15px; display: flex; gap: 20px;">
-              <div><span class="label">Payment Mode:</span> <span class="value" style="font-size: 13px;">${txData.paymentMethod || 'Bank Transfer'}</span></div>
-              <div><span class="label">Category:</span> <span class="value" style="font-size: 13px;">${txData.category || 'Uncategorized'}</span></div>
+              <div><span class="label">${tr('Payment Mode:')}</span> <span class="value" style="font-size: 13px;">${tr(txData.paymentMethod || 'Bank Transfer')}</span></div>
+              <div><span class="label">${tr('Category:')}</span> <span class="value" style="font-size: 13px;">${tr(txData.category || 'Uncategorized')}</span></div>
             </div>
           </div>
           <div class="footer">
-            This document is a digitally generated ${title.toLowerCase()} from the SkyStruct Lite Web Platform.<br/>
-            &copy; ${new Date().getFullYear()} SkyStruct Lite Systems. All rights reserved.
+            ${tr('This document is a digitally generated {{docType}} from the SkyStruct Lite Web Platform.', { docType: rtl ? title : title.toLowerCase() })}<br/>
+            &copy; ${new Date().getFullYear()} ${tr('SkyStruct Lite Systems. All rights reserved.')}
           </div>
         </body>
       </html>
@@ -335,7 +339,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
     if (item.invoiceUrl) {
       window.open(item.invoiceUrl, '_blank');
     } else {
-      toast.success('Generating and downloading invoice...');
+      toast.success(tr("Generating and downloading invoice..."));
       const htmlContent = generateTransactionHTML(item, project);
       
       try {
@@ -356,7 +360,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
         html2pdf().set(opt).from(element).save();
       } catch (err) {
         console.error('Error generating PDF:', err);
-        toast.error('Failed to generate PDF invoice.');
+        toast.error(tr("Failed to generate PDF invoice."));
       }
     }
   };
@@ -369,7 +373,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">You don't have permission to view the Transaction Management module.</p>
+        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view the Transaction Management module.")}</p>
       </div>
     );
   }
@@ -384,10 +388,10 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <div className="w-6 h-6 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
               <Wallet className="w-3.5 h-3.5" />
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Net Balance</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Net Balance")}</span>
           </div>
           <p className={`text-3xl font-extrabold mt-1 text-center break-all ${netBalance >= 0 ? 'text-slate-900' : 'text-red-600'}`}>
-            {formatExactCurrency(netBalance, (project as any)?.currency || '$')}
+            {formatExactCurrency(netBalance, projectCurrency(project as any))}
           </p>
         </div>
 
@@ -396,8 +400,8 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <TrendingUp className="w-6 h-6 text-emerald-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Inflow</p>
-            <p className="text-2xl font-extrabold text-emerald-600 mt-1 break-all">{formatExactCurrency(totals.incoming, (project as any)?.currency || '$')}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Inflow")}</p>
+            <p className="text-2xl font-extrabold text-emerald-600 mt-1 break-all">{formatExactCurrency(totals.incoming, projectCurrency(project as any))}</p>
           </div>
         </div>
 
@@ -406,8 +410,8 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <TrendingDown className="w-6 h-6 text-red-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Outflow</p>
-            <p className="text-2xl font-extrabold text-red-600 mt-1 break-all">{formatExactCurrency(totals.outgoing, (project as any)?.currency || '$')}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Outflow")}</p>
+            <p className="text-2xl font-extrabold text-red-600 mt-1 break-all">{formatExactCurrency(totals.outgoing, projectCurrency(project as any))}</p>
           </div>
         </div>
       </div>
@@ -425,7 +429,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
                   : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900'
               }`}
             >
-              {f}
+              {tr(f)}
             </button>
           ))}
         </div>
@@ -435,10 +439,10 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search records..."
+              placeholder={tr("Search records...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-64 pl-9 pr-4 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs"
+              className="w-full sm:w-64 ps-9 pe-4 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs"
             />
           </div>
           {canCreate && (
@@ -447,7 +451,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             className="flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Record</span>
+            <span>{tr("Add Record")}</span>
           </button>
           )}
         </div>
@@ -456,7 +460,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
       {/* Ledger */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
-          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Financial Ledger</p>
+          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{tr("Financial Ledger")}</p>
         </div>
 
         {filtered.length === 0 ? (
@@ -464,9 +468,9 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
               <CreditCard className="w-8 h-8 text-slate-300" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">No records found</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">{tr("No records found")}</h3>
             <p className="text-slate-500 text-sm">
-              {search ? 'No records match your search.' : 'Add a transaction to get started.'}
+              {search ? tr("No records match your search.") : tr("Add a transaction to get started.")}
             </p>
           </div>
         ) : (
@@ -475,26 +479,26 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
               const { color, bg, icon: Icon, prefix } = getTxMeta(item);
               return (
                 <div key={item._id} className="flex items-center px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors group">
-                  <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${bg} flex items-center justify-center shrink-0 mr-3 sm:mr-4`}>
+                  <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${bg} flex items-center justify-center shrink-0 me-3 sm:me-4`}>
                     <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${color}`} />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">{item.partyName}</p>
+                    <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">{tr(item.partyName)}</p>
                     <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">
-                      {item.type}
+                      {tr(item.type)}
                       {item.paymentMethod && !item.isPurchase && ` · ${item.paymentMethod}`}
                       {' · '}
                       {new Date(item.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                     {item.description && (
-                      <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 truncate">{item.description}</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 truncate">{tr(item.description)}</p>
                     )}
                   </div>
 
-                  <div className="flex items-center space-x-2 sm:space-x-4 ml-3 sm:ml-4 min-w-0 max-w-[45%] sm:max-w-[55%]">
-                    <p className={`text-sm sm:text-base font-black ${color} tabular-nums break-all text-right`}>
-                      {prefix}{formatExactCurrency(item.amount, (project as any)?.currency || '$')}
+                  <div className="flex items-center space-x-2 sm:space-x-4 ms-3 sm:ms-4 min-w-0 max-w-[45%] sm:max-w-[55%]">
+                    <p className={`text-sm sm:text-base font-black ${color} tabular-nums break-all text-end`}>
+                      {tr(prefix)}{formatExactCurrency(item.amount, projectCurrency(project as any))}
                     </p>
                     <button
                       onClick={() => handleDownloadInvoice(item)}
@@ -504,7 +508,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
                     </button>
                     {item.linkedPurchase ? (
                       <span
-                        title="Auto-generated from a Purchase Order — edit or cancel the PO to change this entry"
+                        title={tr("Auto-generated from a Purchase Order — edit or cancel the PO to change this entry")}
                         className="p-1.5 rounded-lg text-slate-300 shrink-0"
                       >
                         <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -543,7 +547,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowTypeSheet(false)} />
           <div className="relative bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-black text-gray-900">Record Transaction</h3>
+              <h3 className="text-xl font-black text-gray-900">{tr("Record Transaction")}</h3>
               <button onClick={() => setShowTypeSheet(false)} className="p-2 rounded-xl text-slate-400 hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -553,14 +557,14 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
                 <button
                   key={t.value}
                   onClick={() => openForm(t.value)}
-                  className="w-full flex items-center space-x-4 p-4 rounded-2xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left group"
+                  className="w-full flex items-center space-x-4 p-4 rounded-2xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-start group"
                 >
                   <div className={`w-12 h-12 rounded-xl ${t.bg} flex items-center justify-center shrink-0`}>
                     <t.icon className={`w-6 h-6 ${t.color}`} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700">{t.label}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{t.description}</p>
+                    <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700">{tr(t.label)}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr(t.description)}</p>
                   </div>
                 </button>
               ))}
@@ -575,7 +579,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowFormModal(false)} />
           <div className="relative bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white rounded-t-3xl sm:rounded-t-2xl border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-black text-gray-900">{editingTxId ? 'Edit' : 'New'} {txType}</h3>
+              <h3 className="text-xl font-black text-gray-900">{editingTxId ? tr("Edit") : tr("New")} {tr(txType)}</h3>
               <button onClick={() => setShowFormModal(false)} className="p-2 rounded-xl text-slate-400 hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -583,7 +587,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
 
             <div className="p-6 space-y-5">
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Amount ($) *</label>
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">{tr("Amount ({{currency}}) *", { currency: projectCurrency(project as any) })}</label>
                 <input
                   type="number"
                   min={0}
@@ -597,23 +601,23 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
 
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
-                  {txType === 'Incoming' ? 'Received From' : txType === 'Outgoing' ? 'Paid To' : 'Issued To'} *
+                  {txType === 'Incoming' ? tr("Received From") : txType === 'Outgoing' ? tr("Paid To") : tr("Issued To")} *
                 </label>
                 <input
                   type="text"
                   value={partyName}
                   onChange={(e) => setPartyName(e.target.value)}
-                  placeholder="Name of party..."
+                  placeholder={tr("Name of party...")}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Description / Remarks (Optional)</label>
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">{tr("Description / Remarks (Optional)")}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Enter any notes..."
+                  placeholder={tr("Enter any notes...")}
                   rows={3}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
                 />
@@ -626,7 +630,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
                 disabled={submitting}
                 className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-600/20"
               >
-                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>Save Transaction</span>}
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>{tr("Save Transaction")}</span>}
               </button>
             </div>
           </div>
@@ -641,21 +645,21 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-7 h-7 text-red-600" />
             </div>
-            <h3 className="text-xl font-black text-gray-900 text-center mb-2">Delete {deleteIsPurchase ? 'Purchase' : 'Transaction'}</h3>
-            <p className="text-slate-500 text-sm text-center mb-6">This will permanently remove this {deleteIsPurchase ? 'purchase order' : 'financial record'}. This action cannot be undone.</p>
+            <h3 className="text-xl font-black text-gray-900 text-center mb-2">{tr("Delete ")}{deleteIsPurchase ? tr("Purchase") : tr("Transaction")}</h3>
+            <p className="text-slate-500 text-sm text-center mb-6">{tr("This will permanently remove this ")}{deleteIsPurchase ? tr("purchase order") : tr("financial record")}{tr(". This action cannot be undone.")}</p>
             <div className="flex space-x-3">
               <button
                 onClick={() => setDeleteTarget(null)}
                 className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors"
               >
-                Cancel
+                {tr("Cancel")}
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
                 className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition-colors flex items-center justify-center"
               >
-                {deleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete'}
+                {deleting ? <Loader2 className="w-5 h-5 animate-spin" /> : tr("Delete")}
               </button>
             </div>
           </div>

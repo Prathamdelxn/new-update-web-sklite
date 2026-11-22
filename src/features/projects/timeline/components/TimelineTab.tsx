@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -68,7 +69,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
   useEffect(() => {
     api.get(`/projects/${projectId}/milestones`)
       .then(r => setMilestones(Array.isArray(r.data) ? r.data : []))
-      .catch(() => toast.error('Failed to load milestones'))
+      .catch(() => toast.error(tr("Failed to load milestones")))
       .finally(() => setLoading(false));
   }, [projectId]);
 
@@ -118,9 +119,9 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
         <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
           <GanttChart className="w-7 h-7 text-blue-600" />
         </div>
-        <h4 className="text-base font-bold text-slate-900 mb-1">No timeline data yet</h4>
+        <h4 className="text-base font-bold text-slate-900 mb-1">{tr("No timeline data yet")}</h4>
         <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">
-          Add milestones with target dates to visualize your project critical path and timeline.
+          {tr("Add milestones with target dates to visualize your project critical path and timeline.")}
         </p>
       </div>
     );
@@ -174,19 +175,19 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
         {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900">Project Timeline</h3>
-          <p className="text-sm text-slate-500 mt-1">Click a milestone row to expand its tasks.</p>
+          <h3 className="text-xl font-bold text-gray-900">{tr("Project Timeline")}</h3>
+          <p className="text-sm text-slate-500 mt-1">{tr("Click a milestone row to expand its tasks.")}</p>
         </div>
         <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
           {Object.entries(STATUS_COLORS).map(([s, c]) => (
             <div key={s} className="flex items-center gap-1.5">
               <div className={cn('w-2.5 h-2.5 rounded-full', c.bar)} />
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{s}</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr(s)}</span>
             </div>
           ))}
           <div className="flex items-center gap-1.5">
             <div className="w-0.5 h-3 bg-red-500 rounded-full" />
-            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Today</span>
+            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{tr("Today")}</span>
           </div>
         </div>
       </div>
@@ -205,7 +206,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-bold hover:bg-red-100 transition-all"
           >
             <CalendarClock className="w-3.5 h-3.5" />
-            Today
+            {tr("Today")}
           </button>
         )}
         <button
@@ -218,17 +219,17 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
 
       {/* Gantt grid */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="flex">
+        <div className="flex" dir="ltr">{/* Gantt stays left-to-right (time runs left to right) even in Arabic */}
 
           {/* ── Label column ── */}
-          <div style={{ width: LABEL_W }} className="shrink-0 border-r border-gray-200 bg-gray-50">
+          <div style={{ width: LABEL_W }} className="shrink-0 border-e border-gray-200 bg-gray-50">
 
             {/* Header spacer (matches two header rows) */}
             <div
               style={{ height: MONTH_ROW + DAY_ROW }}
               className="border-b border-gray-200 flex items-end px-4 pb-1.5 bg-gray-50"
             >
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Milestone / Task</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{tr("Milestone / Task")}</span>
             </div>
 
             {normalized.map((m, i) => {
@@ -258,13 +259,13 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                     )} />
                     <div className={cn('w-2.5 h-2.5 rounded-full shrink-0', dotColor)} />
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-900 truncate leading-tight">{m.label}</p>
+                      <p className="text-xs font-bold text-gray-900 truncate leading-tight">{tr(m.label)}</p>
                       <p className="text-[9px] text-slate-400 mt-0.5">
                         {fmtShort(m.barStart)} → {fmtShort(m.barEnd)}
                       </p>
                       {hasTasks && (
                         <p className={cn('text-[9px] font-bold mt-0.5', c.text)}>
-                          {done}/{m.tasks.length} tasks · {m.status || 'Pending'}
+                          {tr(done)}/{m.tasks.length}{tr(" tasks · ")}{m.status || tr("Pending")}
                         </p>
                       )}
                     </div>
@@ -276,7 +277,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                       key={task._id || ti}
                       style={{ height: TASK_H }}
                       className={cn(
-                        'flex items-center gap-2 pl-9 pr-3 border-b border-gray-100',
+                        'flex items-center gap-2 ps-9 pe-3 border-b border-gray-100',
                         i % 2 === 0 ? 'bg-blue-50/20' : 'bg-blue-50/30'
                       )}
                     >
@@ -289,7 +290,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                           'text-[10px] font-semibold truncate',
                           task.isCompleted ? 'text-emerald-600 line-through' : 'text-slate-600'
                         )}>
-                          {task.title || task.name || 'Task'}
+                          {task.title || task.name || tr("Task")}
                         </p>
                         {(task.startDate || task.dueDate || task.endDate) && (
                           <p className="text-[9px] text-slate-400 mt-0.5">
@@ -313,10 +314,10 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                 {months.map((mo, i) => (
                   <div
                     key={i}
-                    className="border-r border-gray-200 flex items-center px-2 shrink-0"
+                    className="border-e border-gray-200 flex items-center px-2 shrink-0"
                     style={{ width: mo.span * DAY_W }}
                   >
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{mo.label}</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{tr(mo.label)}</span>
                   </div>
                 ))}
               </div>
@@ -331,7 +332,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                       key={di}
                       style={{ width: DAY_W }}
                       className={cn(
-                        'shrink-0 flex items-center justify-center border-r text-[10px] font-bold',
+                        'shrink-0 flex items-center justify-center border-e text-[10px] font-bold',
                         isToday   ? 'bg-red-500 text-white border-red-400' :
                         isWeekend ? 'bg-gray-100 text-slate-400 border-gray-200' :
                                     'bg-white text-slate-400 border-gray-100'
@@ -391,16 +392,16 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                       >
                         {/* Progress fill */}
                         <div
-                          className={cn('absolute left-0 top-0 bottom-0 rounded-xl', c.bar)}
+                          className={cn('absolute start-0 top-0 bottom-0 rounded-xl', c.bar)}
                           style={{ width: `${pct}%`, opacity: 0.5 }}
                         />
                         {barW >= 56 && (
                           <span className={cn('relative px-2.5 text-[9px] font-black uppercase tracking-wide truncate flex-1', c.text)}>
-                            {m.label}
+                            {tr(m.label)}
                           </span>
                         )}
                         {pct > 0 && barW >= 80 && (
-                          <span className={cn('relative px-2 text-[9px] font-black shrink-0', c.text)}>{pct}%</span>
+                          <span className={cn('relative px-2 text-[9px] font-black shrink-0', c.text)}>{tr(pct)}%</span>
                         )}
                       </div>
 
@@ -451,7 +452,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                               'text-[9px] font-bold truncate',
                               task.isCompleted ? 'text-white' : 'text-blue-600'
                             )}>
-                              {tW >= 48 ? (task.title || task.name || 'Task') : ''}
+                              {tW >= 48 ? (task.title || task.name || tr("Task")) : ''}
                             </span>
                           </div>
                         </div>
@@ -468,7 +469,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
 
       {/* Status summary */}
       <div className="mt-8">
-        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Milestone Summary</h4>
+        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">{tr("Milestone Summary")}</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Total', count: milestones.length, text: 'text-blue-500' },
@@ -478,7 +479,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
               <p className={cn('text-2xl font-black', s.text)}>{s.count}</p>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{s.label}</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{tr(s.label)}</p>
             </div>
           ))}
         </div>

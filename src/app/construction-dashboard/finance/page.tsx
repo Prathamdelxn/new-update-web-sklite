@@ -1,4 +1,6 @@
 'use client';
+import { tr } from '@/i18n';
+import { projectCurrency, dominantCurrency } from '@/lib/projectCurrency';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -29,6 +31,7 @@ interface ProjectFinanceSummary {
   totalOutgoing: number;
   totalPurchases: number;
   balance: number;
+  currency: string;
 }
 
 interface LedgerItem {
@@ -88,7 +91,7 @@ export default function FinancePage() {
 
         setTransactions(allTx);
       } catch {
-        toast.error('Failed to load financial data');
+        toast.error(tr("Failed to load financial data"));
       } finally {
         setLoading(false);
       }
@@ -102,9 +105,12 @@ export default function FinancePage() {
     const totalIncoming = projectTx.filter(t => t.type === 'Incoming').reduce((s, t) => s + t.amount, 0);
     const totalOutgoing = projectTx.filter(t => t.type === 'Outgoing' && !t.isPurchase).reduce((s, t) => s + t.amount, 0);
     const totalPurchases = projectTx.filter(t => t.isPurchase).reduce((s, t) => s + t.amount, 0);
-    return { _id: p._id, name: p.name, budget, totalIncoming, totalOutgoing, totalPurchases, balance: totalIncoming - totalOutgoing - totalPurchases };
+    return { _id: p._id, name: p.name, budget, totalIncoming, totalOutgoing, totalPurchases, balance: totalIncoming - totalOutgoing - totalPurchases, currency: projectCurrency(p) };
   });
 
+  // Org totals use the currency most projects are in; each project row uses its own
+  const orgCurrency = dominantCurrency(projects);
+  const currencyByProject = new Map(summaries.map((s) => [String(s._id), s.currency]));
   const totalBudget = summaries.reduce((s, p) => s + p.budget, 0);
   const totalIncoming = summaries.reduce((s, p) => s + p.totalIncoming, 0);
   const totalOutgoing = summaries.reduce((s, p) => s + p.totalOutgoing + p.totalPurchases, 0);
@@ -124,17 +130,17 @@ export default function FinancePage() {
       <div className="space-y-8">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">Organisation Finance</h1>
-          <p className="text-slate-500 mt-1">Consolidated financial summary across all {projects.length > 0 ? `${projects.length} ` : ''}organisation projects.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900">{tr("Organisation Finance")}</h1>
+          <p className="text-slate-500 mt-1">{tr("Consolidated financial summary across all ")}{projects.length > 0 ? `${projects.length} ` : ''}{tr("organisation projects.")}</p>
         </div>
 
         {/* Top-level KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Total Budget', value: totalBudget, icon: Wallet, color: 'text-blue-600', bg: 'bg-blue-50', prefix: '$' },
-            { label: 'Total Incoming', value: totalIncoming, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', prefix: '$' },
-            { label: 'Total Outgoing', value: totalOutgoing, icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50', prefix: '$' },
-            { label: 'Net Balance', value: netBalance, icon: CreditCard, color: netBalance >= 0 ? 'text-emerald-600' : 'text-red-600', bg: netBalance >= 0 ? 'bg-emerald-50' : 'bg-red-50', prefix: '$' },
+            { label: 'Total Budget', value: totalBudget, icon: Wallet, color: 'text-blue-600', bg: 'bg-blue-50', prefix: orgCurrency },
+            { label: 'Total Incoming', value: totalIncoming, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', prefix: orgCurrency },
+            { label: 'Total Outgoing', value: totalOutgoing, icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50', prefix: orgCurrency },
+            { label: 'Net Balance', value: netBalance, icon: CreditCard, color: netBalance >= 0 ? 'text-emerald-600' : 'text-red-600', bg: netBalance >= 0 ? 'bg-emerald-50' : 'bg-red-50', prefix: orgCurrency },
           ].map((stat, i) => (
             <GlassCard key={i} className="p-6 border-gray-200" gradient>
               <div className="flex items-center justify-between mb-4">
@@ -142,9 +148,9 @@ export default function FinancePage() {
                   <stat.icon className={cn('w-5 h-5', stat.color)} />
                 </div>
               </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{tr(stat.label)}</p>
               <p className={cn('text-2xl font-extrabold', stat.color)}>
-                {stat.prefix}{Math.abs(stat.value).toLocaleString()}
+                {stat.prefix} {Math.abs(stat.value).toLocaleString()}
               </p>
             </GlassCard>
           ))}
@@ -185,15 +191,15 @@ export default function FinancePage() {
                     <TrendingUp className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-gray-900">Monthly Cash Flow</h3>
-                    <p className="text-[10px] text-slate-500">Inflow vs Outflow over time</p>
+                    <h3 className="text-sm font-bold text-gray-900">{tr("Monthly Cash Flow")}</h3>
+                    <p className="text-[10px] text-slate-500">{tr("Inflow vs Outflow over time")}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   {[['bg-emerald-500', 'Inflow'], ['bg-red-400', 'Outflow']].map(([c, l]) => (
                     <div key={l} className="flex items-center space-x-1.5">
                       <div className={cn('w-3 h-3 rounded-sm', c)} />
-                      <span className="text-[10px] font-bold text-slate-500">{l}</span>
+                      <span className="text-[10px] font-bold text-slate-500">{tr(l)}</span>
                     </div>
                   ))}
                 </div>
@@ -220,7 +226,7 @@ export default function FinancePage() {
                       <g key={m}>
                         <rect x={x} y={yOf(monthMap[m].in)} width={singleW} height={inH} rx="3" fill="#10b981" opacity="0.85" />
                         <rect x={x + singleW + gap} y={yOf(monthMap[m].out)} width={singleW} height={outH} rx="3" fill="#f87171" opacity="0.85" />
-                        <text x={x + singleW + gap / 2} y={H - 4} textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{m}</text>
+                        <text x={x + singleW + gap / 2} y={H - 4} textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">{tr(m)}</text>
                       </g>
                     );
                   })}
@@ -233,12 +239,12 @@ export default function FinancePage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Budget by Project */}
           <div className="lg:col-span-2 space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Budget Allocation by Project</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{tr("Budget Allocation by Project")}</h3>
             <div className="space-y-3">
               {summaries.length === 0 ? (
                 <div className="py-12 text-center border border-dashed border-gray-200 rounded-2xl">
                   <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">No projects found.</p>
+                  <p className="text-sm text-slate-500">{tr("No projects found.")}</p>
                 </div>
               ) : summaries.map(p => {
                 const spent = p.totalOutgoing + p.totalPurchases;
@@ -246,9 +252,9 @@ export default function FinancePage() {
                 return (
                   <GlassCard key={p._id} className="p-4 border-gray-200" gradient>
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-bold text-gray-900 truncate pr-2">{p.name}</p>
+                      <p className="text-sm font-bold text-gray-900 truncate pe-2">{tr(p.name)}</p>
                       <span className={cn('text-xs font-bold shrink-0', p.balance >= 0 ? 'text-emerald-600' : 'text-red-600')}>
-                        {p.balance >= 0 ? '+' : ''}${p.balance.toLocaleString()}
+                        {p.balance >= 0 ? '+' : ''}{p.currency} {p.balance.toLocaleString()}
                       </span>
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200 mb-2">
@@ -258,8 +264,8 @@ export default function FinancePage() {
                       />
                     </div>
                     <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
-                      <span>Spent: ${spent.toLocaleString()}</span>
-                      <span>Budget: ${p.budget.toLocaleString()}</span>
+                      <span>{tr("Spent: {{amount}}", { amount: `${p.currency} ${spent.toLocaleString()}` })}</span>
+                      <span>{tr("Budget: {{amount}}", { amount: `${p.currency} ${p.budget.toLocaleString()}` })}</span>
                     </div>
                   </GlassCard>
                 );
@@ -270,15 +276,15 @@ export default function FinancePage() {
           {/* Recent Transactions */}
           <div className="lg:col-span-3 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Recent Transactions</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{tr("Recent Transactions")}</h3>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder={tr("Search...")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-gray-50 border border-gray-200 rounded-xl py-2 pl-9 pr-3 text-xs text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-44"
+                  className="bg-gray-50 border border-gray-200 rounded-xl py-2 ps-9 pe-3 text-xs text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-44"
                 />
               </div>
             </div>
@@ -286,7 +292,7 @@ export default function FinancePage() {
             {recentTx.length === 0 ? (
               <div className="py-20 text-center border border-dashed border-gray-200 rounded-2xl">
                 <CreditCard className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">No transactions recorded yet.</p>
+                <p className="text-slate-500 text-sm">{tr("No transactions recorded yet.")}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -300,11 +306,11 @@ export default function FinancePage() {
                           <Icon className={cn('w-4 h-4', meta.color)} />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{tx.partyName}</p>
+                          <p className="text-sm font-semibold text-gray-900">{tr(tx.partyName)}</p>
                           <div className="flex items-center space-x-2 mt-0.5">
                             {tx.projectName && (
                               <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-md">
-                                {tx.projectName}
+                                {tr(tx.projectName)}
                               </span>
                             )}
                             <span className="text-[10px] text-slate-400 font-bold">{new Date(tx.date).toLocaleDateString()}</span>
@@ -312,7 +318,7 @@ export default function FinancePage() {
                         </div>
                       </div>
                       <span className={cn('text-sm font-bold', meta.color)}>
-                        {meta.prefix}${tx.amount?.toLocaleString()}
+                        {meta.prefix}{currencyByProject.get(String((tx as any).projectId)) || orgCurrency} {tx.amount?.toLocaleString()}
                       </span>
                     </div>
                   );

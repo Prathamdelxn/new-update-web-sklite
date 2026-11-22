@@ -7,7 +7,7 @@ import { tr } from '@/i18n';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckSquare, AlertTriangle, Clock, TrendingUp, DollarSign, Loader2 } from 'lucide-react';
+import { CheckSquare, AlertTriangle, Clock, TrendingUp, Loader2, Banknote } from 'lucide-react';
 import { Card, CardContent } from '@/components/interior/ui';
 import { interiorProjectService } from '@/services/interiorProject.service';
 import { useQuery } from '@tanstack/react-query';
@@ -177,7 +177,7 @@ export default function InteriorProjectOverviewView({ projectId }: InteriorProje
             <CardContent className="p-3.5 sm:p-5 flex-1 flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[0.625rem] sm:text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Contract Budget")}</span>
-                <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
+                <Banknote className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
               </div>
               <div className="my-2 sm:my-3 flex items-baseline gap-2">
                 <span className="text-lg sm:text-2xl font-extrabold tracking-tight text-[hsl(var(--foreground))] truncate">{formatBudget(project?.budget?.amount ?? project?.budget ?? project?.totalBudget)}</span>

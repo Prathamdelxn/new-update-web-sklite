@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -93,7 +94,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
       setEstimatedTotal(res.data.estimatedTotal ?? 0);
       setStep('preview');
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to parse file. Check column names match the template.');
+      toast.error(err?.response?.data?.message || tr("Failed to parse file. Check column names match the template."));
       setFile(null);
     } finally {
       setPreviewing(false);
@@ -112,11 +113,11 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
     setStep('importing');
     try {
       await sendFile(file, 'confirm');
-      toast.success(`${previewItems.length} BOQ items imported successfully!`);
+      toast.success(tr("{{previewItemsCount}} BOQ items imported successfully!", { previewItemsCount: previewItems.length }));
       onSuccess();
       handleClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Import failed');
+      toast.error(err?.response?.data?.message || tr("Import failed"));
       setStep('preview');
     }
   };
@@ -145,10 +146,10 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">
-                      {step === 'upload' ? 'Step 1 of 2' : step === 'preview' ? 'Step 2 of 2' : 'Importing'}
+                      {step === 'upload' ? tr("Step 1 of 2") : step === 'preview' ? tr("Step 2 of 2") : tr("Importing")}
                     </p>
                     <h2 className="text-base font-bold text-gray-900">
-                      {step === 'upload' ? 'Upload BOQ Sheet' : step === 'preview' ? 'Preview & Confirm' : 'Importing BOQ…'}
+                      {step === 'upload' ? tr("Upload BOQ Sheet") : step === 'preview' ? tr("Preview & Confirm") : tr("Importing BOQ…")}
                     </h2>
                   </div>
                 </div>
@@ -164,7 +165,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                     {/* Template download */}
                     <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl">
                       <div>
-                        <p className="text-sm font-bold text-blue-800">Required columns</p>
+                        <p className="text-sm font-bold text-blue-800">{tr("Required columns")}</p>
                         <p className="text-xs text-blue-600 mt-0.5">{TEMPLATE_COLUMNS.join(' · ')}</p>
                       </div>
                       <button
@@ -172,7 +173,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                         className="flex items-center gap-2 px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-blue-700 hover:bg-blue-100 transition-all shrink-0"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        Download Template
+                        {tr("Download Template")}
                       </button>
                     </div>
 
@@ -202,9 +203,9 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                             <Upload className="w-7 h-7 text-slate-400" />
                           </div>
                           <p className="text-sm font-bold text-gray-900 mb-1">
-                            {dragOver ? 'Drop it here' : 'Click or drag & drop'}
+                            {dragOver ? tr("Drop it here") : tr("Click or drag & drop")}
                           </p>
-                          <p className="text-xs text-slate-400">.xlsx · .xls · .csv — max 5 MB</p>
+                          <p className="text-xs text-slate-400">{tr(".xlsx · .xls · .csv — max 5 MB")}</p>
                         </>
                       )}
                     </label>
@@ -219,36 +220,36 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                       <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                         <div>
-                          <p className="text-sm font-bold text-emerald-800">{previewItems.length} items ready to import</p>
-                          <p className="text-xs text-emerald-600">from <span className="font-semibold">{file?.name}</span></p>
+                          <p className="text-sm font-bold text-emerald-800">{previewItems.length}{tr(" items ready to import")}</p>
+                          <p className="text-xs text-emerald-600">{tr("from ")}<span className="font-semibold">{tr(file?.name)}</span></p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Estimated Total</p>
+                      <div className="text-end">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{tr("Estimated Total")}</p>
                         <p className="text-lg font-black text-emerald-700">${estimatedTotal.toLocaleString()}</p>
                       </div>
                     </div>
 
                     {/* Preview table */}
                     <div className="overflow-auto rounded-xl border border-gray-200 max-h-64">
-                      <table className="w-full text-left text-xs min-w-[700px]">
+                      <table className="w-full text-start text-xs min-w-[700px]">
                         <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
                           <tr>
                             {['Group', 'Item #', 'Description', 'Unit', 'Qty', 'Unit Cost', 'Total'].map(h => (
-                              <th key={h} className="px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wider text-[10px]">{h}</th>
+                              <th key={h} className="px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wider text-[10px]">{tr(h)}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {previewItems.map((item, i) => (
                             <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="px-3 py-2 font-medium text-gray-700">{item.groupName}</td>
+                              <td className="px-3 py-2 font-medium text-gray-700">{tr(item.groupName)}</td>
                               <td className="px-3 py-2 font-mono text-slate-500">{item.itemNumber || '-'}</td>
-                              <td className="px-3 py-2 text-gray-900 max-w-[200px] truncate">{item.itemDescription}</td>
+                              <td className="px-3 py-2 text-gray-900 max-w-[200px] truncate">{tr(item.itemDescription)}</td>
                               <td className="px-3 py-2 text-slate-500">{item.unit || '-'}</td>
-                              <td className="px-3 py-2 text-right font-bold text-slate-600">{item.quantity}</td>
-                              <td className="px-3 py-2 text-right text-slate-500">${Number(item.unitCost).toLocaleString()}</td>
-                              <td className="px-3 py-2 text-right font-bold text-blue-600">${Number(item.totalCost).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-end font-bold text-slate-600">{item.quantity}</td>
+                              <td className="px-3 py-2 text-end text-slate-500">${Number(item.unitCost).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-end font-bold text-blue-600">${Number(item.totalCost).toLocaleString()}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -258,7 +259,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                     {previewItems.length === 0 && (
                       <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
                         <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-                        <p className="text-sm text-amber-700">No rows found. Make sure your columns match the template exactly.</p>
+                        <p className="text-sm text-amber-700">{tr("No rows found. Make sure your columns match the template exactly.")}</p>
                       </div>
                     )}
                   </div>
@@ -268,7 +269,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                 {step === 'importing' && (
                   <div className="flex flex-col items-center justify-center py-12 gap-4">
                     <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-                    <p className="text-sm font-bold text-gray-700">Importing {previewItems.length} items…</p>
+                    <p className="text-sm font-bold text-gray-700">{tr("Importing ")}{previewItems.length}{tr(" items…")}</p>
                   </div>
                 )}
               </div>
@@ -282,14 +283,14 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                       className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 text-sm font-semibold transition-all"
                     >
                       <RotateCcw className="w-4 h-4" />
-                      Change File
+                      {tr("Change File")}
                     </button>
                   )}
                   <button
                     onClick={handleClose}
                     className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 text-sm font-semibold transition-all"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   {step === 'preview' && (
                     <button
@@ -298,7 +299,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition-all shadow-sm"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      Import {previewItems.length} Items
+                      {tr("Import ")}{previewItems.length}{tr(" Items")}
                     </button>
                   )}
                 </div>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,7 +59,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.quantity > MAX_INPUT_VALUE) {
-      toast.error('Quantity is too large');
+      toast.error(tr("Quantity is too large"));
       return;
     }
     setIsLoading(true);
@@ -70,13 +71,13 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
           unit: formData.unit,
           initialStock: formData.quantity,
         });
-        toast.success('Material added successfully!');
+        toast.success(tr("Material added successfully!"));
       } else if (mode === 'edit') {
         await api.patch(`/materials/${initialData._id}`, {
           name: formData.name,
           unit: formData.unit,
         });
-        toast.success('Material updated successfully!');
+        toast.success(tr("Material updated successfully!"));
       } else {
         const type = mode === 'stock-in' ? 'Received' : 'Used';
         await api.post(`/projects/${projectId}/materials/bulk-action`, {
@@ -87,12 +88,12 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
             note: formData.note,
           }],
         });
-        toast.success(`Stock ${mode === 'stock-in' ? 'added' : 'removed'} successfully!`);
+        toast.success(tr("Stock {{value}} successfully!", { value: mode === 'stock-in' ? 'added' : 'removed' }));
       }
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to process material');
+      toast.error(error.response?.data?.message || tr("Failed to process material"));
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +139,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
-                    <p className="text-xs text-slate-500 mt-0.5">Project Inventory Management</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{tr("Project Inventory Management")}</p>
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -150,7 +151,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                 {mode === 'create' || mode === 'edit' ? (
                   <>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-600 ml-1">Material Name</label>
+                      <label className="text-sm font-medium text-slate-600 ms-1">{tr("Material Name")}</label>
                       <div className="relative group">
                         <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                         <input
@@ -159,32 +160,32 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                           maxLength={80}
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                          placeholder="e.g. Cement, Steel Bars"
+                          className="w-full bg-white border border-gray-200 rounded-xl py-2.5 ps-10 pe-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                          placeholder={tr("e.g. Cement, Steel Bars")}
                         />
                       </div>
                     </div>
                     <div className={cn("grid gap-4", mode === 'create' ? "grid-cols-2" : "grid-cols-1")}>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-600 ml-1">Unit</label>
+                        <label className="text-sm font-medium text-slate-600 ms-1">{tr("Unit")}</label>
                         <div className="relative group">
                           <Scale className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" />
                           <select
                             required
                             value={formData.unit}
                             onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                            className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                            className="w-full bg-white border border-gray-200 rounded-xl py-2.5 ps-10 pe-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                           >
-                            <option value="">Select Unit</option>
+                            <option value="">{tr("Select Unit")}</option>
                             {PREDEFINED_UNITS.map((u) => (
-                              <option key={u} value={u}>{u}</option>
+                              <option key={u} value={u}>{tr(u)}</option>
                             ))}
                           </select>
                         </div>
                       </div>
                       {mode === 'create' && (
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-600 ml-1">Initial Stock</label>
+                          <label className="text-sm font-medium text-slate-600 ms-1">{tr("Initial Stock")}</label>
                           <input
                             type="number"
                             min={0}
@@ -202,17 +203,17 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                   <div className="space-y-6">
                     <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Material</span>
-                        <span className="text-sm font-black text-gray-900">{initialData.name}</span>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{tr("Material")}</span>
+                        <span className="text-sm font-black text-gray-900">{tr(initialData.name)}</span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Current Balance</span>
-                        <span className="text-sm font-black text-blue-600 break-all text-right">{formatCompact((initialData.totalReceived || 0) - (initialData.totalConsumed || 0))} {initialData.unit}</span>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{tr("Current Balance")}</span>
+                        <span className="text-sm font-black text-blue-600 break-all text-end">{formatCompact((initialData.totalReceived || 0) - (initialData.totalConsumed || 0))} {tr(initialData.unit)}</span>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-600 ml-1">Quantity to {mode === 'stock-in' ? 'Add' : 'Remove'}</label>
+                      <label className="text-sm font-medium text-slate-600 ms-1">{tr("Quantity to ")}{mode === 'stock-in' ? tr("Add") : tr("Remove")}</label>
                       <div className="relative group">
                         {mode === 'stock-in' ? <ArrowDownLeft className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" /> : <ArrowUpRight className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />}
                         <input
@@ -223,21 +224,21 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                           placeholder="0"
                           value={formData.quantity === 0 ? '' : formData.quantity}
                           onChange={(e) => setFormData({ ...formData, quantity: e.target.value === '' ? 0 : Number(e.target.value) })}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-bold"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 ps-10 pe-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-bold"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-600 ml-1">Note (Optional)</label>
+                      <label className="text-sm font-medium text-slate-600 ms-1">{tr("Note (Optional)")}</label>
                       <div className="relative group">
                         <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                         <textarea
                           rows={2}
                           value={formData.note}
                           onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm resize-none"
-                          placeholder="Reason for adjustment..."
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 ps-10 pe-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm resize-none"
+                          placeholder={tr("Reason for adjustment...")}
                         />
                       </div>
                     </div>
@@ -250,7 +251,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                     onClick={onClose}
                     className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all active:scale-[0.98]"
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -265,10 +266,10 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                     {isLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Processing...</span>
+                        <span>{tr("Processing...")}</span>
                       </>
                     ) : (
-                      <span>{mode === 'create' ? 'Add Material' : mode === 'edit' ? 'Save Changes' : mode === 'stock-in' ? 'Confirm Addition' : 'Confirm Removal'}</span>
+                      <span>{mode === 'create' ? tr("Add Material") : mode === 'edit' ? tr("Save Changes") : mode === 'stock-in' ? tr("Confirm Addition") : tr("Confirm Removal")}</span>
                     )}
                   </button>
                 </div>

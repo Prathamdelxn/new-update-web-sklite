@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import { LayoutGrid, FolderTree, ShieldAlert, Layers } from 'lucide-react';
@@ -30,11 +31,11 @@ export default function TemplatesPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Templates Management
+              {tr("Templates Management")}
             </h1>
           </div>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
-            Standardize site delivery and workflows with reusable project templates and categorized specifications.
+            {tr("Standardize site delivery and workflows with reusable project templates and categorized specifications.")}
           </p>
         </div>
 
@@ -52,7 +53,7 @@ export default function TemplatesPage() {
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span>{label}</span>
+                <span>{tr(label)}</span>
               </button>
             ))}
           </div>
@@ -68,9 +69,9 @@ export default function TemplatesPage() {
             <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center mb-3">
               <ShieldAlert className="w-6 h-6 text-amber-600" />
             </div>
-            <p className="text-sm font-bold text-slate-800">You don't have access to templates</p>
+            <p className="text-sm font-bold text-slate-800">{tr("You don't have access to templates")}</p>
             <p className="text-xs text-slate-500 mt-1 max-w-sm">
-              Ask your admin to enable <span className="font-semibold text-slate-700">Template Management → View</span> on your role.
+              {tr("Ask your admin to enable ")}<span className="font-semibold text-slate-700">{tr("Template Management → View")}</span>{tr(" on your role.")}
             </p>
           </div>
         )}

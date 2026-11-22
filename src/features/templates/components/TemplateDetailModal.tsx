@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -31,7 +32,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
       setLoading(true);
       api.get(`/templates/${templateId}`)
         .then(res => setTemplate(res.data))
-        .catch(() => toast.error('Failed to load template details'))
+        .catch(() => toast.error(tr("Failed to load template details")))
         .finally(() => setLoading(false));
     } else {
       setTemplate(null);
@@ -58,9 +59,9 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
               {/* Header */}
               <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <div>
-                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Viewing Template</p>
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">{tr("Viewing Template")}</p>
                   <h2 className="text-sm font-bold text-slate-900 mt-0.5">
-                    {loading ? 'Loading…' : (template?.name || '—')}
+                    {loading ? tr("Loading…") : (template?.name || '—')}
                   </h2>
                 </div>
                 <button
@@ -84,19 +85,19 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                           <span className="text-xl">🏗️</span>
                         </div>
                         <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 text-[10.5px] font-bold">
-                          {template.category?.name || 'General'}
+                          {template.category?.name || tr("General")}
                         </span>
                       </div>
 
-                      <h3 className="text-base font-bold text-slate-900 mb-1">{template.name}</h3>
+                      <h3 className="text-base font-bold text-slate-900 mb-1">{tr(template.name)}</h3>
                       <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                        {template.description || `A standardized template configured for ${template.category?.name || 'general'} project delivery.`}
+                        {template.description || tr("A standardized template configured for {{value}} project delivery.", { value: template.category?.name || 'general' })}
                       </p>
 
                       {/* Stats row */}
                       <div className="bg-white rounded-lg border border-slate-200/90 grid grid-cols-3 divide-x divide-slate-100 shadow-2xs">
                         <div className="px-3 py-2 text-center">
-                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Budget Range</p>
+                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{tr("Budget Range")}</p>
                           <p className="text-xs font-bold text-slate-900">
                             {template.minBudget || template.maxBudget
                               ? `${formatCurrency(template.minBudget || 0, '$')} – ${formatCurrency(template.maxBudget || 0, '$')}`
@@ -105,13 +106,13 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                           </p>
                         </div>
                         <div className="px-3 py-2 text-center">
-                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Est. Area</p>
+                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{tr("Est. Area")}</p>
                           <p className="text-xs font-bold text-slate-900">
                             {template.area ? `${template.area.toLocaleString()} sqft` : '—'}
                           </p>
                         </div>
                         <div className="px-3 py-2 text-center">
-                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Timeline</p>
+                          <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{tr("Timeline")}</p>
                           <p className="text-xs font-bold text-slate-900">
                             {template.estimatedDays ? `${template.estimatedDays} days` : '—'}
                           </p>
@@ -121,7 +122,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 
                     {/* Photos & Visuals */}
                     <div className="space-y-2.5">
-                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Photos & Visuals</h4>
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{tr("Photos & Visuals")}</h4>
                       {template.images && template.images.length > 0 ? (
                         <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
                           {template.images.map((img: string, idx: number) => (
@@ -133,14 +134,14 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                       ) : (
                         <div className="border border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center gap-1.5 text-slate-400 bg-slate-50/50">
                           <ImageIcon className="w-7 h-7 text-slate-300" />
-                          <p className="text-xs font-semibold">No photos uploaded</p>
+                          <p className="text-xs font-semibold">{tr("No photos uploaded")}</p>
                         </div>
                       )}
                     </div>
 
                     {/* Plan Files */}
                     <div className="space-y-2.5">
-                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Plan Files & Documents</h4>
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{tr("Plan Files & Documents")}</h4>
                       {template.files && template.files.length > 0 ? (
                         <div className="space-y-2">
                           {template.files.map((file: any, idx: number) => (
@@ -149,15 +150,15 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                                 <FileText className="w-4 h-4 text-blue-600" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-slate-900 truncate">{file.name || `Plan File ${idx + 1}`}</p>
+                                <p className="text-xs font-bold text-slate-900 truncate">{file.name || tr("Plan File {{value}}", { value: idx + 1 })}</p>
                                 <p className="text-[10px] font-semibold text-slate-400">
-                                  {file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'Architectural Plan'}
+                                  {file.size ? `${(file.size / 1024).toFixed(1)} KB` : tr("Architectural Plan")}
                                 </p>
                               </div>
                               <a
                                 href={file.url} target="_blank" rel="noopener noreferrer"
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
-                                title="Download"
+                                title={tr("Download")}
                               >
                                 <Download className="w-4 h-4" />
                               </a>
@@ -167,7 +168,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                       ) : (
                         <div className="border border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center gap-1.5 text-slate-400 bg-slate-50/50">
                           <FileText className="w-7 h-7 text-slate-300" />
-                          <p className="text-xs font-semibold">No files attached</p>
+                          <p className="text-xs font-semibold">{tr("No files attached")}</p>
                         </div>
                       )}
                     </div>
@@ -183,7 +184,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                   onClick={onClose}
                   className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer shadow-2xs"
                 >
-                  Close
+                  {tr("Close")}
                 </button>
                 {template && onEdit && (
                   <button
@@ -191,7 +192,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-xs"
                   >
                     <Pencil className="w-3.5 h-3.5" />
-                    <span>Edit Template</span>
+                    <span>{tr("Edit Template")}</span>
                   </button>
                 )}
               </div>

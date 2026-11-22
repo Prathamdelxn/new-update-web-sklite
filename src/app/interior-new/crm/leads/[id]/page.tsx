@@ -9,73 +9,7 @@ import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useConfirm } from '@/providers/ConfirmContext';
-import {
-  ArrowLeft,
-  ArrowRight,
-  User,
-  Phone,
-  Mail,
-  Building,
-  DollarSign,
-  Activity,
-  Plus,
-  MessageSquare,
-  MessageCircle,
-  X,
-  CheckCircle2,
-  XCircle,
-  ShieldCheck,
-  ShoppingBag,
-  Receipt,
-  Paperclip,
-  CheckCheck,
-  Calendar,
-  MapPin,
-  Ruler,
-  PenTool,
-  UploadCloud,
-  File as FileIcon,
-  Image as ImageIcon,
-  Calculator,
-  FileText,
-  ChevronDown,
-  ChevronRight,
-  Pencil,
-  Trash2,
-  DoorOpen,
-  Maximize2,
-  Columns,
-  Zap,
-  Droplets,
-  Wind,
-  Armchair,
-  AlertTriangle,
-  AlertCircle,
-  Layers,
-  Palette,
-  Sliders,
-  Sun,
-  Sparkles,
-  Box,
-  Archive,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  Lock,
-  Copy,
-  Check,
-  CalendarCheck,
-  Clock,
-  PhoneCall,
-  Frown,
-  History,
-  Share2,
-  Globe,
-  Send,
-  CheckCircle,
-  FileSpreadsheet,
-  Download,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, Phone, Mail, Building, Activity, Plus, MessageSquare, MessageCircle, X, CheckCircle2, XCircle, ShieldCheck, ShoppingBag, Receipt, Paperclip, CheckCheck, Calendar, MapPin, Ruler, PenTool, UploadCloud, File as FileIcon, Image as ImageIcon, Calculator, FileText, ChevronDown, ChevronRight, Pencil, Trash2, DoorOpen, Maximize2, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, AlertCircle, Layers, Palette, Sliders, Sun, Sparkles, Box, Archive, ExternalLink, Eye, EyeOff, Lock, Copy, Check, CalendarCheck, Clock, PhoneCall, Frown, History, Share2, Globe, Send, CheckCircle, FileSpreadsheet, Download, Banknote } from 'lucide-react';
 import { exportBoqToExcel } from '@/lib/exportBoqExcelLazy';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, parseMaxBudget, formatSmartCurrency, formatMillionBillion } from '@/lib/utils';
@@ -1520,7 +1454,7 @@ const { hasPermission: canDo } = usePermissions();
                   </div>
                 </div>
                 <div className="bg-[hsl(var(--card))] p-3 rounded-xl border border-[hsl(var(--border))] flex items-center gap-2.5">
-                  <span className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0"><DollarSign size={15} /></span>
+                  <span className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0"><Banknote size={15} /></span>
                   <div className="overflow-hidden min-w-0">
                     <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider truncate">{tr("Est. Budget")}</p>
                     <p className="font-bold text-xs truncate mt-0.5 text-emerald-600 dark:text-emerald-400">
@@ -1669,7 +1603,7 @@ const { hasPermission: canDo } = usePermissions();
 
                       <div className="flex items-center justify-between gap-1 p-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.6)]">
                         <span className="text-[hsl(var(--muted-foreground))] font-medium flex items-center gap-1.5 shrink-0">
-                          <DollarSign size={12} className="text-amber-500" />{tr(" Budget / Quote")}
+                          <Banknote size={12} className="text-amber-500" />{tr(" Budget / Quote")}
                         </span>
                         <span className="font-bold text-emerald-600 dark:text-emerald-400 break-words min-w-0">
                           {lead.quotations?.[lead.quotations.length - 1]?.grandTotal
@@ -2492,7 +2426,7 @@ const { hasPermission: canDo } = usePermissions();
 
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
                           <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <DollarSign size={11} className="text-amber-500" />{tr(" Target Budget")}
+                            <Banknote size={11} className="text-amber-500" />{tr(" Target Budget")}
                           </p>
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
                             {lead.budgetRange || (lead.budget ? `${currencySymbol} ${Number(lead.budget).toLocaleString()}` : tr("Not specified"))}

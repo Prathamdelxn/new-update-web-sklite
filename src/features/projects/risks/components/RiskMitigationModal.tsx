@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,16 +59,16 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
 
     try {
       await api.patch(`/risks/${risk._id}`, payload);
-      toast.success('Mitigation updated successfully');
+      toast.success(tr("Mitigation updated successfully"));
       onSuccess();
       onClose();
     } catch (error: any) {
       if (error.response?.status >= 500) {
-        toast.success('Mitigation updated successfully');
+        toast.success(tr("Mitigation updated successfully"));
         onSuccess();
         onClose();
       } else {
-        toast.error(error.response?.data?.message || 'Failed to update mitigation');
+        toast.error(error.response?.data?.message || tr("Failed to update mitigation"));
       }
     } finally {
       setIsSaving(false);
@@ -97,8 +98,8 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
               {/* Header */}
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Update Progress</h2>
-                  <p className="text-xs text-slate-500 mt-1 max-w-[280px] truncate">{risk.title}</p>
+                  <h2 className="text-lg font-bold text-gray-900">{tr("Update Progress")}</h2>
+                  <p className="text-xs text-slate-500 mt-1 max-w-[280px] truncate">{tr(risk.title)}</p>
                 </div>
                 <button
                   onClick={onClose}
@@ -114,9 +115,9 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      Mitigation Progress
+                      {tr("Mitigation Progress")}
                     </label>
-                    <span className="text-sm font-black text-gray-900">{progress}%</span>
+                    <span className="text-sm font-black text-gray-900">{tr(progress)}%</span>
                   </div>
                   <div className="relative mt-2">
                     <input
@@ -136,7 +137,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                 {/* Status selector */}
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Set Status
+                    {tr("Set Status")}
                   </label>
                   <div className="grid grid-cols-4 gap-2">
                     {STATUSES.map((s) => {
@@ -153,7 +154,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                               : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                           )}
                         >
-                          {s}
+                          {tr(s)}
                         </button>
                       );
                     })}
@@ -163,13 +164,13 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                 {/* Update Note */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Update Note
+                    {tr("Update Note")}
                   </label>
                   <input
                     type="text"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="What progress has been made?"
+                    placeholder={tr("What progress has been made?")}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
@@ -182,7 +183,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                   onClick={onClose}
                   className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-gray-100 transition-all"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   type="button"
@@ -193,12 +194,12 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                   {isSaving ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Saving...</span>
+                      <span>{tr("Saving...")}</span>
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>Save</span>
+                      <span>{tr("Save")}</span>
                     </>
                   )}
                 </button>

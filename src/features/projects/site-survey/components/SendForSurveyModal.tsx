@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -38,7 +39,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
       const res = await api.get(`/users?permission=sitesurvey:create&projectId=${projectId}`);
       setUsers(Array.isArray(res.data) ? res.data : res.data?.users ?? []);
     } catch {
-      toast.error('Failed to load eligible surveyors');
+      toast.error(tr("Failed to load eligible surveyors"));
     } finally {
       setLoading(false);
     }
@@ -54,11 +55,11 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
         auditAction: 'Update',
         auditDetails: `Site survey assigned to ${selectedUser.name}`,
       });
-      toast.success(`Site survey assigned to ${selectedUser.name}`);
+      toast.success(tr("Site survey assigned to {{name}}", { name: selectedUser.name }));
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to assign surveyor');
+      toast.error(err.response?.data?.message || tr("Failed to assign surveyor"));
     } finally {
       setSubmitting(false);
     }
@@ -123,8 +124,8 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                     <Map className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Site Survey</p>
-                    <h2 className="text-base font-bold text-gray-900">Assign Surveyor</h2>
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{tr("Site Survey")}</p>
+                    <h2 className="text-base font-bold text-gray-900">{tr("Assign Surveyor")}</h2>
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
@@ -140,8 +141,8 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                     type="text"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Search surveyors..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    placeholder={tr("Search surveyors...")}
+                    className="w-full ps-10 pe-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
               </div>
@@ -152,8 +153,8 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                 {filtered.length === 0 && !loading ? (
                   <div className="text-center py-10 text-sm text-slate-400">
                     {users.length === 0
-                      ? 'No users with site survey permission found.'
-                      : `No results for "${search}"`}
+                      ? tr("No users with site survey permission found.")
+                      : tr("No results for \"{{search}}\"", { search: search })}
                   </div>
                 ) : (
                   filtered.map(u => {
@@ -162,7 +163,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                       <button
                         key={u._id}
                         onClick={() => setSelectedUser(isSelected ? null : u)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-start ${
                           isSelected
                             ? 'bg-blue-50 border-blue-300'
                             : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-blue-50/40'
@@ -172,7 +173,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                           {u.name?.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{u.name}</p>
+                          <p className="text-sm font-semibold text-gray-900 truncate">{tr(u.name)}</p>
                           <p className="text-xs text-slate-400 truncate">{roleLabel(u)}</p>
                         </div>
                         {isSelected && (
@@ -193,7 +194,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                   onClick={onClose}
                   className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 text-sm font-semibold transition-all"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </button>
                 <button
                   onClick={handleAssign}
@@ -201,8 +202,8 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                   className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold flex items-center justify-center gap-2 enabled:hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {submitting
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Assigning...</>
-                    : <><UserCheck className="w-4 h-4" /> Assign & Send</>
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />{tr(" Assigning...")}</>
+                    : <><UserCheck className="w-4 h-4" />{tr(" Assign & Send")}</>
                   }
                 </button>
               </div>

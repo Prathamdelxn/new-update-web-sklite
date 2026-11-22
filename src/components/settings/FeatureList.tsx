@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { Check, X } from 'lucide-react';
 
@@ -23,7 +24,7 @@ export default function FeatureList({ features }: FeatureListProps) {
     <div className="bg-white rounded-3xl border border-slate-200 p-6">
 
       <h3 className="text-xs font-bold tracking-[4px] uppercase text-blue-600 mb-6">
-        What's Included
+        {tr("What's Included")}
       </h3>
 
       <div className="space-y-5">
@@ -56,7 +57,7 @@ export default function FeatureList({ features }: FeatureListProps) {
                     : 'text-slate-400 line-through'
                 }`}
               >
-                {feature.name}
+                {tr(feature.name)}
               </span>
             </div>
           );

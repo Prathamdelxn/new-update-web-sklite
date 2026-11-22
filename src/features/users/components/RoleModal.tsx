@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -187,22 +188,22 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) { toast.error('Role name is required'); return; }
+    if (!name.trim()) { toast.error(tr("Role name is required")); return; }
     if (missingProjectView) { toast.error(PROJECT_VIEW_FIRST_MSG); return; }
     setIsLoading(true);
     try {
       const payload = { name, description, permissions: toBackend(permissions) };
       if (initialData) {
         await api.patch(`/roles/${initialData._id}`, payload);
-        toast.success('Role updated successfully');
+        toast.success(tr("Role updated successfully"));
       } else {
         await api.post('/roles', payload);
-        toast.success('Role created successfully');
+        toast.success(tr("Role created successfully"));
       }
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Action failed');
+      toast.error(error.response?.data?.message || tr("Action failed"));
     } finally {
       setIsLoading(false);
     }
@@ -245,9 +246,9 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                     </div>
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900">
-                        {initialData ? 'Edit Role' : 'Create New Role'}
+                        {initialData ? tr("Edit Role") : tr("Create New Role")}
                       </h2>
-                      <p className="text-xs text-slate-400 mt-0.5">Configure access levels per module</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{tr("Configure access levels per module")}</p>
                     </div>
                   </div>
                   <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -259,23 +260,23 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                   {/* Name + Description */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Role Name</label>
+                      <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">{tr("Role Name")}</label>
                       <input
                         type="text" required value={name}
                         onChange={e => setName(e.target.value)}
                         disabled={isAdmin}
                         className="w-full bg-gray-50 border border-gray-200 rounded-md py-2.5 px-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-60"
-                        placeholder="e.g. Project Manager"
+                        placeholder={tr("e.g. Project Manager")}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Description</label>
+                      <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">{tr("Description")}</label>
                       <input
                         type="text" value={description}
                         onChange={e => setDescription(e.target.value)}
                         disabled={isAdmin}
                         className="w-full bg-gray-50 border border-gray-200 rounded-md py-2.5 px-4 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-60"
-                        placeholder="Brief purpose of this role"
+                        placeholder={tr("Brief purpose of this role")}
                       />
                     </div>
                   </div>
@@ -285,22 +286,22 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                     {/* Section header */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Module Permissions</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{totalEnabled} permission{totalEnabled !== 1 ? 's' : ''} enabled across {MODULES.length} modules</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Module Permissions")}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{tr(totalEnabled)}{tr(" permission")}{totalEnabled !== 1 ? 's' : ''}{tr(" enabled across ")}{MODULES.length}{tr(" modules")}</p>
                       </div>
                       {!isAdmin && (
                         <div className="flex items-center gap-1.5">
                           <button type="button" onClick={() => applyPreset('readonly')}
                             className="px-3 py-1.5 rounded-md text-xs font-medium bg-gray-100 border border-gray-200 text-slate-600 hover:bg-gray-200 transition-all">
-                            Read Only
+                            {tr("Read Only")}
                           </button>
                           <button type="button" onClick={() => applyPreset('full')}
                             className="px-3 py-1.5 rounded-md text-xs font-medium bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-all">
-                            Full Access
+                            {tr("Full Access")}
                           </button>
                           <button type="button" onClick={clearAll}
                             className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition-all">
-                            Clear All
+                            {tr("Clear All")}
                           </button>
                         </div>
                       )}
@@ -311,12 +312,11 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                       <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                         <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
                         <p className="text-xs font-semibold text-amber-800 flex-1">
-                          This role has project permissions but not <span className="font-bold">Project Management → View</span>.
-                          Members with it won't be able to open any project, so those permissions won't work.
+                          {tr("This role has project permissions but not ")}<span className="font-bold">{tr("Project Management → View")}</span>{tr(". Members with it won't be able to open any project, so those permissions won't work.")}
                         </p>
                         <button type="button" onClick={enableProjectView}
                           className="px-3 py-1.5 rounded-md text-xs font-bold bg-amber-600 text-white hover:bg-amber-500 transition-all shrink-0">
-                          Enable Project View
+                          {tr("Enable Project View")}
                         </button>
                       </div>
                     )}
@@ -325,7 +325,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                     {isAdmin && (
                       <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
                         <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0" />
-                        <p className="text-sm font-semibold text-blue-700">This is a protected system role. Permissions are locked and cannot be modified.</p>
+                        <p className="text-sm font-semibold text-blue-700">{tr("This is a protected system role. Permissions are locked and cannot be modified.")}</p>
                       </div>
                     )}
 
@@ -343,14 +343,14 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                             <button
                               type="button"
                               onClick={() => toggleExpand(module.id)}
-                              className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                              className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-start"
                             >
                               <div className="flex items-center gap-3">
                                 <span className="text-base leading-none">{module.icon}</span>
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900">{module.title}</p>
+                                  <p className="text-sm font-medium text-gray-900">{tr(module.title)}</p>
                                   <p className="text-[10px] text-slate-400 mt-0.5">
-                                    {activeCount === 0 ? 'No access defined' : `${activeCount} of ${modActions.length} permissions enabled`}
+                                    {activeCount === 0 ? tr("No access defined") : tr("{{activeCount}} of {{modActionsCount}} permissions enabled", { activeCount: activeCount, modActionsCount: modActions.length })}
                                   </p>
                                 </div>
                               </div>
@@ -358,7 +358,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                                 {/* Active count badge */}
                                 {activeCount > 0 && (
                                     <span className="px-2 py-0.5 rounded-sm text-[9px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                                    {activeCount}/{modActions.length}
+                                    {tr(activeCount)}/{modActions.length}
                                   </span>
                                 )}
                                 {isExpanded
@@ -381,13 +381,13 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                                       onClick={() => toggle(module.id, action.id)}
                                       disabled={isAdmin}
                                       className={cn(
-                                        'flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-medium transition-all text-left',
+                                        'flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-medium transition-all text-start',
                                         isActive ? styles.active : 'bg-gray-50 border-gray-200 text-slate-500 hover:border-gray-300',
                                         isAdmin && 'cursor-not-allowed opacity-70'
                                       )}
                                     >
                                       <span className={cn('w-2 h-2 rounded-full shrink-0', isActive ? styles.dot : 'bg-gray-300')} />
-                                      {action.label}
+                                      {tr(action.label)}
                                     </button>
                                   );
                                 })}
@@ -403,7 +403,7 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                   <div className="pt-4 flex gap-3 border-t border-gray-200">
                     <button type="button" onClick={onClose}
                       className="flex-1 py-2.5 rounded-md bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all">
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     <button
                       type="submit"
@@ -411,8 +411,8 @@ export const RoleModal: React.FC<RoleModalProps> = ({ isOpen, onClose, onSuccess
                       className="flex-1 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {isLoading
-                        ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Saving...</span></>
-                        : <span>{isAdmin ? 'Role Locked' : initialData ? 'Save Changes' : 'Create Role'}</span>
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /><span>{tr("Saving...")}</span></>
+                        : <span>{isAdmin ? tr("Role Locked") : initialData ? tr("Save Changes") : tr("Create Role")}</span>
                       }
                     </button>
                   </div>

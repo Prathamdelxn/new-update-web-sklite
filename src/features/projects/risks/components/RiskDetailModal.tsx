@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -106,14 +107,14 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: statusColor }}>
-                        {risk.category}
+                        {tr(risk.category)}
                       </span>
                       <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <span className="text-[10px] font-bold text-slate-500">P: {risk.probability}</span>
+                      <span className="text-[10px] font-bold text-slate-500">P: {tr(risk.probability)}</span>
                       <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <span className="text-[10px] font-bold text-slate-500">I: {risk.impact}</span>
+                      <span className="text-[10px] font-bold text-slate-500">I: {tr(risk.impact)}</span>
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900 leading-snug">{risk.title}</h2>
+                    <h2 className="text-lg font-bold text-gray-900 leading-snug">{tr(risk.title)}</h2>
                   </div>
                 </div>
                 <button 
@@ -130,18 +131,18 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                      Status
+                      {tr("Status")}
                     </span>
                     <span className={cn('text-sm font-semibold', getStatusTextClass(risk.status))}>
-                      {risk.status}
+                      {tr(risk.status)}
                     </span>
                   </div>
                   <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                      Impact
+                      {tr("Impact")}
                     </span>
                     <span className={cn('text-sm font-semibold')} style={{ color: getImpactColor(risk.impact) }}>
-                      {risk.impact}
+                      {tr(risk.impact)}
                     </span>
                   </div>
                 </div>
@@ -149,10 +150,10 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                 {/* Description */}
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                    Description
+                    {tr("Description")}
                   </span>
                   <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm text-slate-700 leading-relaxed">
-                    {risk.description || 'No description provided.'}
+                    {risk.description || tr("No description provided.")}
                   </div>
                 </div>
 
@@ -160,9 +161,9 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      Mitigation Progress
+                      {tr("Mitigation Progress")}
                     </span>
-                    <span className="text-sm font-black text-gray-900">{risk.mitigationProgress}%</span>
+                    <span className="text-sm font-black text-gray-900">{tr(risk.mitigationProgress)}%</span>
                   </div>
                   <div className="h-2 w-full bg-slate-100 border border-slate-200/55 rounded-full overflow-hidden">
                     <div 
@@ -174,8 +175,8 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                     />
                   </div>
                   {risk.note && (
-                    <p className="text-xs text-slate-500 italic mt-2 border-l-2 border-slate-200 pl-3 py-0.5">
-                      "{risk.note}"
+                    <p className="text-xs text-slate-500 italic mt-2 border-s-2 border-slate-200 ps-3 py-0.5">
+                      "{tr(risk.note)}"
                     </p>
                   )}
                 </div>
@@ -184,19 +185,19 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                 {risk.history && risk.history.length > 0 && (
                   <div className="space-y-3 pt-2">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                      History log
+                      {tr("History log")}
                     </span>
-                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    <div className="space-y-2 max-h-48 overflow-y-auto pe-1">
                       {[...risk.history].reverse().map((h: any, i: number) => (
                         <div key={i} className="p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs">
                           <div className="flex items-center justify-between mb-1.5 text-[10px] font-bold text-slate-400">
-                            <span>{h.updatedBy?.name || 'System'}</span>
+                            <span>{h.updatedBy?.name || tr("System")}</span>
                             <span>{new Date(h.timestamp).toLocaleDateString()}</span>
                           </div>
-                          {h.note && <p className="text-slate-700 italic mb-1">"{h.note}"</p>}
+                          {h.note && <p className="text-slate-700 italic mb-1">"{tr(h.note)}"</p>}
                           {h.oldStatus !== h.newStatus && (
                             <p className="text-[10px] text-slate-500">
-                              Status changed: <span className="font-semibold">{h.oldStatus}</span> &rarr; <span className="font-semibold">{h.newStatus}</span>
+                              {tr("Status changed: ")}<span className="font-semibold">{tr(h.oldStatus)}</span> &rarr; <span className="font-semibold">{tr(h.newStatus)}</span>
                             </p>
                           )}
                         </div>
@@ -213,7 +214,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                   onClick={onClose}
                   className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-gray-100 hover:text-gray-900 transition-all cursor-pointer"
                 >
-                  Close
+                  {tr("Close")}
                 </button>
               </div>
             </div>

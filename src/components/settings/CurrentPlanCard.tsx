@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { Star } from 'lucide-react';
 
@@ -45,11 +46,11 @@ export default function CurrentPlanCard({
         <div>
 
           <p className="uppercase tracking-[4px] text-xs font-semibold text-slate-200">
-            Current Plan
+            {tr("Current Plan")}
           </p>
 
           <h2 className="text-5xl font-bold mt-4">
-            {plan}
+            {tr(plan)}
           </h2>
 
         </div>
@@ -65,12 +66,12 @@ export default function CurrentPlanCard({
       <div className="flex items-center gap-4 mt-10">
 
         <span className={`px-4 py-2 rounded-full text-sm font-semibold ${STATUS_BADGE[status] || STATUS_BADGE.Trial}`}>
-          ● {status}
+          ● {tr(status)}
         </span>
 
         {dateLabel && (
           <span className="text-slate-200">
-            {dateLabel}
+            {tr(dateLabel)}
           </span>
         )}
 

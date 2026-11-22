@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { useRouter } from 'next/navigation';
 import {
@@ -26,7 +27,7 @@ export default function TermsPage() {
           </button>
 
           <h1 className="text-3xl font-bold">
-            Terms & Conditions
+            {tr("Terms & Conditions")}
           </h1>
 
         </div>
@@ -43,13 +44,13 @@ export default function TermsPage() {
 
           <h2 className="text-5xl font-extrabold text-slate-900">
 
-            Legal Agreement
+            {tr("Legal Agreement")}
 
           </h2>
 
           <p className="text-lg text-slate-500 mt-4">
 
-            Last updated: October 2026
+            {tr("Last updated: October 2026")}
 
           </p>
 
@@ -62,71 +63,56 @@ export default function TermsPage() {
           <div className="prose prose-slate max-w-none">
 
             <p className="text-md leading-8 text-slate-600">
-              Please read these terms and conditions carefully before using
-              our application. By continuing to use the application, you
-              agree to these terms.
+              {tr("Please read these terms and conditions carefully before using our application. By continuing to use the application, you agree to these terms.")}
             </p>
 
             <section className="mt-10">
               <h3 className="text-2xl font-bold mb-4">
-                1. Acceptance of Terms
+                {tr("1. Acceptance of Terms")}
               </h3>
 
               <p className="text-md leading-8 text-slate-600">
-                By accessing and using this application, you agree to be
-                bound by these Terms and Conditions. Continued use of the
-                platform constitutes acceptance of any future updates to
-                these terms.
+                {tr("By accessing and using this application, you agree to be bound by these Terms and Conditions. Continued use of the platform constitutes acceptance of any future updates to these terms.")}
               </p>
             </section>
 
             <section className="mt-10">
               <h3 className="text-2xl font-bold mb-4">
-                2. Privacy Policy
+                {tr("2. Privacy Policy")}
               </h3>
 
               <p className="text-md leading-8 text-slate-600">
-                Your privacy is important to us. Information collected
-                through the platform is handled according to our Privacy
-                Policy and applicable data protection regulations.
+                {tr("Your privacy is important to us. Information collected through the platform is handled according to our Privacy Policy and applicable data protection regulations.")}
               </p>
             </section>
 
             <section className="mt-10">
               <h3 className="text-2xl font-bold mb-4">
-                3. User Conduct
+                {tr("3. User Conduct")}
               </h3>
 
               <p className="text-md leading-8 text-slate-600">
-                Users agree to use this platform responsibly and lawfully.
-                Activities that interfere with system operation, violate
-                regulations, or infringe on the rights of others are strictly
-                prohibited.
+                {tr("Users agree to use this platform responsibly and lawfully. Activities that interfere with system operation, violate regulations, or infringe on the rights of others are strictly prohibited.")}
               </p>
             </section>
 
             <section className="mt-10">
               <h3 className="text-2xl font-bold mb-4">
-                4. Intellectual Property
+                {tr("4. Intellectual Property")}
               </h3>
 
               <p className="text-md leading-8 text-slate-600">
-                All software, content, branding, designs, documentation,
-                and intellectual property associated with this application
-                remain the exclusive property of the company and may not be
-                copied or redistributed without written permission.
+                {tr("All software, content, branding, designs, documentation, and intellectual property associated with this application remain the exclusive property of the company and may not be copied or redistributed without written permission.")}
               </p>
             </section>
 
             <section className="mt-10">
               <h3 className="text-2xl font-bold mb-4">
-                5. Limitation of Liability
+                {tr("5. Limitation of Liability")}
               </h3>
 
               <p className="text-md leading-8 text-slate-600">
-                Under no circumstances shall the company be liable for any
-                indirect, incidental, special, or consequential damages
-                resulting from the use or inability to use this platform.
+                {tr("Under no circumstances shall the company be liable for any indirect, incidental, special, or consequential damages resulting from the use or inability to use this platform.")}
               </p>
             </section>
 
@@ -136,8 +122,7 @@ export default function TermsPage() {
 
         <p className="text-center text-slate-500 text-md">
 
-          If you have any questions regarding these Terms & Conditions,
-          please contact the support team.
+          {tr("If you have any questions regarding these Terms & Conditions, please contact the support team.")}
 
         </p>
 

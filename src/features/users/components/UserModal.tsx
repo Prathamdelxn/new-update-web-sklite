@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -100,7 +101,7 @@ export const UserModal: React.FC<UserModalProps> = ({
         ));
 
       if (isTargetAdmin) {
-        toast.error('Admin accounts are system-protected and cannot be edited.');
+        toast.error(tr("Admin accounts are system-protected and cannot be edited."));
         onClose();
         return;
       }
@@ -176,18 +177,18 @@ export const UserModal: React.FC<UserModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.email.trim()) {
-      toast.error('Please enter full name and email address.');
+      toast.error(tr("Please enter full name and email address."));
       return;
     }
 
     const cleanPhone = formData.mobile.trim().replace(/[\s-]/g, '');
     if (!cleanPhone) {
-      toast.error('Please enter a mobile phone number.');
+      toast.error(tr("Please enter a mobile phone number."));
       return;
     }
     if (!/^\+?[0-9]{7,15}$/.test(cleanPhone)) {
       toast.error(
-        'Please enter a valid mobile number (e.g. +91 9876543210 or 10 digits).'
+        tr("Please enter a valid mobile number (e.g. +91 9876543210 or 10 digits).")
       );
       return;
     }
@@ -210,7 +211,7 @@ export const UserModal: React.FC<UserModalProps> = ({
           payload.password = formData.password.trim();
         }
         await api.patch(`/users/${initialData._id}`, payload);
-        toast.success('Team member updated successfully!');
+        toast.success(tr("Team member updated successfully!"));
         onSuccess();
         onClose();
       } else {
@@ -227,7 +228,7 @@ export const UserModal: React.FC<UserModalProps> = ({
     } catch (error: any) {
       toast.error(
         error.response?.data?.message ||
-          (isEditing ? 'Failed to update user' : 'Failed to onboard user')
+          (isEditing ? tr("Failed to update user") : tr("Failed to onboard user"))
       );
     } finally {
       setIsLoading(false);
@@ -271,11 +272,11 @@ export const UserModal: React.FC<UserModalProps> = ({
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-150">
-                          {isEditing ? 'Member Management' : 'Team Onboarding'}
+                          {isEditing ? tr("Member Management") : tr("Team Onboarding")}
                         </span>
                       </div>
                       <h2 className="text-sm font-extrabold text-slate-900 tracking-tight mt-0.5">
-                        {isEditing ? 'Update Team Member' : 'Onboard New Member'}
+                        {isEditing ? tr("Update Team Member") : tr("Onboard New Member")}
                       </h2>
                     </div>
                   </div>
@@ -283,7 +284,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                     type="button"
                     onClick={onClose}
                     className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    title="Close modal"
+                    title={tr("Close modal")}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -299,18 +300,18 @@ export const UserModal: React.FC<UserModalProps> = ({
                         <div className="flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-blue-600" />
                           <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-                            Identity & Contact
+                            {tr("Identity & Contact")}
                           </h3>
                         </div>
                         <span className="text-[10px] font-semibold text-slate-400">
-                          Personal Info
+                          {tr("Personal Info")}
                         </span>
                       </div>
 
                       {/* Full Name */}
                       <div>
                         <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                          Full Name <span className="text-rose-500">*</span>
+                          {tr("Full Name ")}<span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -321,8 +322,8 @@ export const UserModal: React.FC<UserModalProps> = ({
                             onChange={(e) =>
                               setFormData((f) => ({ ...f, name: e.target.value }))
                             }
-                            placeholder="e.g. Robert Fox"
-                            className="w-full pl-8.5 pr-3 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                            placeholder={tr("e.g. Robert Fox")}
+                            className="w-full ps-8.5 pe-3 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                           />
                         </div>
                       </div>
@@ -330,7 +331,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                       {/* Email Address */}
                       <div>
                         <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                          Email Address <span className="text-rose-500">*</span>
+                          {tr("Email Address ")}<span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -341,8 +342,8 @@ export const UserModal: React.FC<UserModalProps> = ({
                             onChange={(e) =>
                               setFormData((f) => ({ ...f, email: e.target.value }))
                             }
-                            placeholder="name@company.com"
-                            className="w-full pl-8.5 pr-3 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                            placeholder={tr("name@company.com")}
+                            className="w-full ps-8.5 pe-3 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                           />
                         </div>
                       </div>
@@ -352,7 +353,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                         {/* Mobile Number */}
                         <div>
                           <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                            Mobile <span className="text-rose-500">*</span>
+                            {tr("Mobile ")}<span className="text-rose-500">*</span>
                           </label>
                           <div className="relative">
                             <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -364,7 +365,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                                 setFormData((f) => ({ ...f, mobile: e.target.value }))
                               }
                               placeholder="+91..."
-                              className="w-full pl-7.5 pr-2 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                              className="w-full ps-7.5 pe-2 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                             />
                           </div>
                         </div>
@@ -372,9 +373,9 @@ export const UserModal: React.FC<UserModalProps> = ({
                         {/* Password */}
                         <div>
                           <label className="block text-[11px] font-bold text-slate-700 mb-1 truncate">
-                            {isEditing ? 'New Password' : 'Password'}
-                            <span className="text-slate-400 font-normal ml-0.5 text-[10px]">
-                              {isEditing ? '(Option)' : '(Default)'}
+                            {isEditing ? tr("New Password") : tr("Password")}
+                            <span className="text-slate-400 font-normal ms-0.5 text-[10px]">
+                              {isEditing ? tr("(Option)") : tr("(Default)")}
                             </span>
                           </label>
                           <div className="relative">
@@ -388,14 +389,14 @@ export const UserModal: React.FC<UserModalProps> = ({
                                   password: e.target.value,
                                 }))
                               }
-                              placeholder={isEditing ? 'Unchanged' : 'welcome123'}
-                              className="w-full pl-7.5 pr-7 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                              placeholder={isEditing ? tr("Unchanged") : tr("welcome123")}
+                              className="w-full ps-7.5 pe-7 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                             />
                             <button
                               type="button"
                               onClick={() => setShowCredsPassword((v) => !v)}
                               className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
-                              title={showCredsPassword ? 'Hide' : 'Show'}
+                              title={showCredsPassword ? tr("Hide") : tr("Show")}
                             >
                               {showCredsPassword ? (
                                 <EyeOff className="w-3 h-3" />
@@ -414,11 +415,11 @@ export const UserModal: React.FC<UserModalProps> = ({
                         <div className="flex items-center gap-1.5">
                           <Shield className="w-3.5 h-3.5 text-blue-600" />
                           <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-                            Access & Permissions
+                            {tr("Access & Permissions")}
                           </h3>
                         </div>
                         <span className="text-[10px] font-semibold text-slate-400">
-                          Role & Scope
+                          {tr("Role & Scope")}
                         </span>
                       </div>
 
@@ -426,9 +427,9 @@ export const UserModal: React.FC<UserModalProps> = ({
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="block text-[11px] font-bold text-slate-700">
-                            Global Organisation Role
+                            {tr("Global Organisation Role")}
                           </label>
-                          <span className="text-[10px] text-slate-400">System-wide</span>
+                          <span className="text-[10px] text-slate-400">{tr("System-wide")}</span>
                         </div>
                         <div className="relative">
                           <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
@@ -439,12 +440,12 @@ export const UserModal: React.FC<UserModalProps> = ({
                                 roles.find((r) => r._id === e.target.value) || null
                               )
                             }
-                            className="w-full pl-8.5 pr-8 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300 appearance-none cursor-pointer"
+                            className="w-full ps-8.5 pe-8 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300 appearance-none cursor-pointer"
                           >
-                            <option value="">No global role (project-scoped access)</option>
+                            <option value="">{tr("No global role (project-scoped access)")}</option>
                             {roles.map((role) => (
                               <option key={role._id} value={role._id}>
-                                {role.name}
+                                {tr(role.name)}
                               </option>
                             ))}
                           </select>
@@ -458,7 +459,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                           <div className="flex items-center gap-1.5">
                             <FolderOpen className="w-3.5 h-3.5 text-blue-600" />
                             <label className="text-[11px] font-bold text-slate-700">
-                              Assigned Projects
+                              {tr("Assigned Projects")}
                             </label>
                             <span className="text-[9.5px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded-full">
                               {selectedProjects.length}
@@ -470,7 +471,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                             className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
                           >
                             <FolderOpen className="w-3 h-3" />
-                            <span>{selectedProjects.length > 0 ? 'Edit Selection' : '+ Assign'}</span>
+                            <span>{selectedProjects.length > 0 ? tr("Edit Selection") : tr("+ Assign")}</span>
                           </button>
                         </div>
 
@@ -482,14 +483,14 @@ export const UserModal: React.FC<UserModalProps> = ({
                           >
                             <FolderOpen className="w-4 h-4 text-slate-300 group-hover:text-blue-500 mb-0.5 transition-colors" />
                             <p className="text-xs font-bold text-slate-600 group-hover:text-blue-600">
-                              Assign Projects
+                              {tr("Assign Projects")}
                             </p>
                             <p className="text-[10px] text-slate-400">
-                              Restrict access to specific projects
+                              {tr("Restrict access to specific projects")}
                             </p>
                           </button>
                         ) : (
-                          <div className="space-y-1.5 max-h-[82px] overflow-y-auto custom-scrollbar pr-0.5">
+                          <div className="space-y-1.5 max-h-[82px] overflow-y-auto custom-scrollbar pe-0.5">
                             {selectedProjects.map((project) => (
                               <div
                                 key={project._id}
@@ -497,7 +498,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                               >
                                 <div className="min-w-0 flex-1">
                                   <p className="text-xs font-bold text-slate-900 truncate">
-                                    {project.name}
+                                    {tr(project.name)}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
@@ -511,10 +512,10 @@ export const UserModal: React.FC<UserModalProps> = ({
                                     }
                                     className="text-[10.5px] font-semibold bg-slate-50 border border-slate-200 rounded py-0.5 px-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                                   >
-                                    <option value="">Global role</option>
+                                    <option value="">{tr("Global role")}</option>
                                     {roles.map((role) => (
                                       <option key={role._id} value={role._id}>
-                                        {role.name}
+                                        {tr(role.name)}
                                       </option>
                                     ))}
                                   </select>
@@ -522,7 +523,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                                     type="button"
                                     onClick={() => removeProject(project._id)}
                                     className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-                                    title="Remove project"
+                                    title={tr("Remove project")}
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </button>
@@ -538,7 +539,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                   {/* ── Sticky Modal Footer ── */}
                   <div className="px-5 py-3 bg-slate-50 border-t border-slate-150 flex items-center justify-between shrink-0">
                     <span className="text-[11px] font-semibold text-slate-400">
-                      <span className="text-rose-500 font-bold">*</span> Required fields marked
+                      <span className="text-rose-500 font-bold">*</span>{tr(" Required fields marked")}
                     </span>
 
                     <div className="flex items-center gap-2">
@@ -547,7 +548,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                         onClick={onClose}
                         className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer"
                       >
-                        Cancel
+                        {tr("Cancel")}
                       </button>
 
                       <button
@@ -559,14 +560,14 @@ export const UserModal: React.FC<UserModalProps> = ({
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             <span>
-                              {isEditing ? 'Saving...' : 'Initializing...'}
+                              {isEditing ? tr("Saving...") : tr("Initializing...")}
                             </span>
                           </>
                         ) : (
                           <>
                             <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
                             <span>
-                              {isEditing ? 'Save Changes' : 'Initialize Member'}
+                              {isEditing ? tr("Save Changes") : tr("Initialize Member")}
                             </span>
                           </>
                         )}
@@ -607,10 +608,10 @@ export const UserModal: React.FC<UserModalProps> = ({
                     </div>
                     <div>
                       <h3 className="text-sm font-extrabold text-slate-900">
-                        Select Projects
+                        {tr("Select Projects")}
                       </h3>
                       <p className="text-[10.5px] font-semibold text-slate-400">
-                        Choose projects to assign this member
+                        {tr("Choose projects to assign this member")}
                       </p>
                     </div>
                   </div>
@@ -631,19 +632,19 @@ export const UserModal: React.FC<UserModalProps> = ({
                       type="text"
                       value={projectSearch}
                       onChange={(e) => setProjectSearch(e.target.value)}
-                      placeholder="Search projects by name..."
-                      className="w-full pl-9 pr-3 py-1.5 bg-slate-50/70 border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
+                      placeholder={tr("Search projects by name...")}
+                      className="w-full ps-9 pe-3 py-1.5 bg-slate-50/70 border border-slate-200/90 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-slate-300"
                       autoFocus
                     />
                   </div>
 
                   {/* Project List */}
-                  <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-56">
+                  <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pe-1 max-h-56">
                     {filteredProjects.length === 0 ? (
                       <div className="text-center py-6">
                         <FolderOpen className="w-7 h-7 text-slate-300 mx-auto mb-1.5" />
                         <p className="text-xs font-semibold text-slate-500">
-                          No matching projects found
+                          {tr("No matching projects found")}
                         </p>
                       </div>
                     ) : (
@@ -657,24 +658,24 @@ export const UserModal: React.FC<UserModalProps> = ({
                             type="button"
                             onClick={() => toggleProject(project)}
                             className={cn(
-                              'w-full flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer',
+                              'w-full flex items-center justify-between p-2.5 rounded-xl border text-start transition-all cursor-pointer',
                               isSelected
                                 ? 'bg-blue-50/70 border-blue-300'
                                 : 'bg-white border-slate-200/80 hover:bg-slate-50 hover:border-slate-300'
                             )}
                           >
-                            <div className="min-w-0 pr-2">
+                            <div className="min-w-0 pe-2">
                               <p
                                 className={cn(
                                   'text-xs font-bold truncate',
                                   isSelected ? 'text-blue-900' : 'text-slate-800'
                                 )}
                               >
-                                {project.name}
+                                {tr(project.name)}
                               </p>
                               {project.status && (
                                 <span className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider">
-                                  {project.status}
+                                  {tr(project.status)}
                                 </span>
                               )}
                             </div>
@@ -704,14 +705,14 @@ export const UserModal: React.FC<UserModalProps> = ({
                     onClick={() => setSelectedProjects([])}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 text-xs font-bold transition-all cursor-pointer"
                   >
-                    Clear All
+                    {tr("Clear All")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsProjectPickerOpen(false)}
                     className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-bold transition-all border border-slate-300 cursor-pointer"
                   >
-                    Apply Selection ({selectedProjects.length})
+                    {tr("Apply Selection (")}{selectedProjects.length})
                   </button>
                 </div>
               </div>
@@ -744,13 +745,13 @@ export const UserModal: React.FC<UserModalProps> = ({
                   </div>
                   <div>
                     <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                      Success
+                      {tr("Success")}
                     </span>
                     <h3 className="text-sm font-extrabold text-slate-900 tracking-tight mt-0.5">
-                      Member Onboarded!
+                      {tr("Member Onboarded!")}
                     </h3>
                     <p className="text-[10.5px] font-medium text-slate-500">
-                      Share these initial credentials securely with the member.
+                      {tr("Share these initial credentials securely with the member.")}
                     </p>
                   </div>
                 </div>
@@ -788,7 +789,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
-                          {label}
+                          {tr(label)}
                         </p>
                         <p className="text-xs font-bold text-slate-900 truncate mt-0.5 font-mono">
                           {secret && !showCredsPassword ? '••••••••••••' : value}
@@ -801,8 +802,8 @@ export const UserModal: React.FC<UserModalProps> = ({
                           className="p-1 text-slate-400 hover:text-slate-700 hover:bg-white rounded-lg transition-colors cursor-pointer"
                           title={
                             showCredsPassword
-                              ? 'Hide password'
-                              : 'Show password'
+                              ? tr("Hide password")
+                              : tr("Show password")
                           }
                         >
                           {showCredsPassword ? (
@@ -816,7 +817,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                         type="button"
                         onClick={() => copyToClipboard(value, field)}
                         className="p-1 text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg transition-colors cursor-pointer"
-                        title="Copy to clipboard"
+                        title={tr("Copy to clipboard")}
                       >
                         {copiedField === field ? (
                           <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -831,7 +832,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                 <div className="flex items-start gap-2 p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-800 text-[10.5px] font-semibold mb-4">
                   <span className="shrink-0 text-sm">⚠️</span>
                   <span className="leading-relaxed">
-                    Save or copy these credentials now. For security purposes, this password will not be displayed again.
+                    {tr("Save or copy these credentials now. For security purposes, this password will not be displayed again.")}
                   </span>
                 </div>
 
@@ -843,7 +844,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                   }}
                   className="w-full py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs border border-emerald-600/30 transition-all cursor-pointer"
                 >
-                  Done & Close
+                  {tr("Done & Close")}
                 </button>
               </div>
             </motion.div>

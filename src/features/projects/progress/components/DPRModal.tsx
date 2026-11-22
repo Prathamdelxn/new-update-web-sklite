@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,7 +57,7 @@ export const DPRModal: React.FC<DPRModalProps> = ({
       const url = await uploadToCloudinary(file);
       setFormData(prev => ({ ...prev, photos: [...prev.photos, url] }));
     } catch {
-      toast.error('Photo upload failed. Check your Cloudinary config.');
+      toast.error(tr("Photo upload failed. Check your Cloudinary config."));
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -77,7 +78,7 @@ export const DPRModal: React.FC<DPRModalProps> = ({
         photos: formData.photos,
         date: formData.date,
       });
-      toast.success('Progress report posted successfully!');
+      toast.success(tr("Progress report posted successfully!"));
       onSuccess();
       onClose();
       setFormData({
@@ -88,7 +89,7 @@ export const DPRModal: React.FC<DPRModalProps> = ({
         photos: []
       });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to post report');
+      toast.error(error.response?.data?.message || tr("Failed to post report"));
     } finally {
       setIsLoading(false);
     }
@@ -120,8 +121,8 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                       <TrendingUp className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">Post Progress Update</h2>
-                      <p className="text-xs text-slate-500 mt-0.5">Daily site report & milestone log.</p>
+                      <h2 className="text-xl font-bold text-gray-900">{tr("Post Progress Update")}</h2>
+                      <p className="text-xs text-slate-500 mt-0.5">{tr("Daily site report & milestone log.")}</p>
                     </div>
                   </div>
                   <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -132,7 +133,7 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-600 ml-1">Update Date</label>
+                      <label className="text-sm font-medium text-slate-600 ms-1">{tr("Update Date")}</label>
                       <div className="relative group">
                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                         <input
@@ -140,28 +141,28 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                           required
                           value={formData.date}
                           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 ps-10 pe-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-600 ml-1">Milestone Tag</label>
+                      <label className="text-sm font-medium text-slate-600 ms-1">{tr("Milestone Tag")}</label>
                       <select
                         value={formData.milestone}
                         onChange={(e) => setFormData({ ...formData, milestone: e.target.value })}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all"
                       >
-                        <option value="">General Work</option>
+                        <option value="">{tr("General Work")}</option>
                         {milestones.map(m => (
-                          <option key={m._id} value={m._id}>{m.name}</option>
+                          <option key={m._id} value={m._id}>{tr(m.name)}</option>
                         ))}
                       </select>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center ml-1">
-                      <label className="text-sm font-medium text-slate-600">Work Description</label>
+                    <div className="flex justify-between items-center ms-1">
+                      <label className="text-sm font-medium text-slate-600">{tr("Work Description")}</label>
                       <span className="text-[10px] font-bold text-slate-400">{formData.description.length}/200</span>
                     </div>
                     <textarea
@@ -171,14 +172,14 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all resize-none"
-                      placeholder="What work was completed today?"
+                      placeholder={tr("What work was completed today?")}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center ml-1">
-                      <label className="text-sm font-medium text-slate-600">Progress achieved</label>
-                      <span className="text-lg font-black text-blue-600">{formData.progressPercent}%</span>
+                    <div className="flex justify-between items-center ms-1">
+                      <label className="text-sm font-medium text-slate-600">{tr("Progress achieved")}</label>
+                      <span className="text-lg font-black text-blue-600">{tr(formData.progressPercent)}%</span>
                     </div>
                     <input
                       type="range"
@@ -192,11 +193,11 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-sm font-medium text-slate-600 ml-1">Site Photos</label>
+                    <label className="text-sm font-medium text-slate-600 ms-1">{tr("Site Photos")}</label>
                     <div className="flex flex-wrap gap-3">
                       {formData.photos.map((photo, i) => (
                         <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
-                          <img loading="lazy" decoding="async" src={photo} alt="Upload" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={photo} alt={tr("Upload")} className="w-full h-full object-cover" />
                         </div>
                       ))}
                       <label className={`w-16 h-16 rounded-lg border-2 border-dashed transition-all flex flex-col items-center justify-center ${isUploading ? 'border-blue-300 bg-blue-50 cursor-not-allowed' : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer text-slate-400 hover:text-blue-500'}`}>
@@ -212,7 +213,7 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                       onClick={onClose}
                       className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all active:scale-[0.98]"
                     >
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     <button
                       type="submit"
@@ -222,10 +223,10 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                       {isLoading ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Posting...</span>
+                          <span>{tr("Posting...")}</span>
                         </>
                       ) : (
-                        <span>Post Update</span>
+                        <span>{tr("Post Update")}</span>
                       )}
                     </button>
                   </div>

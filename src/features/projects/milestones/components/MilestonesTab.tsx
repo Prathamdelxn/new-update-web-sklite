@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
@@ -172,7 +173,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
         setIsForbidden(true);
       } else {
         console.error('Error fetching milestones:', error);
-        toast.error('Failed to load milestones');
+        toast.error(tr("Failed to load milestones"));
       }
     } finally {
       setLoading(false);
@@ -214,7 +215,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   const commitTask = () => {
     if (!taskForm.title.trim()) return;
     if (taskForm.startDate && taskForm.endDate && taskForm.endDate < taskForm.startDate) {
-      toast.error('End date cannot be before the start date');
+      toast.error(tr("End date cannot be before the start date"));
       return;
     }
 
@@ -227,11 +228,11 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
       const mStartDateStr = new Date(milestoneStartDate).toISOString().slice(0, 10);
 
       if (taskForm.startDate && taskForm.startDate < mStartDateStr) {
-        toast.error(`Task start date cannot be before milestone start date (${new Date(milestoneStartDate).toLocaleDateString()})`);
+        toast.error(tr("Task start date cannot be before milestone start date ({{value}})", { value: new Date(milestoneStartDate).toLocaleDateString() }));
         return;
       }
       if (taskForm.endDate && taskForm.endDate > mDueDateStr) {
-        toast.error(`Task end date cannot be after milestone due date (${new Date(milestoneDueDate).toLocaleDateString()})`);
+        toast.error(tr("Task end date cannot be after milestone due date ({{value}})", { value: new Date(milestoneDueDate).toLocaleDateString() }));
         return;
       }
     }
@@ -273,15 +274,15 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
       if (editingMilestone) {
         await api.patch(`/projects/${projectId}/milestones/${editingMilestone._id}`, payload);
-        toast.success('Milestone updated');
+        toast.success(tr("Milestone updated"));
       } else {
         await api.post(`/projects/${projectId}/milestones`, payload);
-        toast.success('Milestone created');
+        toast.success(tr("Milestone created"));
       }
       setIsModalOpen(false);
       fetchData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to save milestone');
+      toast.error(error.response?.data?.message || tr("Failed to save milestone"));
     } finally {
       setIsSaving(false);
     }
@@ -293,7 +294,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
       await api.patch(`/projects/${projectId}/milestones/${milestone._id}`, { status });
       setMilestones(prev => prev.map(m => m._id === milestone._id ? { ...m, status } : m));
     } catch {
-      toast.error('Failed to update status');
+      toast.error(tr("Failed to update status"));
     }
   };
 
@@ -315,7 +316,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
       setCompletionPrompt(prev => prev ? { ...prev, proofImageUrl: url, uploading: false } : null);
     } catch {
       setCompletionPrompt(prev => prev ? { ...prev, uploading: false } : null);
-      toast.error('Image upload failed');
+      toast.error(tr("Image upload failed"));
     }
   };
 
@@ -338,7 +339,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
     if (!editingTask) return;
     const { startDate, endDate } = editingTask.form;
     if (startDate && endDate && endDate < startDate) {
-      toast.error('End date cannot be before the start date');
+      toast.error(tr("End date cannot be before the start date"));
       return;
     }
     const ms = milestones.find(m => m._id === editingTask.milestoneId);
@@ -353,11 +354,11 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
       const mStartDateStr = new Date(milestoneStartDate).toISOString().slice(0, 10);
 
       if (startDate && startDate < mStartDateStr) {
-        toast.error(`Task start date cannot be before milestone start date (${new Date(milestoneStartDate).toLocaleDateString()})`);
+        toast.error(tr("Task start date cannot be before milestone start date ({{value}})", { value: new Date(milestoneStartDate).toLocaleDateString() }));
         return;
       }
       if (endDate && endDate > mDueDateStr) {
-        toast.error(`Task end date cannot be after milestone due date (${new Date(milestoneDueDate).toLocaleDateString()})`);
+        toast.error(tr("Task end date cannot be after milestone due date ({{value}})", { value: new Date(milestoneDueDate).toLocaleDateString() }));
         return;
       }
     }
@@ -378,9 +379,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
       const res = await api.patch(`/projects/${projectId}/milestones/${ms._id}`, { tasks: updatedTasks });
       setMilestones(prev => prev.map(m => m._id === ms._id ? res.data : m));
       setEditingTask(null);
-      toast.success('Task updated');
+      toast.success(tr("Task updated"));
     } catch {
-      toast.error('Failed to update task');
+      toast.error(tr("Failed to update task"));
     } finally {
       setIsSavingEditTask(false);
     }
@@ -415,9 +416,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
       setMilestones(prev =>
         prev.map(m => m._id === milestone._id ? { ...m, tasks: updatedTasks, ...payload } : m)
       );
-      if (payload.status === 'Completed') toast.success('All tasks done — milestone marked Completed!');
+      if (payload.status === 'Completed') toast.success(tr("All tasks done — milestone marked Completed!"));
     } catch {
-      toast.error('Failed to update task');
+      toast.error(tr("Failed to update task"));
     } finally {
       setTogglingTask(null);
     }
@@ -427,18 +428,18 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
   const handleDelete = async (id: string, name: string) => {
     setMilestoneMenuId(null);
     const ok = await confirm({
-      title: 'Delete Milestone',
-      message: `Delete milestone "${name}"? This cannot be undone.`,
-      confirmText: 'Delete Milestone',
+      title: tr("Delete Milestone"),
+      message: tr("Delete milestone \"{{name}}\"? This cannot be undone.", { name: name }),
+      confirmText: tr("Delete Milestone"),
       type: 'danger',
     });
     if (!ok) return;
     try {
       await api.delete(`/projects/${projectId}/milestones/${id}`);
-      toast.success('Milestone deleted');
+      toast.success(tr("Milestone deleted"));
       fetchData();
     } catch {
-      toast.error('Failed to delete milestone');
+      toast.error(tr("Failed to delete milestone"));
     }
   };
 
@@ -460,9 +461,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
             <ShieldAlert className="w-8 h-8 text-slate-400" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Access Denied</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">{tr("Access Denied")}</h2>
           <p className="text-slate-500 text-sm max-w-sm text-center mb-6">
-            You do not have the required "Task Management" permission to view milestones.
+            {tr("You do not have the required \"Task Management\" permission to view milestones.")}
           </p>
         </div>
       ) : (
@@ -479,7 +480,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 : 'text-slate-500 hover:text-slate-900'
             )}
           >
-            Milestones
+            {tr("Milestones")}
           </button>
           <button
             type="button"
@@ -491,7 +492,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 : 'text-slate-500 hover:text-slate-900'
             )}
           >
-            Timeline
+            {tr("Timeline")}
           </button>
         </div>
 
@@ -502,18 +503,18 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Project Milestones</h3>
-                <p className="text-xs text-slate-500 mt-1">Key targets, task completion tracking, and critical path objectives.</p>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">{tr("Project Milestones")}</h3>
+                <p className="text-xs text-slate-500 mt-1">{tr("Key targets, task completion tracking, and critical path objectives.")}</p>
               </div>
               <div className="flex items-center space-x-2.5">
                 <div className="flex p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl">
-                  <button onClick={() => setView('cards')} className={cn('p-1.5 rounded-lg transition-all', view === 'cards' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title="Cards view">
+                  <button onClick={() => setView('cards')} className={cn('p-1.5 rounded-lg transition-all', view === 'cards' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title={tr("Cards view")}>
                     <LayoutGrid className="w-4 h-4" />
                   </button>
-                  <button onClick={() => setView('list')} className={cn('p-1.5 rounded-lg transition-all', view === 'list' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title="List view">
+                  <button onClick={() => setView('list')} className={cn('p-1.5 rounded-lg transition-all', view === 'list' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title={tr("List view")}>
                     <List className="w-4 h-4" />
                   </button>
-                  <button onClick={() => setView('gantt')} className={cn('p-1.5 rounded-lg transition-all', view === 'gantt' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title="Gantt chart">
+                  <button onClick={() => setView('gantt')} className={cn('p-1.5 rounded-lg transition-all', view === 'gantt' ? 'bg-white text-blue-700 border border-slate-200/60' : 'text-slate-400 hover:text-slate-700')} title={tr("Gantt chart")}>
                     <AlignLeft className="w-4 h-4" />
                   </button>
                 </div>
@@ -523,7 +524,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     className="flex items-center space-x-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Import XER</span>
+                    <span>{tr("Import XER")}</span>
                   </button>
                 )}
                 {canCreate && (
@@ -532,7 +533,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>New Milestone</span>
+                    <span>{tr("New Milestone")}</span>
                   </button>
                 )}
               </div>
@@ -546,8 +547,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
               <Calendar className="w-7 h-7 text-blue-600" />
             </div>
-            <h4 className="text-base font-bold text-slate-900 mb-1">No due dates set</h4>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">Assign due dates to your milestones to view them in the Gantt chart timeline.</p>
+            <h4 className="text-base font-bold text-slate-900 mb-1">{tr("No due dates set")}</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">{tr("Assign due dates to your milestones to view them in the Gantt chart timeline.")}</p>
           </div>
         );
         const dates  = milestones.map(m => new Date(m.dueDate || m.createdAt).getTime());
@@ -564,8 +565,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
         return (
           <GlassCard className="p-6 border-gray-200 overflow-hidden" gradient>
             <div className="overflow-x-auto"><div style={{ minWidth: 600 }}>
-              <div className="flex mb-4 pl-[200px]">
-                {months.map((m, i) => <div key={i} className="flex-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-l border-gray-200 pl-1">{m}</div>)}
+              <div className="flex mb-4 ps-[200px]">
+                {months.map((m, i) => <div key={i} className="flex-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-s border-gray-200 ps-1">{tr(m)}</div>)}
               </div>
               <div className="space-y-3">
                 {milestones.map(m => {
@@ -578,8 +579,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                   return (
                     <div key={m._id} className="flex items-center gap-4">
                       <div className="w-[196px] shrink-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{m.name}</p>
-                        <p className="text-[10px] text-slate-500">{m.dueDate ? new Date(m.dueDate).toLocaleDateString() : 'No date'}</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{tr(m.name)}</p>
+                        <p className="text-[10px] text-slate-500">{m.dueDate ? new Date(m.dueDate).toLocaleDateString() : tr("No date")}</p>
                       </div>
                       <div className="flex-1 relative h-8 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                         <div className={cn('absolute h-full rounded-lg flex items-center px-2', STATUS_BAR_COLOR[m.status] || 'bg-slate-400')} style={{ left: `${leftPct}%`, width: `${widthPct}%` }}>
@@ -591,7 +592,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 })}
               </div>
               <div className="flex items-center space-x-4 mt-6 pt-4 border-t border-gray-100">
-                {Object.entries(STATUS_BAR_COLOR).map(([s, c]) => <div key={s} className="flex items-center space-x-1.5"><div className={cn('w-3 h-3 rounded-sm', c)} /><span className="text-[10px] font-semibold text-slate-500">{s}</span></div>)}
+                {Object.entries(STATUS_BAR_COLOR).map(([s, c]) => <div key={s} className="flex items-center space-x-1.5"><div className={cn('w-3 h-3 rounded-sm', c)} /><span className="text-[10px] font-semibold text-slate-500">{tr(s)}</span></div>)}
               </div>
             </div></div>
           </GlassCard>
@@ -616,9 +617,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                         <Flag className="w-4 h-4 text-blue-600" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-sm font-bold text-gray-900 leading-tight truncate">{milestone.name}</h4>
+                        <h4 className="text-sm font-bold text-gray-900 leading-tight truncate">{tr(milestone.name)}</h4>
                         <p className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
-                          Due: {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString() : 'TBD'}
+                          {tr("Due: ")}{milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString() : tr("TBD")}
                         </p>
                       </div>
                     </div>
@@ -628,19 +629,19 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                         onChange={e => handleStatusChange(milestone, e.target.value as MilestoneStatus)}
                         className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border cursor-pointer focus:outline-none appearance-none text-center shrink-0', getStatusStyle(milestone.status || 'Pending'))}
                       >
-                        {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                        {STATUS_OPTIONS.map(s => <option key={s} value={s}>{tr(s)}</option>)}
                       </select>
                     ) : (
                       <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border text-center shrink-0', getStatusStyle(milestone.status || 'Pending'))}>
-                        {milestone.status || 'Pending'}
+                        {milestone.status || tr("Pending")}
                       </span>
                     )}
                   </div>
 
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase">
-                      <span>{completedTasks}/{totalTasks} Tasks</span>
-                      <span>{progress}%</span>
+                      <span>{tr(completedTasks)}/{tr(totalTasks)}{tr(" Tasks")}</span>
+                      <span>{tr(progress)}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200">
                       <div className={cn('h-full rounded-full', milestone.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500')} style={{ width: `${progress}%` }} />
@@ -652,7 +653,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                       onClick={() => setExpandedId(isExpanded ? null : milestone._id)}
                       className="text-xs font-bold text-blue-600 flex items-center gap-1"
                     >
-                      <span>{isExpanded ? 'Hide Checklist' : 'Show Checklist'}</span>
+                      <span>{isExpanded ? tr("Hide Checklist") : tr("Show Checklist")}</span>
                       {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     </button>
 
@@ -681,10 +682,10 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                 {isToggling ? <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" /> : task.isCompleted ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <Circle className="w-3.5 h-3.5 text-gray-300" />}
                               </button>
                               <div className="flex-1 min-w-0">
-                                <p className={cn('font-semibold', task.isCompleted ? 'line-through text-slate-400' : 'text-gray-800')}>{task.title}</p>
+                                <p className={cn('font-semibold', task.isCompleted ? 'line-through text-slate-400' : 'text-gray-800')}>{tr(task.title)}</p>
                                 {assignee ? (
                                   <p className="text-[10px] text-slate-500 mt-0.5 font-medium flex items-center gap-1">
-                                    <User className="w-3 h-3 text-blue-500" />{assignee}
+                                    <User className="w-3 h-3 text-blue-500" />{tr(assignee)}
                                   </p>
                                 ) : (
                                   !task.isCompleted && (canUpdate || canAssign) && (
@@ -693,7 +694,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                       onClick={() => openEditTask(milestone, i)}
                                       className="text-[10px] text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded mt-1 font-semibold flex items-center gap-1 w-fit transition-colors"
                                     >
-                                      <User className="w-2.5 h-2.5" />Assign
+                                      <User className="w-2.5 h-2.5" />{tr("Assign")}
                                     </button>
                                   )
                                 )}
@@ -716,14 +717,14 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
           {/* Desktop Table View (hidden on mobile, visible md+) */}
           <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-200 bg-white">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+            <table className="w-full text-start border-collapse min-w-[800px]">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="w-8"></th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Milestone Name</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Due Date</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tasks</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Progress</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Milestone Name")}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Due Date")}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Tasks")}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Progress")}</th>
                   {/* <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</th> */}
                   <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider"></th>
                 </tr>
@@ -737,7 +738,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                   return (
                     <React.Fragment key={milestone._id}>
                       <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
-                        <td className="pl-4">
+                        <td className="ps-4">
                           <button
                             onClick={() => setExpandedId(isExpanded ? null : milestone._id)}
                             className="p-1 rounded hover:bg-gray-100 text-slate-400 transition-transform"
@@ -751,23 +752,23 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                               <Flag className="w-4 h-4 text-blue-600" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-gray-900 truncate">{milestone.name}</p>
-                              <p className="text-[10px] text-slate-500 truncate max-w-[240px] mt-0.5">{milestone.description}</p>
+                              <p className="text-sm font-bold text-gray-900 truncate">{tr(milestone.name)}</p>
+                              <p className="text-[10px] text-slate-500 truncate max-w-[240px] mt-0.5">{tr(milestone.description)}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm font-medium text-slate-600 whitespace-nowrap">
-                          {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD'}
+                          {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : tr("TBD")}
                         </td>
                         <td className="px-6 py-4 text-sm font-bold text-slate-700 whitespace-nowrap">
-                          {completedTasks}/{totalTasks}
+                          {tr(completedTasks)}/{tr(totalTasks)}
                         </td>
                         <td className="px-6 py-4 w-40">
                           <div className="flex items-center space-x-2">
                             <div className="h-1.5 w-20 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
                               <div className={cn('h-full rounded-full', milestone.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500')} style={{ width: `${progress}%` }} />
                             </div>
-                            <span className="text-xs font-semibold text-slate-700">{progress}%</span>
+                            <span className="text-xs font-semibold text-slate-700">{tr(progress)}%</span>
                           </div>
                         </td>
                         {/* <td className="px-6 py-4 text-center">
@@ -779,13 +780,13 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                             {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                           </select>
                         </td> */}
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-end">
                           <div className="flex items-center justify-end space-x-1">
                             {canDelete && (
                               <button
                                 onClick={() => handleDelete(milestone._id, milestone.name)}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                                title="Delete Milestone"
+                                title={tr("Delete Milestone")}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -793,7 +794,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                             <button
                               onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}
                               className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-100 transition-all"
-                              title="View details"
+                              title={tr("View details")}
                             >
                               <ChevronRight className="w-4 h-4" />
                             </button>
@@ -806,9 +807,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                         <tr>
                           <td colSpan={7} className="bg-gray-50/50 p-6 border-b border-gray-100">
                             <div className="space-y-3">
-                              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2">Task Checklist</p>
+                              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ps-2">{tr("Task Checklist")}</p>
                               {totalTasks === 0 ? (
-                                <p className="text-xs text-slate-400 italic pl-2">No tasks added to this milestone.</p>
+                                <p className="text-xs text-slate-400 italic ps-2">{tr("No tasks added to this milestone.")}</p>
                               ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                   {milestone.tasks.map((task: any, i: number) => {
@@ -822,8 +823,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                             {isToggling ? <Loader2 className="w-4 h-4 text-blue-500 animate-spin" /> : task.isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Circle className="w-4 h-4 text-gray-300 hover:text-blue-400" />}
                                           </button>
                                           <div className="flex-1 min-w-0">
-                                            <p className={cn('text-sm font-semibold', task.isCompleted ? 'line-through text-slate-400' : 'text-gray-800')}>{task.title}</p>
-                                            {task.description && <p className="text-xs text-slate-400 truncate mt-0.5">{task.description}</p>}
+                                            <p className={cn('text-sm font-semibold', task.isCompleted ? 'line-through text-slate-400' : 'text-gray-800')}>{tr(task.title)}</p>
+                                            {task.description && <p className="text-xs text-slate-400 truncate mt-0.5">{tr(task.description)}</p>}
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[10px] text-slate-400">
                                               {(task.startDate || task.endDate) && (
                                                 <span className="flex items-center gap-1">
@@ -834,7 +835,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                               )}
                                               {assignee ? (
                                                 <span className="flex items-center gap-1 text-slate-700 font-medium">
-                                                  <User className="w-3 h-3 text-blue-500" />{assignee}
+                                                  <User className="w-3 h-3 text-blue-500" />{tr(assignee)}
                                                 </span>
                                               ) : (
                                                 !task.isCompleted && (canUpdate || canAssign) && (
@@ -843,7 +844,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                                     onClick={() => openEditTask(milestone, i)}
                                                     className="flex items-center gap-1 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded font-semibold transition-colors"
                                                   >
-                                                    <User className="w-2.5 h-2.5" />Assign
+                                                    <User className="w-2.5 h-2.5" />{tr("Assign")}
                                                   </button>
                                                 )
                                               )}
@@ -874,9 +875,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                         <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
                           <Target className="w-7 h-7 text-blue-600" />
                         </div>
-                        <h4 className="text-base font-bold text-slate-900 mb-1">No milestones set</h4>
+                        <h4 className="text-base font-bold text-slate-900 mb-1">{tr("No milestones set")}</h4>
                         <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">
-                          Define key milestones to track the critical path of your project.
+                          {tr("Define key milestones to track the critical path of your project.")}
                         </p>
                       </div>
                     </td>
@@ -904,14 +905,14 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     <div className="min-w-0 flex-1 cursor-pointer" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border', getStatusStyle(milestone.status || 'Pending'))}>
-                          {milestone.status || 'Pending'}
+                          {milestone.status || tr("Pending")}
                         </span>
                       </div>
-                      <h4 className="text-base font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors" title={milestone.name}>{milestone.name}</h4>
+                      <h4 className="text-base font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors" title={milestone.name}>{tr(milestone.name)}</h4>
                       {milestone.dueDate && (
                         <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500 font-medium">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>Due {new Date(milestone.dueDate).toLocaleDateString()}</span>
+                          <span>{tr("Due ")}{new Date(milestone.dueDate).toLocaleDateString()}</span>
                         </div>
                       )}
                     </div>
@@ -939,7 +940,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                   {/* Description */}
                   {milestone.description && (
                     <p className="text-xs text-slate-500 mt-2.5 line-clamp-2 cursor-pointer flex-1 leading-relaxed" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
-                      {milestone.description}
+                      {tr(milestone.description)}
                     </p>
                   )}
                   {!milestone.description && <div className="flex-1" />}
@@ -947,8 +948,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                   {/* Progress */}
                   <div className="mt-4 space-y-1.5 cursor-pointer" onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500 font-semibold text-[11px]">Progress</span>
-                      <span className="font-bold text-slate-900">{progress}%</span>
+                      <span className="text-slate-500 font-semibold text-[11px]">{tr("Progress")}</span>
+                      <span className="font-bold text-slate-900">{tr(progress)}%</span>
                     </div>
                     <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                       <motion.div
@@ -967,14 +968,14 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                       className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
                     >
                       <List className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{completedTasks}/{totalTasks} Tasks</span>
+                      <span>{tr(completedTasks)}/{tr(totalTasks)}{tr(" Tasks")}</span>
                       {totalTasks > 0 && (isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />)}
                     </button>
                     <button
                       onClick={() => router.push(`/construction-dashboard/projects/${projectId}/milestones/${milestone._id}`)}
                       className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-0.5"
                     >
-                      <span>Details</span>
+                      <span>{tr("Details")}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -1003,10 +1004,10 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                 </button>
                                 <div className="flex-1 min-w-0">
                                   <p className={cn('text-sm font-medium leading-tight', task.isCompleted ? 'line-through text-slate-400' : 'text-gray-800')}>
-                                    {task.title}
+                                    {tr(task.title)}
                                   </p>
                                   {task.description && (
-                                    <p className="text-xs text-slate-500 mt-1 truncate">{task.description}</p>
+                                    <p className="text-xs text-slate-500 mt-1 truncate">{tr(task.description)}</p>
                                   )}
                                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
                                     {(task.startDate || task.endDate) && (
@@ -1018,7 +1019,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                     )}
                                     {assignee && (
                                       <span className="flex items-center gap-1 text-[10px] text-slate-400">
-                                        <User className="w-3 h-3" />{assignee}
+                                        <User className="w-3 h-3" />{tr(assignee)}
                                       </span>
                                     )}
                                   </div>
@@ -1027,7 +1028,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                                   <button
                                     onClick={() => openEditTask(milestone, i)}
                                     className="p-1.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-all shrink-0 opacity-0 group-hover:opacity-100"
-                                    title="Edit task"
+                                    title={tr("Edit task")}
                                   >
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
@@ -1049,9 +1050,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
               <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mb-4">
                 <Target className="w-7 h-7 text-blue-600" />
               </div>
-              <h4 className="text-base font-bold text-slate-900 mb-1">No milestones set</h4>
+              <h4 className="text-base font-bold text-slate-900 mb-1">{tr("No milestones set")}</h4>
               <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed mt-1">
-                Define key milestones to track the critical path of your project.
+                {tr("Define key milestones to track the critical path of your project.")}
               </p>
             </div>
           )}
@@ -1073,27 +1074,27 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-900">Mark task complete</p>
-                      <p className="text-xs text-slate-500 truncate max-w-[220px]">{task?.title}</p>
+                      <p className="text-sm font-bold text-gray-900">{tr("Mark task complete")}</p>
+                      <p className="text-xs text-slate-500 truncate max-w-[220px]">{tr(task?.title)}</p>
                     </div>
                   </div>
 
                   {/* Completion note */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Completion Note <span className="font-normal text-slate-400">(optional)</span></label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Completion Note ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span></label>
                     <textarea
                       rows={2}
                       value={completionPrompt.note}
                       onChange={e => setCompletionPrompt(prev => prev ? { ...prev, note: e.target.value } : null)}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none transition-all"
-                      placeholder="How was it completed? Any notes..."
+                      placeholder={tr("How was it completed? Any notes...")}
                       autoFocus
                     />
                   </div>
 
                   {/* Proof of work image */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Proof of Work <span className="font-normal text-slate-400">(optional photo)</span></label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Proof of Work ")}<span className="font-normal text-slate-400">{tr("(optional photo)")}</span></label>
                     <input
                       ref={proofInputRef}
                       type="file"
@@ -1103,7 +1104,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     />
                     {completionPrompt.proofImageUrl ? (
                       <div className="relative rounded-xl overflow-hidden border border-emerald-200">
-                        <img loading="lazy" decoding="async" src={completionPrompt.proofImageUrl} alt="Proof" className="w-full h-32 object-cover" />
+                        <img loading="lazy" decoding="async" src={completionPrompt.proofImageUrl} alt={tr("Proof")} className="w-full h-32 object-cover" />
                         <button
                           onClick={() => setCompletionPrompt(prev => prev ? { ...prev, proofImageUrl: '' } : null)}
                           className="absolute top-2 right-2 p-1 bg-black/50 rounded-lg text-white hover:bg-black/70 transition-colors"
@@ -1111,7 +1112,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                           <X className="w-3.5 h-3.5" />
                         </button>
                         <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-emerald-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
-                          <CheckCircle2 className="w-3 h-3" /> Uploaded
+                          <CheckCircle2 className="w-3 h-3" />{tr(" Uploaded")}
                         </div>
                       </div>
                     ) : (
@@ -1121,21 +1122,21 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                         className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50/30 rounded-xl text-sm font-semibold text-slate-400 hover:text-blue-500 transition-all disabled:opacity-50"
                       >
                         {completionPrompt.uploading
-                          ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
-                          : <><Camera className="w-4 h-4" /> Upload Photo</>
+                          ? <><Loader2 className="w-4 h-4 animate-spin" />{tr(" Uploading...")}</>
+                          : <><Camera className="w-4 h-4" />{tr(" Upload Photo")}</>
                         }
                       </button>
                     )}
                   </div>
 
                   <div className="flex gap-3">
-                    <button onClick={() => setCompletionPrompt(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-slate-600 transition-all">Cancel</button>
+                    <button onClick={() => setCompletionPrompt(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-slate-600 transition-all">{tr("Cancel")}</button>
                     <button
                       onClick={() => commitToggle(ms, completionPrompt.taskIndex, completionPrompt.note, completionPrompt.proofImageUrl)}
                       disabled={completionPrompt.uploading}
                       className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-sm font-bold text-white transition-all flex items-center justify-center gap-2"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Mark Done
+                      <CheckCircle2 className="w-4 h-4" />{tr(" Mark Done")}
                     </button>
                   </div>
                 </div>
@@ -1157,7 +1158,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
                       <Pencil className="w-4 h-4 text-blue-600" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900">Edit Task</p>
+                    <p className="text-sm font-bold text-gray-900">{tr("Edit Task")}</p>
                   </div>
                   <button onClick={() => setEditingTask(null)} className="p-1.5 text-slate-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                     <X className="w-4 h-4" />
@@ -1165,31 +1166,31 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Title *</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Title *")}</label>
                   <input
                     type="text"
                     autoFocus
                     value={editingTask.form.title}
                     onChange={e => setEditingTask(prev => prev ? { ...prev, form: { ...prev.form, title: e.target.value } } : null)}
                     className={inputCls}
-                    placeholder="Task title"
+                    placeholder={tr("Task title")}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Description</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Description")}</label>
                   <input
                     type="text"
                     value={editingTask.form.description}
                     onChange={e => setEditingTask(prev => prev ? { ...prev, form: { ...prev.form, description: e.target.value } } : null)}
                     className={inputCls}
-                    placeholder="Optional details..."
+                    placeholder={tr("Optional details...")}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Start Date</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Start Date")}</label>
                     <input
                       type="date"
                       value={editingTask.form.startDate}
@@ -1208,7 +1209,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">End Date</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("End Date")}</label>
                     <input
                       type="date"
                       value={editingTask.form.endDate}
@@ -1220,21 +1221,21 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Assign To</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Assign To")}</label>
                   <select value={editingTask.form.assignedTo} onChange={e => setEditingTask(prev => prev ? { ...prev, form: { ...prev.form, assignedTo: e.target.value } } : null)} className={inputCls}>
-                    <option value="">— Unassigned —</option>
-                    {members.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
+                    <option value="">{tr("— Unassigned —")}</option>
+                    {members.map(m => <option key={m._id} value={m._id}>{tr(m.name)}</option>)}
                   </select>
                 </div>
 
                 <div className="flex gap-3 pt-1">
-                  <button onClick={() => setEditingTask(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-slate-600 transition-all">Cancel</button>
+                  <button onClick={() => setEditingTask(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-slate-600 transition-all">{tr("Cancel")}</button>
                   <button
                     onClick={handleSaveEditTask}
                     disabled={isSavingEditTask || !editingTask.form.title.trim()}
                     className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-sm font-bold text-white transition-all flex items-center justify-center gap-2"
                   >
-                    {isSavingEditTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" /> Save Task</>}
+                    {isSavingEditTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4" />{tr(" Save Task")}</>}
                   </button>
                 </div>
               </div>
@@ -1260,9 +1261,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                   if (ms) handleDelete(ms._id, ms.name);
                   setMilestoneMenuId(null); setMenuPos(null);
                 }}
-                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
+                className="w-full px-4 py-2.5 text-start text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
               >
-                <Trash2 className="w-3.5 h-3.5" /><span>Delete</span>
+                <Trash2 className="w-3.5 h-3.5" /><span>{tr("Delete")}</span>
               </button>
             )}
           </div>
@@ -1289,8 +1290,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                       <Flag className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">{editingMilestone ? 'Edit Milestone' : 'New Milestone'}</h2>
-                      <p className="text-xs text-slate-500 mt-0.5">{editingMilestone ? 'Update details and tasks.' : 'Set a target with optional task checklist.'}</p>
+                      <h2 className="text-xl font-bold text-gray-900">{editingMilestone ? tr("Edit Milestone") : tr("New Milestone")}</h2>
+                      <p className="text-xs text-slate-500 mt-0.5">{editingMilestone ? tr("Update details and tasks.") : tr("Set a target with optional task checklist.")}</p>
                     </div>
                   </div>
                   <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -1300,21 +1301,21 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
                 <form onSubmit={handleSave} className="px-8 pb-8 space-y-5">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-600">Milestone Name</label>
-                    <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputCls} placeholder="e.g. Foundation Complete" />
+                    <label className="text-sm font-medium text-slate-600">{tr("Milestone Name")}</label>
+                    <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputCls} placeholder={tr("e.g. Foundation Complete")} />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-600">Description</label>
-                    <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className={inputCls + ' resize-none'} placeholder="What needs to be achieved?" />
+                    <label className="text-sm font-medium text-slate-600">{tr("Description")}</label>
+                    <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className={inputCls + ' resize-none'} placeholder={tr("What needs to be achieved?")} />
                   </div>
 
 
 
                   <div className="pt-2 flex space-x-4">
-                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all">Cancel</button>
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all">{tr("Cancel")}</button>
                     <button type="submit" disabled={isSaving} className="flex-1 py-3 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                      {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>{editingMilestone ? 'Save Changes' : 'Create Milestone'}</span>}
+                      {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>{editingMilestone ? tr("Save Changes") : tr("Create Milestone")}</span>}
                     </button>
                   </div>
                 </form>

@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -56,7 +57,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 : 'bg-white text-slate-600 border-gray-200 hover:border-gray-300 hover:text-gray-900'
             )}
           >
-            {page}
+            {tr(page)}
           </button>
         )
       )}

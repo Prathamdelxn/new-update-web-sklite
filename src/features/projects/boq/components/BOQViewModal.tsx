@@ -1,3 +1,5 @@
+import { tr } from '@/i18n';
+import { projectCurrency } from '@/lib/projectCurrency';
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, XCircle, Clock, ShieldCheck, AlertCircle, Hourglass, Info, Loader2 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -71,11 +73,11 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
       >
         {/* Header */}
         <div className="bg-gray-50 border-b border-gray-100 px-6 py-5 flex items-start justify-between relative">
-          <div className="pr-10">
-            <h3 className="text-xl font-black text-gray-900 tracking-tight">Item Details</h3>
+          <div className="pe-10">
+            <h3 className="text-xl font-black text-gray-900 tracking-tight">{tr("Item Details")}</h3>
             <p className="text-sm font-semibold text-slate-500 mt-0.5 line-clamp-1">
-              {currentView.itemNumber || 'BOQ Line Item'}
-              {selectedVersionIdx !== 0 && ' [Archived Version]'}
+              {currentView.itemNumber || tr("BOQ Line Item")}
+              {selectedVersionIdx !== 0 && tr(" [Archived Version]")}
             </p>
           </div>
           <button 
@@ -100,7 +102,7 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
                     : "bg-gray-100 text-slate-500 hover:bg-gray-200 hover:text-gray-900"
                 )}
               >
-                v{v.version || 1} {i === 0 && '(Latest)'}
+                v{v.version || 1} {i === 0 && tr("(Latest)")}
               </button>
             ))}
           </div>
@@ -117,12 +119,12 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
               {/* Basic Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Group Name</p>
-                  <p className="text-sm font-semibold text-gray-900">{currentView.groupName}</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{tr("Group Name")}</p>
+                  <p className="text-sm font-semibold text-gray-900">{tr(currentView.groupName)}</p>
                 </div>
                 <div className="sm:col-span-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Description</p>
-                  <p className="text-sm font-semibold text-gray-900">{currentView.itemDescription}</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{tr("Description")}</p>
+                  <p className="text-sm font-semibold text-gray-900">{tr(currentView.itemDescription)}</p>
                 </div>
               </div>
 
@@ -130,16 +132,16 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
               <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-100">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Quantity</p>
-                    <p className="text-sm font-bold text-gray-900">{currentView.quantity} {currentView.unit}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{tr("Quantity")}</p>
+                    <p className="text-sm font-bold text-gray-900">{currentView.quantity} {tr(currentView.unit)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Unit Cost</p>
-                    <p className="text-sm font-bold text-gray-900">{formatCurrency(Number(currentView.unitCost), project?.currency || '$')}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{tr("Unit Cost")}</p>
+                    <p className="text-sm font-bold text-gray-900">{formatCurrency(Number(currentView.unitCost), projectCurrency(project))}</p>
                   </div>
-                  <div className="col-span-2 sm:col-span-1 pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l border-slate-200 sm:pl-4">
-                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Total Amount</p>
-                    <p className="text-xl font-black text-blue-700">{formatCurrency(Number(currentView.totalCost), project?.currency || '$')}</p>
+                  <div className="col-span-2 sm:col-span-1 pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-s border-slate-200 sm:ps-4">
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">{tr("Total Amount")}</p>
+                    <p className="text-xl font-black text-blue-700">{formatCurrency(Number(currentView.totalCost), projectCurrency(project))}</p>
                   </div>
                 </div>
               </div>
@@ -147,9 +149,9 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
               {/* Remarks */}
               {currentView.remark && (
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Remarks</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{tr("Remarks")}</p>
                   <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
-                    <p className="text-sm text-slate-700 italic">"{currentView.remark}"</p>
+                    <p className="text-sm text-slate-700 italic">"{tr(currentView.remark)}"</p>
                   </div>
                 </div>
               )}
@@ -159,8 +161,8 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">Rejection Reason</p>
-                    <p className="text-sm font-semibold text-red-900 leading-snug">{currentView.rejectionReason}</p>
+                    <p className="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">{tr("Rejection Reason")}</p>
+                    <p className="text-sm font-semibold text-red-900 leading-snug">{tr(currentView.rejectionReason)}</p>
                   </div>
                 </div>
               )}
@@ -170,9 +172,9 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
-                      {selectedVersionIdx === 0 ? 'Last modified by' : 'Created by'}
+                      {selectedVersionIdx === 0 ? tr("Last modified by") : tr("Created by")}
                     </p>
-                    <p className="text-xs font-bold text-gray-900">{currentView.createdByName || 'System'}</p>
+                    <p className="text-xs font-bold text-gray-900">{currentView.createdByName || tr("System")}</p>
                   </div>
                   <p className="text-xs font-semibold text-slate-500">
                     {currentView.createdAt ? new Date(currentView.createdAt).toLocaleString() : ''}
@@ -183,9 +185,9 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
                   <div className="flex items-center justify-between pt-1">
                     <div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
-                        {currentView.status} by
+                        {tr(currentView.status)}{tr(" by")}
                       </p>
-                      <p className="text-xs font-bold text-gray-900">{currentView.approvedByName || 'Authorized User'}</p>
+                      <p className="text-xs font-bold text-gray-900">{currentView.approvedByName || tr("Authorized User")}</p>
                     </div>
                     <p className="text-xs font-semibold text-slate-500">
                       {currentView.approvedAt ? new Date(currentView.approvedAt).toLocaleString() : ''}
@@ -201,7 +203,7 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
         <div className="bg-gray-50 border-t border-gray-100 px-6 py-4">
           {showApprovalButtons ? (
             <div className="space-y-3">
-              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider text-center">Approval Required</p>
+              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider text-center">{tr("Approval Required")}</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => onUpdateStatus(viewingHistory[0], 'Rejected')}
@@ -209,7 +211,7 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
                   className="flex-1 flex justify-center items-center gap-2 py-3 bg-white border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl font-bold transition-all disabled:opacity-50"
                 >
                   <XCircle className="w-5 h-5" />
-                  Reject Item
+                  {tr("Reject Item")}
                 </button>
                 <button
                   onClick={() => onUpdateStatus(viewingHistory[0], 'Approved')}
@@ -217,7 +219,7 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
                   className="flex-1 flex justify-center items-center gap-2 py-3 bg-emerald-600 text-white hover:bg-emerald-500 rounded-xl font-bold shadow-md shadow-emerald-600/20 transition-all disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-5 h-5" />
-                  Approve Item
+                  {tr("Approve Item")}
                 </button>
               </div>
             </div>
@@ -226,8 +228,8 @@ export const BOQViewModal: React.FC<BOQViewModalProps> = ({
               <Info className="w-4 h-4" />
               <span className="text-sm font-semibold">
                 {viewingHistory[0]?.status === 'Pending' 
-                  ? `Pending with ${viewingHistory[0]?.requestedApproverName || 'Authorized Approver'}` 
-                  : (selectedVersionIdx === 0 ? 'Viewing current version.' : 'Viewing historical version.')}
+                  ? tr("Pending with {{value}}", { value: viewingHistory[0]?.requestedApproverName || 'Authorized Approver' }) 
+                  : (selectedVersionIdx === 0 ? tr("Viewing current version.") : tr("Viewing historical version."))}
               </span>
             </div>
           )}

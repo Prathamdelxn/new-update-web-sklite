@@ -1,28 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  X,
-  PenTool,
-  Plus,
-  Trash2,
-  Building2,
-  Sparkles,
-  Sliders,
-  Home,
-  Briefcase,
-  Utensils,
-  Store,
-  Layers,
-  Zap,
-  Droplets,
-  Sun,
-  Palette,
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  DollarSign
-} from 'lucide-react';
+import { X, PenTool, Plus, Trash2, Building2, Sparkles, Sliders, Home, Briefcase, Utensils, Store, Layers, Zap, Droplets, Sun, Palette, ChevronDown, ChevronUp, Copy, Banknote } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -331,7 +310,7 @@ export const LogRequirementsModal = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-                  <DollarSign size={16} />
+                  <Banknote size={16} />
                 </div>
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
@@ -346,7 +325,7 @@ export const LogRequirementsModal = ({
 
             <div className="space-y-3">
               <div className="relative">
-                <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                <Banknote className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
                 <input
                   type="text"
                   value={budgetRange}

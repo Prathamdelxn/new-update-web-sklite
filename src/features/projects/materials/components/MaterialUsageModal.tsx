@@ -1,4 +1,5 @@
 'use client';
+import { tr } from '@/i18n';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -60,7 +61,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.items.some(it => it.quantity > MAX_INPUT_VALUE)) {
-      toast.error('Quantity is too large');
+      toast.error(tr("Quantity is too large"));
       return;
     }
     setIsLoading(true);
@@ -71,7 +72,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
         commonNote: formData.notes,
         items: formData.items,
       });
-      toast.success('Material consumption logged successfully!');
+      toast.success(tr("Material consumption logged successfully!"));
       onSuccess();
       onClose();
       setFormData({
@@ -80,7 +81,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
         notes: ''
       });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to log usage');
+      toast.error(error.response?.data?.message || tr("Failed to log usage"));
     } finally {
       setIsLoading(false);
     }
@@ -112,8 +113,8 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                       <History className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">Log Material Usage</h2>
-                      <p className="text-xs text-slate-500 mt-0.5">Record material consumption on site.</p>
+                      <h2 className="text-xl font-bold text-gray-900">{tr("Log Material Usage")}</h2>
+                      <p className="text-xs text-slate-500 mt-0.5">{tr("Record material consumption on site.")}</p>
                     </div>
                   </div>
                   <button onClick={onClose} className="p-2 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-xl transition-colors">
@@ -124,7 +125,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-600 ml-1">Work Location</label>
+                      <label className="text-sm font-medium text-slate-600 ms-1">{tr("Work Location")}</label>
                       <div className="relative group">
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                         <input
@@ -132,13 +133,13 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                           required
                           value={formData.location}
                           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm transition-all"
-                          placeholder="e.g. Block A, Floor 2"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 ps-10 pe-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm transition-all"
+                          placeholder={tr("e.g. Block A, Floor 2")}
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-600 ml-1">Type of Work</label>
+                      <label className="text-sm font-medium text-slate-600 ms-1">{tr("Type of Work")}</label>
                       <div className="relative group">
                         <Clipboard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                         <input
@@ -146,8 +147,8 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                           required
                           value={formData.workType}
                           onChange={(e) => setFormData({ ...formData, workType: e.target.value })}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-10 pr-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm transition-all"
-                          placeholder="e.g. Concreting"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 ps-10 pe-4 text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm transition-all"
+                          placeholder={tr("e.g. Concreting")}
                         />
                       </div>
                     </div>
@@ -155,14 +156,14 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-slate-600 ml-1">Consumed Items</label>
+                      <label className="text-sm font-medium text-slate-600 ms-1">{tr("Consumed Items")}</label>
                       <button
                         type="button"
                         onClick={addItem}
                         className="text-xs font-bold text-blue-600 hover:text-blue-500 flex items-center space-x-1"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Add Item</span>
+                        <span>{tr("Add Item")}</span>
                       </button>
                     </div>
 
@@ -170,22 +171,22 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                       {formData.items.map((item, index) => (
                         <div key={index} className="grid grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded-xl border border-gray-200">
                           <div className="col-span-6 space-y-1">
-                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Material</label>
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
                             <select
                               required
                               value={item.materialId}
                               onChange={(e) => updateItem(index, 'materialId', e.target.value)}
                               className="w-full bg-white border border-gray-200 rounded-lg py-1.5 px-3 text-xs text-gray-900 focus:outline-none focus:border-blue-400"
                             >
-                              <option value="">Select Material</option>
+                              <option value="">{tr("Select Material")}</option>
                               {materials.map(m => (
-                                <option key={m._id} value={m._id}>{m.name}</option>
+                                <option key={m._id} value={m._id}>{tr(m.name)}</option>
                               ))}
                             </select>
                           </div>
                           <div className="col-span-4 space-y-1">
-                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Quantity</label>
-                            <div className="flex items-center bg-white border border-gray-200 rounded-lg pr-2">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ms-1">{tr("Quantity")}</label>
+                            <div className="flex items-center bg-white border border-gray-200 rounded-lg pe-2">
                               <input
                                 type="number"
                                 required
@@ -219,7 +220,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                       onClick={onClose}
                       className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-600 font-medium transition-all active:scale-[0.98]"
                     >
-                      Cancel
+                      {tr("Cancel")}
                     </button>
                     <button
                       type="submit"
@@ -229,10 +230,10 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                       {isLoading ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Logging...</span>
+                          <span>{tr("Logging...")}</span>
                         </>
                       ) : (
-                        <span>Log Consumption</span>
+                        <span>{tr("Log Consumption")}</span>
                       )}
                     </button>
                   </div>
