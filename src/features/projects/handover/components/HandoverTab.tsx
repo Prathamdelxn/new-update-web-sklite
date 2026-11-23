@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -479,10 +480,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-2xl shadow-none">
-        <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-        <p className="text-slate-500 mt-2 text-xs font-medium">{tr("Verifying project handover checklist...")}</p>
-      </div>
+      <SkeletonLoader loading preset="list">{null}</SkeletonLoader>
     );
   }
 

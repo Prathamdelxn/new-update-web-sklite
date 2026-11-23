@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -158,9 +159,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-24">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
+      <SkeletonLoader loading preset="form">{null}</SkeletonLoader>
     );
   }
 

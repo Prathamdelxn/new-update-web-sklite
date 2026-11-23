@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/providers/AuthContext';
@@ -330,10 +331,7 @@ export function ChatTab({ projectId }: ChatTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-2xl shadow-none">
-        <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-        <p className="text-slate-500 mt-2 text-xs font-medium">{tr("Connecting to project discussion...")}</p>
-      </div>
+      <SkeletonLoader loading preset="list">{null}</SkeletonLoader>
     );
   }
 

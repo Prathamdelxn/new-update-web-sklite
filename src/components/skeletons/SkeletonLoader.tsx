@@ -12,6 +12,11 @@ function Bone({ className = '', style }: { className?: string; style?: React.CSS
   );
 }
 
+/** Inline placeholder for a value inside text (e.g. a stat number) — valid inside <p>/<span>. */
+export function BoneInline({ className = '' }: { className?: string }) {
+  return <span aria-hidden className={`inline-block align-middle animate-pulse rounded-md bg-gray-200 ${className}`} />;
+}
+
 /* ─── Preset layouts ───────────────────────────────────────────────── */
 
 /** 3‑column card grid (projects page, etc.) */

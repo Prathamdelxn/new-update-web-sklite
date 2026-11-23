@@ -9,6 +9,7 @@ import { useAuth } from '@/providers/AuthContext';
 import { useIsAdmin } from '@/hooks/usePermission';
 import { cn } from '@/lib/utils';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
+import { motion, MotionConfig } from 'framer-motion';
 import {
   Info, FileText, Banknote, Package, Files, Map,
   AlertCircle, ShieldAlert, Calendar,
@@ -84,20 +85,31 @@ const statusBadgeColor: Record<string, string> = {
   'Cancelled':           'bg-red-50 text-red-700 border-red-200/80',
 };
 
+// Skeleton shown while the project loads — same shape each tab uses for its own
+// loading state, so the placeholder doesn't change shape when the tab takes over.
+const TAB_SKELETON: Record<string, string> = {
+  dashboard: 'dashboard', details: 'form', 'site-survey': 'form', plans: 'list', documents: 'list',
+  boq: 'table', rooms: 'card-grid', ffe: 'table', milestones: 'list', materials: 'table', issues: 'list',
+  risks: 'list', transactions: 'table', reports: 'list', audit: 'list', handover: 'list', chat: 'list',
+  timeline: 'list', progress: 'list', budget: 'form', attendance: 'list',
+};
+
 const RESTRICTED_TABS = [
   'plans', 'rooms', 'ffe', 'boq', 'milestones', 'audit', 'materials', 'transactions', 'risks', 'issues', 'handover', 'attendance', 'reports'
 ];
 
 // ── Inner layout ───────────────────────────────────────────────
 function LayoutInner({ children }: { children: React.ReactNode }) {
-  const { project, loading, accessDenied, fetchProject, projectId } = useProjectContext();
+  const { project, preview, loading, accessDenied, fetchProject, projectId } = useProjectContext();
+  // Header can show the list's name/status straight away while the full project loads
+  const headerInfo = project ?? preview;
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
   const isAdmin = useIsAdmin();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const visibleTabs = getVisibleTabs(project?.projectType, project?.siteSurveyor, isAdmin);
+  const visibleTabs = getVisibleTabs(headerInfo?.projectType, project?.siteSurveyor, isAdmin);
   const activeTab = (ALL_TABS as readonly { id: string }[]).find(t => pathname.includes(`/${t.id}`))?.id || 'dashboard';
 
   const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -165,8 +177,15 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
       e.stopPropagation();
       return;
     }
+    if (tabId === activeTab) return;
+    // Move the highlight now; the route can take a moment to load
+    setPendingTab({ tab: tabId, from: activeTab });
     router.push(`/construction-dashboard/projects/${projectId}/${tabId}`);
   };
+
+  // Clicked tab wins until the URL actually changes, then the URL is the truth again
+  const [pendingTab, setPendingTab] = useState<{ tab: string; from: string } | null>(null);
+  const shownTab = pendingTab && pendingTab.from === activeTab ? pendingTab.tab : activeTab;
 
   // Auto-scroll active tab into view
   useEffect(() => {
@@ -176,7 +195,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     if (activeBtn) {
       activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
-  }, [activeTab]);
+  }, [shownTab]);
 
   const isSurveyPending = (project?.status === 'Site Survey' || (project?.status === 'Initialized' && project?.needSiteSurvey)) && (project as any)?.surveyStatus !== 'Approved';
   const isRestrictedTab = isSurveyPending && RESTRICTED_TABS.includes(activeTab);
@@ -225,8 +244,11 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     </div>
   ) : null;
 
+  // Loaded but nothing came back → not-found / access-denied card.
+  // Otherwise the header and tab bar render straight away (like Interior); only the
+  // name/status show skeleton bars, and the page content waits for the project.
   return (
-    <SkeletonLoader loading={loading} preset="detail">
+    <>
       {!project && !loading ? (
         <div className="text-center py-20 bg-white border border-slate-200 rounded-3xl p-8 shadow-card">
           <h2 className="text-2xl font-bold text-slate-900">{accessDenied ? tr("Access denied") : tr("Project not found")}</h2>
@@ -242,10 +264,10 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
             {tr("Back to Projects")}
           </button>
         </div>
-      ) : project ? (
+      ) : (
         <div className="space-y-4">
           {/* ── Project Workspace Header ── */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/80 rounded-xl px-4 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/80 rounded-xl px-4 py-3 min-h-[58px]">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => router.push(projectsListRoute)}
@@ -255,25 +277,32 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate max-w-xs sm:max-w-md">
-                    {tr(project.name)}
-                  </h1>
-                  <span className={cn(
-                    'shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border',
-                    statusBadgeColor[project.status] || 'bg-blue-50 text-blue-700 border-blue-200/80'
-                  )}>
-                    {tr(project.status)}
-                  </span>
-                  {project.projectType && (
-                    <span className="hidden sm:inline shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border bg-slate-50 text-slate-600 border-slate-200/80">
-                      {tr(project.projectType)}
+                {headerInfo ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate max-w-xs sm:max-w-md">
+                      {tr(headerInfo.name)}
+                    </h1>
+                    <span className={cn(
+                      'shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border',
+                      statusBadgeColor[headerInfo.status] || 'bg-blue-50 text-blue-700 border-blue-200/80'
+                    )}>
+                      {tr(headerInfo.status)}
                     </span>
-                  )}
-                </div>
+                    {headerInfo.projectType && (
+                      <span className="hidden sm:inline shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border bg-slate-50 text-slate-600 border-slate-200/80">
+                        {tr(headerInfo.projectType)}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2" aria-busy="true" aria-label={tr("Loading project")}>
+                    <span className="inline-block h-4 w-48 rounded bg-slate-200/80 animate-pulse" />
+                    <span className="inline-block h-5 w-16 rounded-md bg-slate-100 animate-pulse" />
+                  </div>
+                )}
               </div>
             </div>
-            {canEditProject && (
+            {project && canEditProject && (
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 title={tr("Edit project")}
@@ -292,13 +321,13 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
               onMouseDown={handleMouseDown}
               onWheel={handleTabsWheel}
               className={cn(
-                'flex items-center gap-1 overflow-x-auto scrollbar-hide select-none transition-[cursor]',
-                isGrabbing ? 'cursor-grabbing' : 'cursor-grab',
+                'flex items-center gap-1 overflow-x-auto scrollbar-hide select-none',
                 !isGrabbing && 'scroll-smooth'
               )}
             >
+              <MotionConfig reducedMotion="user">
               {visibleTabs.map((tab) => {
-                const isActive = activeTab === tab.id;
+                const isActive = shownTab === tab.id;
                 const TabIcon = tab.icon;
                 return (
                   <button
@@ -306,22 +335,31 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                     data-active={isActive}
                     onClick={(e) => handleTabClick(tab.id, e)}
                     className={cn(
-                      'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 select-none',
-                      isGrabbing ? 'cursor-grabbing' : 'cursor-pointer',
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-none'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      'group relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 select-none cursor-pointer',
+                      'transition-colors duration-300 ease-out',
+                      isActive ? 'text-white' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                     )}
                   >
-                    <TabIcon className={cn("w-4 h-4 shrink-0 transition-colors", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600")} />
-                    <span>{tr(tab.name)}</span>
+                    {/* One pill that glides between tabs instead of each tab flipping its own background */}
+                    {isActive && (
+                      <motion.span
+                        layoutId="construction-project-tab-pill"
+                        className="absolute inset-0 rounded-lg bg-blue-600"
+                        transition={{ type: 'spring', stiffness: 380, damping: 36, mass: 0.9 }}
+                      />
+                    )}
+                    <TabIcon className={cn("relative w-4 h-4 shrink-0 transition-colors duration-300 ease-out", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600")} />
+                    <span className="relative">{tr(tab.name)}</span>
                   </button>
                 );
               })}
+              </MotionConfig>
             </div>
           </div>
 
-          {isRestrictedTab ? (
+          {!project ? (
+            <SkeletonLoader loading preset={TAB_SKELETON[shownTab] ?? 'list'}>{null}</SkeletonLoader>
+          ) : isRestrictedTab ? (
             <div className="flex flex-col items-center justify-center py-24 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-sm mt-4">
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                 <Lock className="w-8 h-8 text-slate-400" />
@@ -344,16 +382,18 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
             children
           )}
 
-          <CreateProjectModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onSuccess={fetchProject}
-            initialData={project || undefined}
-            projectId={projectId}
-          />
+          {project && (
+            <CreateProjectModal
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              onSuccess={fetchProject}
+              initialData={project}
+              projectId={projectId}
+            />
+          )}
         </div>
-      ) : null}
-    </SkeletonLoader>
+      )}
+    </>
   );
 }
 

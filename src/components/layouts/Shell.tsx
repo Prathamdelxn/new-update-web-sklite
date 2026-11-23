@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layouts/Sidebar';
 import { Topnav } from '@/components/layouts/Topnav';
 import { usePathname, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
 import { isInteriorSession } from '@/lib/interiorAuth';
@@ -92,14 +91,9 @@ export const Shell: React.FC<ShellProps> = ({ children, headerContent }) => {
         
         <main className="flex-1 min-w-0 px-4 md:px-8 pb-8 pt-20">
           <div className="max-w-7xl mx-auto">
-            <motion.div
-              key={pathname}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            >
-              {children}
-            </motion.div>
+            {/* No per-route fade/remount: it re-animated (and rebuilt) the project
+                header and tab bar on every tab click */}
+            {children}
           </div>
         </main>
       </div>

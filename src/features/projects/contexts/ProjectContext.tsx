@@ -1,15 +1,23 @@
 'use client';
 import { tr } from '@/i18n';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api.client';
 import { Project } from '@/types';
 import { useToast } from '@/providers/ToastContext';
 import { useProjectSocket } from '@/hooks/useProjectSocket';
 import { useSocket } from '@/providers/SocketContext';
 
+/** Cache keys shared with the projects list (which seeds the preview). */
+export const constructionProjectKey = (id: string) => ['construction-project', id] as const;
+export const constructionProjectPreviewKey = (id: string) => ['construction-project-preview', id] as const;
+export type ProjectPreview = Pick<Project, '_id' | 'name' | 'status'> & { projectType?: string };
+
 interface ProjectContextType {
   project: Project | null;
+  /** Name/status from the projects list, available before the full project loads (header only). */
+  preview: ProjectPreview | null;
   loading: boolean;
   // True when the API refused the project (403) — the user lacks projects:view
   accessDenied: boolean;
@@ -19,50 +27,69 @@ interface ProjectContextType {
 
 const ProjectContext = createContext<ProjectContextType>({
   project: null,
+  preview: null,
   loading: true,
   accessDenied: false,
   fetchProject: async () => {},
   projectId: '',
 });
 
+const statusOf = (err: unknown) => (err as { response?: { status?: number } })?.response?.status;
+
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
   const params = useParams();
   const projectId = params.id as string;
   const { joinProject, leaveProject } = useSocket();
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [accessDenied, setAccessDenied] = useState(false);
+  const queryClient = useQueryClient();
   const toast = useToast();
 
   useProjectSocket(projectId);
 
-  const fetchProject = async () => {
-    try {
-      const response = await api.get(`/projects/${projectId}`);
-      setProject(response.data);
-      setAccessDenied(false);
-    } catch (err: any) {
-      if (err?.response?.status === 403) {
-        setAccessDenied(true);
-        return;
-      }
-      console.error('Error fetching project:', err);
-      toast.error(err?.response?.data?.message || tr("Failed to load project"));
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Cached like the Interior project: re-opening a project shows it instantly and
+  // refreshes in the background instead of blanking the page.
+  const query = useQuery({
+    queryKey: constructionProjectKey(projectId),
+    queryFn: async () => (await api.get(`/projects/${projectId}`)).data as Project,
+    enabled: Boolean(projectId),
+    staleTime: 30 * 1000,
+    retry: (count, err) => ![403, 404].includes(statusOf(err) ?? 0) && count < 1,
+  });
+
+  const accessDenied = statusOf(query.error) === 403;
 
   useEffect(() => {
-    if (projectId) {
-      fetchProject();
-      joinProject(projectId);
-      return () => leaveProject(projectId);
-    }
+    if (!query.error || accessDenied) return;
+    console.error('Error fetching project:', query.error);
+    const msg = (query.error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+    toast.error(msg || tr("Failed to load project"));
+    // toast once per failed fetch
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query.errorUpdatedAt]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    joinProject(projectId);
+    return () => leaveProject(projectId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
+  const { refetch } = query;
+  // Same contract as before: resolves when the refresh is done, never throws
+  const fetchProject = useCallback(async () => { await refetch(); }, [refetch]);
+
+  const preview = queryClient.getQueryData<ProjectPreview>(constructionProjectPreviewKey(projectId)) ?? null;
+
   return (
-    <ProjectContext.Provider value={{ project, loading, accessDenied, fetchProject, projectId }}>
+    <ProjectContext.Provider
+      value={{
+        project: query.data ?? null,
+        preview,
+        loading: query.isLoading,
+        accessDenied,
+        fetchProject,
+        projectId,
+      }}
+    >
       {children}
     </ProjectContext.Provider>
   );

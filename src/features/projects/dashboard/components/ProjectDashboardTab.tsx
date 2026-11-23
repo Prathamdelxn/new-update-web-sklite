@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { BoneInline } from '@/components/skeletons/SkeletonLoader';
 import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -187,7 +188,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               )}
             </div>
             <p className="text-2xl font-black text-gray-900">
-              {stats.loading ? '—' : `${stats.milestones.total === 0 ? 0 : Math.round((stats.milestones.completed / stats.milestones.total) * 100)}%`}
+              {stats.loading ? <BoneInline className="h-6 w-12" /> : `${stats.milestones.total === 0 ? 0 : Math.round((stats.milestones.completed / stats.milestones.total) * 100)}%`}
             </p>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Milestones Done")}</p>
           </GlassCard>
@@ -207,7 +208,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <span className="text-xs font-bold text-amber-600">{tr(stats.issues.open)}{tr(" open")}</span>
               )}
             </div>
-            <p className="text-2xl font-black text-gray-900">{stats.loading ? '—' : stats.issues.total}</p>
+            <p className="text-2xl font-black text-gray-900">{stats.loading ? <BoneInline className="h-6 w-12" /> : stats.issues.total}</p>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Issues & Snags")}</p>
           </GlassCard>
         </button>
@@ -226,7 +227,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <span className="text-xs font-bold text-rose-600">{tr(stats.risks.active)}{tr(" active")}</span>
               )}
             </div>
-            <p className="text-2xl font-black text-gray-900">{stats.loading ? '—' : stats.risks.total}</p>
+            <p className="text-2xl font-black text-gray-900">{stats.loading ? <BoneInline className="h-6 w-12" /> : stats.risks.total}</p>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Risks Logged")}</p>
           </GlassCard>
         </button>

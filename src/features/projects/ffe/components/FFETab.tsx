@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect } from 'react';
@@ -219,9 +220,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
+      <SkeletonLoader loading preset="table">{null}</SkeletonLoader>
     );
   }
 

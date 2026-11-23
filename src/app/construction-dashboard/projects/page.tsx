@@ -18,6 +18,8 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/services/api.client';
 import { Project } from '@/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { constructionProjectPreviewKey, type ProjectPreview } from '@/features/projects/contexts/ProjectContext';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
@@ -41,6 +43,7 @@ export default function ProjectsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
+  const queryClient = useQueryClient();
   const pathname = usePathname();
   const { user } = useAuth();
   const canCreateProject = canCreateProjects(user);
@@ -73,6 +76,12 @@ export default function ProjectsPage() {
         ? response.data
         : response.data?.projects ?? response.data?.data ?? [];
       setProjects(data);
+      // Let the project page show name/status the moment a card is opened
+      data.forEach((p: Project) => {
+        if (p?._id) queryClient.setQueryData<ProjectPreview>(constructionProjectPreviewKey(p._id), {
+          _id: p._id, name: p.name, status: p.status, projectType: p.projectType,
+        });
+      });
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast.error(tr("Failed to load projects"));

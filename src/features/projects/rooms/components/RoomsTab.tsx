@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -219,10 +220,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-3">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        <p className="text-xs text-slate-500 font-medium">{tr("Loading rooms & interior layout...")}</p>
-      </div>
+      <SkeletonLoader loading preset="card-grid">{null}</SkeletonLoader>
     );
   }
 
