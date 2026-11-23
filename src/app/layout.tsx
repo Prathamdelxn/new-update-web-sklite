@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Arabic } from "next/font/google";
+import { Inter, Noto_Sans_Arabic, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/providers/AuthContext";
 import { ToastProvider } from "@/providers/ToastContext";
@@ -21,6 +21,14 @@ const notoArabic = Noto_Sans_Arabic({
   preload: false,
 });
 
+// Landing page label face (only downloaded where used)
+const labelMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-label",
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "SkyStruct Lite | Construction Management",
   description: "Next-gen construction management platform",
@@ -32,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${notoArabic.variable} antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${notoArabic.variable} ${labelMono.variable} antialiased`} suppressHydrationWarning>
       <body className="font-sans min-h-screen bg-[#F8FAFF] text-slate-900 selection:bg-blue-100 overflow-x-hidden" suppressHydrationWarning>
         {/* Subtle background accent */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">

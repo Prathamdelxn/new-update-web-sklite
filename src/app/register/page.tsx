@@ -15,6 +15,11 @@ import PhoneInput from 'react-phone-number-input';
 
 export default function RegisterPage() {
   const [industryType, setIndustryType] = useState<'construction' | 'interior'>('construction');
+  // Landing page links pass ?type=interior / ?type=construction
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('type');
+    if (t === 'interior' || t === 'construction') setIndustryType(t);
+  }, []);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');

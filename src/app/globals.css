@@ -233,3 +233,110 @@ html[dir="rtl"] input[type="tel"],
 html[dir="rtl"] input[type="number"] {
   unicode-bidi: plaintext;
 }
+
+
+/* Landing page type */
+.font-display {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+.font-label {
+  font-family: var(--font-label), ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ============================================================================
+   Landing page motion & texture (lp-*). Pure CSS; all motion is switched off
+   for prefers-reduced-motion.
+   ========================================================================== */
+
+/* 1. Scroll reveal — only hides once JS has marked the page ready */
+.lp-ready .lp-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--d, 0ms);
+}
+.lp-ready .lp-reveal.is-in { opacity: 1; transform: none; }
+
+/* progress bars fill when their block comes into view (replays on remount) */
+.lp-bar { transform-origin: left center; }
+.is-in .lp-bar { animation: lp-grow 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: var(--d, 250ms); }
+[dir="rtl"] .lp-bar { transform-origin: right center; }
+@keyframes lp-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* 2. Film grain on dark surfaces */
+.lp-grain { position: relative; isolation: isolate; }
+.lp-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.11;
+  mix-blend-mode: overlay;
+  background-size: 180px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 3. Horizon — curved join into a dark section, with a light line + glow on the rim */
+.lp-horizon { position: relative; border-top-left-radius: 48px; border-top-right-radius: 48px; }
+@media (min-width: 768px) { .lp-horizon { border-top-left-radius: 96px; border-top-right-radius: 96px; } }
+.lp-horizon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: min(1100px, 92%);
+  height: 160px;
+  translate: -50% -1px;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, transparent, rgba(0, 158, 227, 0.75), transparent) top / 100% 1px no-repeat,
+    radial-gradient(closest-side, rgba(0, 158, 227, 0.22), transparent) top / 100% 100% no-repeat;
+}
+
+/* 4. Floating glass cards */
+.lp-glass {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 10px 30px rgba(4, 14, 30, 0.25);
+}
+.lp-float { animation: lp-float 7s ease-in-out infinite; animation-delay: var(--fd, 0s); }
+@keyframes lp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* 5. Soft brand glow */
+.lp-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 9999px;
+  filter: blur(10px);
+  background: radial-gradient(closest-side, rgba(0, 113, 206, 0.22), rgba(0, 158, 227, 0.08) 55%, transparent);
+}
+.lp-drift { animation: lp-drift 14s ease-in-out infinite alternate; }
+@keyframes lp-drift { from { transform: translate(-4%, -3%) scale(1); } to { transform: translate(4%, 3%) scale(1.08); } }
+
+/* 6. Marquee */
+.lp-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.lp-marquee-track { display: flex; width: max-content; animation: lp-marquee 45s linear infinite; }
+.lp-marquee:hover .lp-marquee-track { animation-play-state: paused; }
+@keyframes lp-marquee { to { transform: translateX(-50%); } }
+
+/* hero headline: lines rise in on load */
+.lp-rise { display: block; animation: lp-rise 1s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: var(--d, 0ms); }
+@keyframes lp-rise { from { opacity: 0; transform: translateY(0.45em); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-ready .lp-reveal { opacity: 1; transform: none; transition: none; }
+  .lp-bar, .lp-float, .lp-drift, .lp-marquee-track, .lp-rise { animation: none !important; }
+}
