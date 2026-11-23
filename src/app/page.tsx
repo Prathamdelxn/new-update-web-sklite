@@ -24,8 +24,16 @@ const C = {
 const navLinks = [
   { label: 'Construction', href: '#construction' },
   { label: 'Interior', href: '#interior' },
+  { label: 'Compare', href: '#products' },
   { label: 'Platform', href: '#platform' },
   { label: 'FAQ', href: '#faq' },
+];
+
+const productComparison = [
+  ['Best for', 'Contractors and developers', 'Interior and fit-out firms'],
+  ['Work starts at', 'Project setup and site planning', 'Lead, client requirements and design'],
+  ['Core controls', 'BOQ, milestones, labour and materials', 'Drawings, quotations and approvals'],
+  ['Delivery tools', 'Attendance, progress, snags and handover', 'Procurement, vendor payments and handover'],
 ];
 
 const products: Record<Product, { name: string; label: string; photo: string; tagline: string; accent: string; features: string[]; cards: { title: string; sub: string; dot: string }[] }> = {
@@ -391,7 +399,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div ref={rootRef} className="min-h-screen overflow-x-hidden text-[15px] leading-relaxed" style={{ background: C.paper, color: C.ink }}>
+    <div id="top" ref={rootRef} className="min-h-screen overflow-x-hidden text-[15px] leading-relaxed" style={{ background: C.paper, color: C.ink }}>
       {/* Header */}
       <header className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${scrolled ? 'border-b backdrop-blur-md' : 'border-b border-transparent'}`}
         style={scrolled ? { background: 'rgba(246,244,239,.88)', borderColor: C.line } : undefined}>
@@ -533,7 +541,7 @@ export default function LandingPage() {
         </section>
 
         {/* Live preview */}
-        <section className="px-5 py-20 sm:px-8">
+        <section id="preview" className="px-5 py-20 sm:px-8">
           <div className="mx-auto max-w-[1200px]">
             <div className="lp-reveal flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
               <div>
@@ -615,6 +623,21 @@ export default function LandingPage() {
                   </article>
                 );
               })}
+            </div>
+            <div className="lp-reveal mt-10 overflow-hidden rounded-[18px] border bg-white" style={{ borderColor: C.line }}>
+              <div className="border-b px-6 py-5 sm:px-8" style={{ borderColor: C.line }}>
+                <p className="font-label text-[10px]" style={{ color: C.muted }}>At a glance</p>
+                <h3 className="mt-2 text-xl font-semibold tracking-tight">Which workspace fits your team?</h3>
+              </div>
+              <div>
+                {productComparison.map(([category, construction, interior]) => (
+                  <div key={category} className="grid gap-2 border-b px-6 py-4 last:border-0 sm:grid-cols-[.7fr_1fr_1fr] sm:gap-6 sm:px-8" style={{ borderColor: C.line }}>
+                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: C.muted }}>{category}</p>
+                    <p className="text-sm leading-6"><span className="mb-1 block text-[11px] font-medium sm:hidden" style={{ color: C.sky }}>Construction</span>{construction}</p>
+                    <p className="text-sm leading-6"><span className="mb-1 block text-[11px] font-medium sm:hidden" style={{ color: C.bronze }}>Interior</span>{interior}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -729,6 +752,7 @@ export default function LandingPage() {
                   <Link href="/register?type=construction" className="group inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium transition-colors hover:bg-[#E6F5FC]" style={{ color: C.blue }}>Construction <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></Link>
                   <Link href="/register?type=interior" className="group inline-flex items-center gap-2 rounded-full border border-white/40 px-5 py-3 text-sm font-medium transition-colors hover:bg-white/10">Interior <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></Link>
                 </div>
+                <a href="#preview" className="mt-4 inline-flex items-center gap-1.5 text-sm text-white/75 transition-colors hover:text-white">Explore the workspace preview <ArrowUpRight className="size-4" /></a>
               </div>
             </div>
           </div>
@@ -739,13 +763,13 @@ export default function LandingPage() {
         <div className="mx-auto max-w-[1200px]">
           <div className="grid gap-10 pb-12 md:grid-cols-[1.6fr_repeat(3,1fr)]">
             <div className="max-w-xs">
-              <img src="/SS-Logo-2025-Colour.svg" alt="SkyStruct" className="h-11 w-auto" />
+              <a href="#top" aria-label="Back to top"><img src="/SS-Logo-2025-Colour.svg" alt="SkyStruct" className="h-11 w-auto" /></a>
               <p className="mt-5 text-sm leading-6" style={{ color: C.muted }}>Project management for construction contractors and interior fit-out firms.</p>
             </div>
             {([
-              ['Products', [['Construction', '#construction'], ['Interior', '#interior'], ['Compare', '#products']]],
-              ['Explore', [['Platform', '#platform'], ['FAQ', '#faq']]],
-              ['Account', [['Create workspace', '/register'], ['Sign in', '/login'], ['Reset password', '/reset-password']]],
+              ['Products', [['Construction', '#construction'], ['Interior', '#interior'], ['Compare workspaces', '#products']]],
+              ['Explore', [['Workspace preview', '#preview'], ['Platform', '#platform'], ['FAQ', '#faq']]],
+              ['Account', [['Create workspace', '/register'], ['Sign in', '/login']]],
             ] as [string, string[][]][]).map(([title, links]) => (
               <div key={title}>
                 <p className="font-label text-[10px]" style={{ color: C.muted }}>{title}</p>
@@ -759,7 +783,7 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-wrap justify-between gap-2 border-t py-6 text-xs" style={{ borderColor: C.line, color: C.muted }}>
             <span>© {new Date().getFullYear()} SkyStruct. All rights reserved.</span>
-            <span>English · العربية</span>
+            <a href="#top" className="transition-colors hover:text-[#004799]">Back to top ↑</a>
           </div>
         </div>
       </footer>
