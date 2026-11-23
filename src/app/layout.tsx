@@ -30,8 +30,15 @@ const labelMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // absolute base for the link-preview image (app/opengraph-image.png)
+  metadataBase: new URL("https://skystructlite.vercel.app"),
   title: "SkyStruct Lite | Construction Management",
   description: "Next-gen construction management platform",
+  openGraph: {
+    siteName: "SkyStruct Lite",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({
