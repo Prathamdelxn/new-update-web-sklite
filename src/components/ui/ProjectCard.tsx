@@ -103,25 +103,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
       <Link href={`${basePath}/${project._id}`} className="flex flex-col flex-1 p-4 pb-3 outline-none">
         
-        {/* ── Top Header Row ── */}
-        <div className="flex items-start justify-between gap-2.5 mb-3">
+        {/* ── Top Row: icon + category · status ── */}
+        <div className="flex items-center justify-between gap-2.5 mb-2.5">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             {/* Building Icon Avatar */}
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-50 via-slate-50 to-blue-50 border border-blue-100/90 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all shadow-2xs">
               <Building2 className="w-4 h-4 text-blue-600 group-hover:text-blue-700 transition-colors" />
             </div>
-            
-            {/* Title & Category Subtitle */}
-            <div className="min-w-0 flex-1">
-              <h3 className="text-[13.5px] font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors truncate">
-                {tr(project.name)}
-              </h3>
-              <div className="flex items-center gap-1 mt-0.5">
-                <Layers className="w-3 h-3 text-indigo-500 shrink-0" />
-                <span className="text-[11px] font-semibold text-slate-500 truncate">
-                  {tr(categoryName)}
-                </span>
-              </div>
+            <div className="flex items-center gap-1 min-w-0">
+              <Layers className="w-3 h-3 text-indigo-500 shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-500 truncate">
+                {tr(categoryName)}
+              </span>
             </div>
           </div>
 
@@ -135,9 +128,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             }}
           >
             <StatusIcon className="w-3 h-3 shrink-0" />
-            <span className="truncate max-w-[85px]">{tr(project.status)}</span>
+            <span className="whitespace-nowrap">{tr(project.status)}</span>
           </div>
         </div>
+
+        {/* ── Title: full card width, up to two lines (cards stay aligned) ── */}
+        <h3
+          className="text-[14px] leading-snug font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors line-clamp-2 min-h-[2.4em] mb-2.5 break-words"
+          title={tr(project.name)}
+        >
+          {tr(project.name)}
+        </h3>
 
         {/* ── Location Row ── */}
         <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50/80 rounded-lg px-2.5 py-1.5 border border-slate-100 mb-2.5 font-medium">
@@ -155,7 +156,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           )}
 
           {project.clientName && (
-            <span className="inline-flex items-center bg-slate-100/80 text-slate-600 px-2 py-0.5 rounded text-[9.5px] font-bold tracking-wide border border-slate-200/60 truncate max-w-[120px]" title={project.clientName}>
+            <span className="inline-flex items-center bg-slate-100/80 text-slate-600 px-2 py-0.5 rounded text-[9.5px] font-bold tracking-wide border border-slate-200/60 truncate max-w-full" title={project.clientName}>
               {tr("Client: ")}{tr(project.clientName)}
             </span>
           )}

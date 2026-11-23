@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useCurrency } from '@/hooks/useCurrency';
 
 // Port of interior-os-frontend's projects/[projectId]/purchase-orders/page.tsx.
 // This is the simple tabular PO register view (distinct from the kanban
@@ -104,9 +105,9 @@ export default function InteriorPurchaseOrdersView({ projectId }: InteriorPurcha
     }
   };
 
-  const formatCost = (val: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val || 0);
-  };
+  // Organisation currency (was hard-coded INR)
+  const { formatExactCurrency } = useCurrency();
+  const formatCost = (val: number) => formatExactCurrency(Math.round(val || 0));
 
   return (
     <div className="p-6 lg:p-8 space-y-6">

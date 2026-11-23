@@ -55,6 +55,18 @@ export function refreshInteriorUser(force = false): Promise<void> {
       const cached = getInteriorUser();
       const merged = { ...(cached || {}), ...fresh };
       localStorage.setItem('interiorUser', JSON.stringify(merged));
+      // Keep the organisation fresh too — useCurrency reads its settings.currency,
+      // so a currency change made on another device / browser reaches this one.
+      const freshOrg = res?.data?.data?.organization;
+      if (freshOrg) {
+        let cachedOrg: { settings?: { currency?: string } } | null = null;
+        try { cachedOrg = JSON.parse(localStorage.getItem('interiorOrganization') || 'null'); } catch { /* ignore */ }
+        const mergedOrg = { ...(cachedOrg || {}), ...freshOrg };
+        localStorage.setItem('interiorOrganization', JSON.stringify(mergedOrg));
+        if (cachedOrg?.settings?.currency !== mergedOrg.settings?.currency) {
+          window.dispatchEvent(new Event('interior-org-updated'));
+        }
+      }
       window.dispatchEvent(new Event(USER_UPDATED_EVENT));
       if (permissionSignature(cached) !== permissionSignature(merged)) {
         window.dispatchEvent(new Event(PERMISSIONS_CHANGED_EVENT));
