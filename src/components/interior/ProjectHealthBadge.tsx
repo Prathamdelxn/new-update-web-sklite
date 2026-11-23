@@ -147,10 +147,14 @@ export function ProjectHealthBadge({ projectId, project }: Props) {
   }
 
   const hiddenSections = (['tasks', 'milestones', 'risks'] as const).filter((k) => canOpen(k) === false);
-  const go = (section?: string) => {
+  // Rows open the exact record (task detail / risk edit / milestone highlight)
+  const ROW_PARAM: Record<string, string> = { tasks: 'task', risks: 'risk', milestones: 'milestone' };
+  const go = (section?: string, recordId?: string) => {
     if (!section) return;
     setOpen(false);
-    router.push(`/interior-new/projects/${projectId}/${section}`);
+    const key = ROW_PARAM[section];
+    const q = key && recordId ? `?${key}=${encodeURIComponent(recordId)}` : '';
+    router.push(`/interior-new/projects/${projectId}/${section}${q}`);
   };
 
   return (
@@ -234,7 +238,7 @@ export function ProjectHealthBadge({ projectId, project }: Props) {
                           <li key={row.id}>
                             <button
                               type="button"
-                              onClick={() => go(r.section)}
+                              onClick={() => go(r.section, row.id)}
                               className="w-full text-start px-3 py-1.5 hover:bg-[hsl(var(--muted)/0.4)]"
                             >
                               <span className="block text-[0.6875rem] font-medium text-[hsl(var(--foreground))] truncate">{tr(row.label)}</span>

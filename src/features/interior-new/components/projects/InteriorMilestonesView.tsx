@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useDeepLinkParams } from '@/features/interior-new/hooks/useDeepLinkParams';
 
 // Port of interior-os-frontend's projects/[projectId]/milestones/page.tsx.
 // Permission gating (useProjectPermissions) and useConfirm dialog are not
@@ -30,6 +31,13 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
 
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Opened from "What needs doing" (?milestone=<id>): scroll to it and highlight it briefly
+  const [focusedMilestone, setFocusedMilestone] = useState<string | null>(null);
+  useDeepLinkParams(['milestone'], !loading && milestones.length > 0, ({ milestone }) => {
+    setFocusedMilestone(milestone);
+    requestAnimationFrame(() => document.getElementById(`ms-${milestone}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    setTimeout(() => setFocusedMilestone(null), 2800);
+  });
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Create Milestone Modal State
@@ -179,7 +187,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
               const isDeleting = deletingId === m._id;
 
               return (
-                <div key={m._id} className="relative group">
+                <div key={m._id} id={`ms-${m._id}`} className={`relative group rounded-xl transition-shadow duration-500 ${focusedMilestone === String(m._id) ? 'ring-2 ring-blue-400/70' : ''}`}>
                   {/* Dot */}
                   <div
                     className={cn(

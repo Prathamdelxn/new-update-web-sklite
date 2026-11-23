@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useDeepLinkParams } from '@/features/interior-new/hooks/useDeepLinkParams';
 
 // Port of interior-os-frontend's projects/[projectId]/risks/page.tsx.
 
@@ -124,6 +125,12 @@ export default function InteriorRisksView({ projectId }: InteriorRisksViewProps)
     setMitigationPlan('');
     setIsModalOpen(true);
   };
+
+  // Opened from "What needs doing" (?risk=<id>): open that risk to add / update its mitigation plan
+  useDeepLinkParams(['risk'], !loading && risks.length > 0, ({ risk }) => {
+    const match = risks.find((r: any) => String(r._id) === risk);
+    if (match) openEditModal(match);
+  });
 
   const openEditModal = (risk: any) => {
     setEditRiskId(risk._id);

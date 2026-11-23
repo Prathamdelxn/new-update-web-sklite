@@ -33,6 +33,7 @@ interface ActionItem {
   due?: Date | null;
   mine: boolean; // assigned to the viewer
   section: string; // project sub-route to open
+  step?: 'grn' | 'pay' | 'detail'; // procurement: which dialog to open
   priority?: string;
 }
 
@@ -67,6 +68,19 @@ const VO_REVIEW: Record<string, string> = {
   management_approval: 'Management approval', client_approval: 'Client approval',
 };
 const CLOSED_PROJECT = ['completed', 'inactive', 'on-hold', 'on_hold', 'closed', 'cancelled'];
+
+/** Exact record (and step) each item opens, e.g. procurement?po=<id>&do=grn */
+const PARAM: Partial<Record<Kind, string>> = { task: 'task', snag: 'snag', rfi: 'rfi', risk: 'risk', milestone: 'milestone', po: 'po', cr: 'cr', vo: 'vo' };
+function hrefFor(projectId: string, it: ActionItem): string {
+  const base = `/interior-new/projects/${projectId}/${it.section}`;
+  if (it.kind === 'dpr') return `${base}?do=new`;
+  const key = PARAM[it.kind];
+  const recordId = it.id.replace(/^[a-z]+-/, '').replace(/-(grn|pay)$/, '');
+  if (!key || !/^[0-9a-f]{24}$/.test(recordId)) return base;
+  const q = new URLSearchParams({ [key]: recordId });
+  if (it.kind === 'po') q.set('do', it.step || 'detail');
+  return `${base}?${q.toString()}`;
+}
 
 const idOf = (v: any): string => (v && typeof v === 'object' ? String(v._id ?? v.id ?? '') : v ? String(v) : '');
 const listOf = (r: PromiseSettledResult<any> | undefined): any[] => {
@@ -285,13 +299,13 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
         case 'ordered':
         case 'dispatched':
           if (due && startOfDay(due) <= soonCutoff) {
-            out.push({ ...base, action: 'Receive delivery and log GRN', title: ref, meta: vendor, due });
+            out.push({ ...base, step: 'grn', action: 'Receive delivery and log GRN', title: ref, meta: vendor, due });
           }
           break;
         case 'partially_delivered':
         case 'delivered': {
           if (po.status === 'partially_delivered') {
-            out.push({ ...base, id: `${base.id}-grn`, action: 'Chase remaining delivery', title: ref, meta: vendor, due });
+            out.push({ ...base, id: `${base.id}-grn`, step: 'grn', action: 'Chase remaining delivery', title: ref, meta: vendor, due });
           }
           if (data.payments) {
             const paid = data.payments
@@ -299,7 +313,7 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
               .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
             const balance = Math.max(0, (Number(po.amount) || 0) - paid);
             if (balance > 0) {
-              out.push({ ...base, id: `${base.id}-pay`, action: tr('Pay vendor {{amount}}', { amount: formatCurrency(balance) }), title: ref, meta: vendor, due: null });
+              out.push({ ...base, id: `${base.id}-pay`, step: 'pay', action: tr('Pay vendor {{amount}}', { amount: formatCurrency(balance) }), title: ref, meta: vendor, due: null });
             }
           }
           break;
@@ -454,7 +468,7 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
                       <button
                         key={it.id}
                         type="button"
-                        onClick={() => router.push(`/interior-new/projects/${projectId}/${it.section}`)}
+                        onClick={() => router.push(hrefFor(projectId, it))}
                         className="w-full text-start flex items-center gap-3 p-2.5 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.4)] transition-colors group"
                       >
                         <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${meta.color}`}>

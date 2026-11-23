@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useDeepLinkParams } from '@/features/interior-new/hooks/useDeepLinkParams';
 
 // =============================================================================
 // Sky-Lite Web — Interior-New Change Requests View
@@ -84,6 +85,11 @@ export default function InteriorChangeRequestsView({ projectId }: InteriorChange
   const [changeRequests, setChangeRequests] = useState<any[]>([]);
   const [selectedCr, setSelectedCr] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  // Opened from "What needs doing" (?cr=<id>): select that change request
+  useDeepLinkParams(['cr'], !loading && changeRequests.length > 0, ({ cr }) => {
+    const match = changeRequests.find((c: any) => String(c._id) === cr);
+    if (match) setSelectedCr(match);
+  });
   const [actionLoading, setActionLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 

@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
+import WbsSubItems from './WbsSubItems';
 import { memberRoleLabel as roleLabelFor, isVirtualAdminMember } from '@/features/interior-new/lib/memberRoleLabel';
 
 interface InteriorWbsViewProps {
@@ -751,12 +752,13 @@ const getAllDescendantIds = (node: any): string[] => {
                                   <div
                                     key={task._id || task.id}
                                     className={cn(
-                                      'flex items-center justify-between p-2.5 rounded-lg border text-xs transition-colors',
+                                      'rounded-lg border text-xs transition-colors',
                                       isDone
                                         ? 'bg-emerald-50/30 border-emerald-200/60 text-slate-600'
                                         : 'bg-white border-slate-200 hover:border-blue-300 text-slate-800 shadow-2xs'
                                     )}
                                   >
+                                  <div className="flex items-center justify-between p-2.5">
                                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
 
@@ -856,6 +858,17 @@ const getAllDescendantIds = (node: any): string[] => {
                                         </button>
                                       )}
                                     </div>
+                                  </div>
+                                  {/* Sub-items under this activity: tick off / add */}
+                                  <WbsSubItems
+                                    projectId={projectId}
+                                    task={task}
+                                    members={members}
+                                    canEdit={canDo('tasks', 'update')}
+                                    onUpdated={(updated) =>
+                                      setTasks((prev) => prev.map((x) => (String(x._id || x.id) === String(task._id || task.id) ? { ...x, ...updated } : x)))
+                                    }
+                                  />
                                   </div>
                                 );
                               })}

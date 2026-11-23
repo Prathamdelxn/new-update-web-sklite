@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useDeepLinkParams } from '@/features/interior-new/hooks/useDeepLinkParams';
 
 // =============================================================================
 // Sky-Lite Web — Modern Interior OS Quality Snag Register
@@ -72,6 +73,11 @@ export default function InteriorSnagsView({ projectId }: InteriorSnagsViewProps)
 
   // Deep Inspection Modal State
   const [selectedDetailSnag, setSelectedDetailSnag] = useState<any | null>(null);
+  // Opened from "What needs doing" (?snag=<id>): show that snag's details
+  useDeepLinkParams(['snag'], !loading && snags.length > 0, ({ snag }) => {
+    const match = snags.find((s: any) => String(s._id) === snag);
+    if (match) setSelectedDetailSnag(match);
+  });
 
   const fetchSnags = async () => {
     try {

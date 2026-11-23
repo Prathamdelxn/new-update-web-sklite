@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useDeepLinkParams } from '@/features/interior-new/hooks/useDeepLinkParams';
 
 // Port of interior-os-frontend's projects/[projectId]/procurement/page.tsx.
 // Uses window.confirm instead of the source app's useConfirm dialog context
@@ -87,6 +88,36 @@ export default function InteriorProcurementView({ projectId }: InteriorProcureme
   const inventory = useMemo(() => procurementData?.inventory || [], [procurementData?.inventory]);
   const vendors = useMemo(() => procurementData?.vendors || [], [procurementData?.vendors]);
   const payments = useMemo(() => procurementData?.payments || [], [procurementData?.payments]);
+
+  // Opened from "What needs doing" (?po=<id>&do=grn|pay|detail): open that exact PO step
+  useDeepLinkParams(['po', 'do'], !loading && pos.length > 0, ({ po: poId, do: action }) => {
+    const item = pos.find((p: any) => String(p._id) === poId);
+    if (!item) return;
+    const pipeline = ['ordered', 'dispatched'].includes(item.status) ? 'approved' : item.status;
+    setActivePipeline(pipeline);
+    setSelectedPo(item);
+    if (action === 'grn') {
+      setIsGRNOpen(true);
+    } else if (action === 'pay') {
+      const paid = payments
+        .filter((p: any) => p.type === 'outgoing' && p.poNo === item.poNumber)
+        .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+      setPayingPo(item);
+      setPaymentForm({
+        amount: String(Math.max(0, (item.amount || 0) - paid)),
+        paymentMethod: 'Bank Transfer',
+        referenceNo: '',
+        remarks: `Payment for PO ${item.poNumber} (${item.materialName?.replace(' ||CLOSED||', '')})`,
+        paymentDate: new Date().toISOString().split('T')[0],
+        projectName: '',
+        projectLocation: '',
+        invoiceNo: '',
+      });
+      setIsPayModalOpen(true);
+    } else {
+      setIsDetailOpen(true);
+    }
+  });
 
   const [isAddPoOpen, setIsAddPoOpen] = useState(false);
   const [creatingPo, setCreatingPo] = useState(false);

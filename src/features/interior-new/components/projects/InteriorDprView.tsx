@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useDeepLinkParams } from '@/features/interior-new/hooks/useDeepLinkParams';
 
 // =============================================================================
 // Sky-Lite Web — Daily Progress Reports (DPR) View
@@ -190,6 +191,11 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
     populateFromLiveProject();
     setIsFormOpen(true);
   };
+
+  // Opened from "What needs doing" (?do=new): open the new DPR form straight away
+  useDeepLinkParams(['do'], !loading && !!siteLogsData, ({ do: action }) => {
+    if (action === 'new') handleOpenCreateForm();
+  });
 
   // ---------------------------------------------------------------------------
   // Labour Row Helpers

@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useDeepLinkParams } from '@/features/interior-new/hooks/useDeepLinkParams';
 
 // Port of interior-os-frontend's projects/[projectId]/variation-orders/page.tsx.
 // getVoDashboardMetrics is not available in interiorProject.service.ts, so
@@ -48,6 +49,11 @@ export default function InteriorVariationOrdersView({ projectId }: InteriorVaria
   });
 
   const [loading, setLoading] = useState(true);
+  // Opened from "What needs doing" (?vo=<id>): select that variation order
+  useDeepLinkParams(['vo'], !loading && variationOrders.length > 0, ({ vo }) => {
+    const match = variationOrders.find((v: any) => String(v._id) === vo);
+    if (match) setSelectedVo(match);
+  });
   const [actionLoading, setActionLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 

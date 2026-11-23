@@ -716,18 +716,13 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                   )}
 
                   {/* Top Floating Badges */}
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
+                  {/* No "2D / 3D Asset" tag: the active tab already says which type this is.
+                      The number stays clear of the status badge on the other side. */}
+                  <div className="absolute top-2.5 start-2.5 end-32 flex items-center gap-1 min-w-0">
                     <span
-                      className={cn(
-                        'px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase tracking-wider backdrop-blur-md border',
-                        type === '3D'
-                          ? 'bg-purple-600/90 text-white border-purple-400/30'
-                          : 'bg-blue-600/90 text-white border-blue-400/30'
-                      )}
+                      className="min-w-0 truncate px-1.5 py-0.5 rounded-lg text-[0.5625rem] font-mono font-bold bg-black/60 text-white backdrop-blur-md border border-white/10"
+                      title={dwg.drawingNumber}
                     >
-                      {tr(type)}{tr(" Asset")}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded-lg text-[0.5625rem] font-mono font-bold bg-black/60 text-white backdrop-blur-md border border-white/10">
                       {tr(dwg.drawingNumber)}
                     </span>
                     {dwg.annotations && dwg.annotations.length > 0 && (
@@ -738,10 +733,10 @@ export default function InteriorDrawingsView({ projectId }: InteriorDrawingsView
                     )}
                   </div>
 
-                  <div className="absolute top-2.5 right-2.5">
+                  <div className="absolute top-2.5 end-2.5">
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase backdrop-blur-md border',
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[0.5625rem] font-black uppercase whitespace-nowrap backdrop-blur-md border',
                         statusInfo.classes
                       )}
                     >

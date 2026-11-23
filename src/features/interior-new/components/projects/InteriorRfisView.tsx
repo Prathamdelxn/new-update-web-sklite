@@ -1,5 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
+import { useDeepLinkParams } from '@/features/interior-new/hooks/useDeepLinkParams';
 
 // Port of interior-os-frontend's projects/[projectId]/rfis/page.tsx.
 // TanStack/sonner/zustand replaced with local useState/useEffect + interiorProjectService.
@@ -29,6 +30,11 @@ export default function InteriorRfisView({ projectId }: InteriorRfisViewProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const [selectedRfi, setSelectedRfi] = useState<any>(null);
+  // Opened from "What needs doing" (?rfi=<id>): open that RFI thread
+  useDeepLinkParams(['rfi'], !loading && rfis.length > 0, ({ rfi }) => {
+    const match = rfis.find((r: any) => String(r._id) === rfi);
+    if (match) setSelectedRfi(match);
+  });
   const [responseText, setResponseText] = useState('');
 
   const [subject, setSubject] = useState('');
