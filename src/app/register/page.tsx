@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Building2, CheckCircle2, Eye, EyeOff, KeyRound, Loader2, Lock, Mail, User, Phone, Globe, DollarSign, HardHat, Palette } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, Eye, EyeOff, KeyRound, Loader2, Lock, Mail, User, Phone, Globe, DollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
@@ -232,7 +232,6 @@ export default function RegisterPage() {
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
                     }`}
                   >
-                    <HardHat className="w-4 h-4" />
                     Construction
                   </button>
                   <button
@@ -244,7 +243,6 @@ export default function RegisterPage() {
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
                     }`}
                   >
-                    <Palette className="w-4 h-4" />
                     Interior
                   </button>
                 </div>

@@ -49,6 +49,8 @@ import { InteriorComparativeRequirementsView } from '@/features/interior-new/com
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 import { format } from 'date-fns';
+import { ScrollPane } from '@/components/ui/ScrollPane';
+import { AccordionCard, AccordionToolbar } from '@/components/ui/AccordionCard';
 
 export default function Lead360View() {
   const { currencySymbol, currencyCode, formatExactCurrency, formatCurrency } = useCurrency();
@@ -72,6 +74,8 @@ const { hasPermission: canDo } = usePermissions();
   };
 
   const [isSiteVisitModalOpen, setIsSiteVisitModalOpen] = useState(false);
+  // Site Visits tab: which survey sections are open (all collapsed by default)
+  const [siteOpen, setSiteOpen] = useState<Set<string>>(() => new Set());
   const [isSendToSiteVisitOpen, setIsSendToSiteVisitOpen] = useState(false);
   const [isSiteVisitHistoryOpen, setIsSiteVisitHistoryOpen] = useState(false);
   const [isSendToReqOpen, setIsSendToReqOpen] = useState(false);
@@ -1633,6 +1637,7 @@ const { hasPermission: canDo } = usePermissions();
                     )}
                   </div>
                   
+                  <ScrollPane>
                   <div className="relative border-s-2 border-[hsl(var(--border))] ms-2 ps-3 sm:ps-4 space-y-3 sm:space-y-3.5">
                     {activities.length === 0 ? (
                       <div className="py-8 flex flex-col items-center text-center">
@@ -1699,6 +1704,7 @@ const { hasPermission: canDo } = usePermissions();
                       })
                     )}
                   </div>
+                  </ScrollPane>
                 </div>
               </div>
             </motion.div>
@@ -2026,21 +2032,38 @@ const { hasPermission: canDo } = usePermissions();
                       </div>
                     ) : (
                       <>
-                        {/* 4-Card Structured Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
-                          
-                          {/* Card 1: Spatial Dimensions */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0 overflow-hidden">
-                            <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
-                              <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                                <Maximize2 size={14} className="text-purple-500" />
-                                {tr("Spatial Dimensions")}
-                              </h3>
-                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20 shrink-0">
-                                {tr("Spatial")}
-                              </span>
-                            </div>
-
+                        {/* Site survey — numbered accordion, every section fits on one screen */}
+                        {(() => {
+                          const sm: any = lead.siteMeasurements;
+                          const recorded = (...v: any[]) => v.filter(Boolean).length;
+                          const sections = ['spatial', 'openings', 'mep', 'constraints', 'photos'];
+                          const allOpen = sections.every((k) => siteOpen.has(k));
+                          const toggle = (k: string) =>
+                            setSiteOpen((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(k)) next.delete(k);
+                              else next.add(k);
+                              return next;
+                            });
+                          return (
+                            <div className="space-y-2">
+                              <AccordionToolbar
+                                title={tr("Site Survey")}
+                                count={sections.length}
+                                allOpen={allOpen}
+                                onToggleAll={() => setSiteOpen(allOpen ? new Set() : new Set(sections))}
+                              />
+                              <AccordionCard
+                                index={1}
+                                icon={<Maximize2 size={14} className="text-purple-500" />}
+                                title={tr("Spatial Dimensions")}
+                                summary={[
+                                  sm.carpetArea && `${sm.carpetArea} ${tr("Sq.Ft")}`,
+                                  sm.ceilingHeight && `${tr("Ceiling Height")} ${sm.ceilingHeight} ${tr("Ft")}`,
+                                ].filter(Boolean).join(' · ') || tr("Not recorded")}
+                                open={siteOpen.has('spatial')}
+                                onToggle={() => toggle('spatial')}
+                              >
                             <div className="grid grid-cols-2 gap-2 text-xs min-w-0">
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2.5 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Carpet Area")}</p>
@@ -2067,20 +2090,15 @@ const { hasPermission: canDo } = usePermissions();
                                 </p>
                               </div>
                             </div>
-                          </div>
-
-                          {/* Card 2: Openings & Structure */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0 overflow-hidden">
-                            <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
-                              <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                                <DoorOpen size={14} className="text-blue-500" />
-                                {tr("Openings & Structure")}
-                              </h3>
-                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20 shrink-0">
-                                {tr("Structure")}
-                              </span>
-                            </div>
-
+                              </AccordionCard>
+                              <AccordionCard
+                                index={2}
+                                icon={<DoorOpen size={14} className="text-blue-500" />}
+                                title={tr("Openings & Structure")}
+                                summary={tr("{{count}}/3 recorded", { count: recorded(sm.doorDimensions, sm.windowDimensions, sm.columnBeamDimensions || sm.wallThickness) })}
+                                open={siteOpen.has('openings')}
+                                onToggle={() => toggle('openings')}
+                              >
                             <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Door Dimensions")}</p>
@@ -2095,20 +2113,15 @@ const { hasPermission: canDo } = usePermissions();
                                 <p className="font-semibold text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.columnBeamDimensions || lead.siteMeasurements.wallThickness || tr("Not recorded")}</p>
                               </div>
                             </div>
-                          </div>
-
-                          {/* Card 3: MEP & Utilities */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0 overflow-hidden">
-                            <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
-                              <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                                <Zap size={14} className="text-amber-500" />
-                                {tr("MEP & Utility Services")}
-                              </h3>
-                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20 shrink-0">
-                                {tr("MEP")}
-                              </span>
-                            </div>
-
+                              </AccordionCard>
+                              <AccordionCard
+                                index={3}
+                                icon={<Zap size={14} className="text-amber-500" />}
+                                title={tr("MEP & Utility Services")}
+                                summary={tr("{{count}}/3 recorded", { count: recorded(sm.electricalPoints, sm.plumbingPoints, sm.acLocations) })}
+                                open={siteOpen.has('mep')}
+                                onToggle={() => toggle('mep')}
+                              >
                             <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[0.625rem] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1"><Zap size={10} />{tr(" Electrical Points")}</p>
@@ -2123,20 +2136,15 @@ const { hasPermission: canDo } = usePermissions();
                                 <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.acLocations || tr("None recorded")}</p>
                               </div>
                             </div>
-                          </div>
-
-                          {/* Card 4: Constraints & Notes */}
-                          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3 min-w-0 overflow-hidden">
-                            <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
-                              <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                                <Armchair size={14} className="text-emerald-500" />
-                                {tr("Furniture & Constraints")}
-                              </h3>
-                              <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shrink-0">
-                                {tr("Notes")}
-                              </span>
-                            </div>
-
+                              </AccordionCard>
+                              <AccordionCard
+                                index={4}
+                                icon={<Armchair size={14} className="text-emerald-500" />}
+                                title={tr("Furniture & Constraints")}
+                                summary={sm.siteConstraints ? tr("Site constraints reported") : tr("{{count}}/3 recorded", { count: recorded(sm.furnitureDimensions, sm.siteConstraints, sm.notes) })}
+                                open={siteOpen.has('constraints')}
+                                onToggle={() => toggle('constraints')}
+                              >
                             <div className="grid grid-cols-1 gap-2 text-xs min-w-0">
                               <div className="bg-[hsl(var(--muted)/0.35)] rounded-lg p-2 border border-[hsl(var(--border))] min-w-0 overflow-hidden">
                                 <p className="text-[0.625rem] font-bold text-emerald-600 uppercase tracking-wider">{tr("Existing Furniture")}</p>
@@ -2151,21 +2159,15 @@ const { hasPermission: canDo } = usePermissions();
                                 <p className="font-medium text-xs text-[hsl(var(--foreground))] mt-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{lead.siteMeasurements.notes || tr("No notes added")}</p>
                               </div>
                             </div>
-                          </div>
-                        </div>
-
-                        {/* Photos Section */}
-                        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-3.5 space-y-3">
-                          <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
-                              <ImageIcon size={14} className="text-emerald-500" />
-                              {tr("Site Photos & Visual Records")}
-                            </h3>
-                            <span className="text-xs font-bold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded border border-[hsl(var(--border))]">
-                              {lead.sitePhotos?.length || 0}{tr(" Photos")}
-                            </span>
-                          </div>
-
+                              </AccordionCard>
+                              <AccordionCard
+                                index={5}
+                                icon={<ImageIcon size={14} className="text-emerald-500" />}
+                                title={tr("Site Photos & Visual Records")}
+                                summary={`${lead.sitePhotos?.length || 0}${tr(" Photos")}`}
+                                open={siteOpen.has('photos')}
+                                onToggle={() => toggle('photos')}
+                              >
                           {lead.sitePhotos && lead.sitePhotos.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
                               {lead.sitePhotos.map((photo: string, i: number) => (
@@ -2189,7 +2191,10 @@ const { hasPermission: canDo } = usePermissions();
                               <p className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("No Site Photos Uploaded")}</p>
                             </div>
                           )}
-                        </div>
+                              </AccordionCard>
+                            </div>
+                          );
+                        })()}
                       </>
                     )}
                   </div>

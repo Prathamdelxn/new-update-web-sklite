@@ -424,15 +424,15 @@ const { hasPermission: canDo } = usePermissions();
 
                         {/* 5. Actions */}
                         <td
-                          className="px-4.5 py-3 text-end"
+                          className="px-4.5 py-3 text-end whitespace-nowrap"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex flex-nowrap items-center justify-end gap-1.5">
                             {!latestQuote ? (
                               (canDo('crm_quotations', 'create')) && (
                                 <button
                                   onClick={() => onCreateQuotation(lead._id)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                  className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-2.5 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 border border-indigo-600 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                                 >
                                   <FileText size={11} />{tr(" + Quote")}
                                 </button>
@@ -443,7 +443,7 @@ const { hasPermission: canDo } = usePermissions();
                                   (canDo('crm_quotations', 'create')) && (
                                     <button
                                       onClick={() => onCreateQuotation(lead._id)}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 border border-rose-600 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                                       title={tr("Create next quotation version")}
                                     >
                                       <Edit3 size={11} />{tr(" + Rev")}
@@ -462,7 +462,7 @@ const { hasPermission: canDo } = usePermissions();
                                 ) : null}
                                 <button
                                   onClick={() => router.push(`/interior-new/crm/leads/${lead._id}?tab=quotation`)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                  className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-xs"
                                 >
                                   {tr("View ")}<ArrowRight size={11} />
                                 </button>

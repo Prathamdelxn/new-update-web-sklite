@@ -579,39 +579,77 @@ export function InteriorConfirmedOrderStageView({
         accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
       />
 
-      {/* 1. CLEAN TABLE CARD CONTAINER */}
+      {/* 1. THE CONFIRMED ORDER (one per lead / project) */}
+      {lead?.confirmedOrder && (() => {
+        const co = lead.confirmedOrder;
+        const q = typeof co.quotationIndex === 'number' ? allQuotations[co.quotationIndex] : null;
+        const agreed = Number(co.agreedAmount || 0);
+        const advance = Number(co.advanceReceived || 0);
+        const money = (n: number) =>
+          `${currencySymbol} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+        const stats = [
+          {
+            label: tr('Accepted quotation'),
+            value: q ? tr(q.title || `Quotation ${co.quotationIndex + 1}`) : '—',
+            sub: q ? `v${q.version || co.quotationIndex + 1}` : undefined,
+          },
+          { label: tr('Agreed amount'), value: agreed ? money(agreed) : '—' },
+          { label: tr('Advance received'), value: advance ? money(advance) : '—' },
+          { label: tr('Balance due'), value: agreed ? money(Math.max(agreed - advance, 0)) : '—' },
+        ];
+        return (
+          <div className="bg-white border border-slate-200/90 rounded-xl shadow-xs overflow-hidden">
+            <div className="px-4 py-3.5 border-b border-slate-100 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                <Receipt size={16} className="text-emerald-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[0.625rem] font-bold uppercase tracking-wider text-emerald-700">{tr('Confirmed Order')}</p>
+                <p className="text-sm font-bold text-slate-900 truncate" title={co.title}>{tr(co.title || 'Confirmed Order')}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {co.orderNumber && (
+                  <span className="px-2 py-1 rounded-md bg-slate-100 border border-slate-200 text-[0.6875rem] font-mono font-semibold text-slate-700">
+                    {co.orderNumber}
+                  </span>
+                )}
+                {co.confirmedAt && (
+                  <span className="inline-flex items-center gap-1 text-[0.6875rem] text-slate-500 font-medium">
+                    <Clock size={12} className="text-slate-400" />
+                    {formatDateTime(co.confirmedAt)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-slate-100">
+              {stats.map((s) => (
+                <div key={s.label} className="bg-white px-4 py-3 min-w-0">
+                  <p className="text-[0.625rem] font-bold uppercase tracking-wider text-slate-500">{s.label}</p>
+                  <p className="mt-0.5 text-sm font-bold text-slate-900 truncate" title={s.value}>
+                    {s.value}
+                    {s.sub && <span className="ms-1.5 align-middle px-1.5 py-0.5 rounded text-[0.625rem] font-bold bg-slate-100 text-slate-600 border border-slate-200">{s.sub}</span>}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 2. VENDORS — grouped under the quotation they were sent */}
       <div className="bg-white border border-slate-200/90 rounded-xl shadow-xs overflow-hidden">
-        {/* Table Top Bar: Search & Status Header */}
+        {/* Top bar: title, search, quotation filter */}
         <div className="p-3.5 sm:p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 flex-wrap">
-            {/* Search Input */}
-            <div className="relative min-w-[13.75rem] sm:max-w-xs">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={tr("Search quote or vendor...")}
-                className="w-full ps-8.5 pe-8 py-1.5 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
-                >
-                  <X size={13} />
-                </button>
-              )}
-            </div>
+            <p className="text-sm font-bold text-slate-900 shrink-0">
+              {tr('Vendors on this order')}
+              <span className="ms-1.5 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[0.6875rem] font-bold align-middle">{filteredRows.length}</span>
+            </p>
 
-            {/* Filter by Dispatched Quotation (Pills) */}
+            {/* Filter by quotation (only when vendors span several quotations) */}
             {(() => {
-              const uniqueDispatchedQuoteIndices = Array.from(
-                new Set(tableRows.map((r) => r.quotationIndex))
-              );
+              const uniqueDispatchedQuoteIndices = Array.from(new Set(tableRows.map((r) => r.quotationIndex)));
               if (uniqueDispatchedQuoteIndices.length <= 1) return null;
-
               return (
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button
@@ -619,159 +657,151 @@ export function InteriorConfirmedOrderStageView({
                     onClick={() => setSelectedQuoteFilter('all')}
                     className={cn(
                       'px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                      selectedQuoteFilter === 'all'
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      selectedQuoteFilter === 'all' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                     )}
                   >
                     {tr("All Quotes")}
                   </button>
-                  {uniqueDispatchedQuoteIndices.map((idx) => {
-                    const q = allQuotations[idx];
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setSelectedQuoteFilter(idx)}
-                        className={cn(
-                          'px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                          selectedQuoteFilter === idx
-                            ? 'bg-slate-900 text-white shadow-xs'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                        )}
-                      >
-                        {q?.title || `Q${idx + 1}`}
-                      </button>
-                    );
-                  })}
+                  {uniqueDispatchedQuoteIndices.map((idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedQuoteFilter(idx)}
+                      className={cn(
+                        'px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                        selectedQuoteFilter === idx ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      )}
+                    >
+                      {`v${allQuotations[idx]?.version || idx + 1}`}
+                    </button>
+                  ))}
                 </div>
               );
             })()}
           </div>
 
-          <div className="text-xs text-slate-500 font-medium">
-            {tr("Showing ")}<strong className="text-slate-900 font-bold">{filteredRows.length}</strong>{tr(" dispatched quotation")}{filteredRows.length === 1 ? '' : 's'}
+          <div className="relative w-full sm:w-64">
+            <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={tr("Search quote or vendor...")}
+              className="w-full ps-8.5 pe-8 py-1.5 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Professional Light Theme Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-start border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/90 text-[0.6875rem] font-bold uppercase tracking-wider text-slate-600 select-none">
-                <th className="py-3 px-3.5 text-center w-12 font-bold text-slate-400">#</th>
-                <th className="py-3 px-4 min-w-[11.25rem]">{tr("Quotation Name")}</th>
-                <th className="py-3 px-4 min-w-[12.5rem]">{tr("Dispatched Vendor")}</th>
-                <th className="py-3 px-4 min-w-[10.625rem]">{tr("Sent Date & Time")}</th>
-                <th className="py-3 px-4 min-w-[13.75rem]">{tr("Vendor Documents")}</th>
-                <th className="py-3 px-3.5 text-center w-28">{tr("Action")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {filteredRows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-xs text-slate-500">
-                    <Receipt size={28} className="mx-auto text-slate-300 mb-2" />
-                    {tableRows.length === 0 ? (
-                      <div className="space-y-1">
-                        <p className="font-semibold text-slate-800 text-sm">
-                          {tr("No Quotations Dispatched to Vendors Yet")}
-                        </p>
-                        <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                          {tr("Quotations will automatically appear here as soon as they are sent to vendor partners.")}
-                        </p>
-                      </div>
-                    ) : (
-                      tr("No vendor dispatches match your search filter.")
+        {filteredRows.length === 0 ? (
+          <div className="py-12 text-center text-xs text-slate-500">
+            <Receipt size={28} className="mx-auto text-slate-300 mb-2" />
+            {tableRows.length === 0 ? (
+              <div className="space-y-1">
+                <p className="font-semibold text-slate-800 text-sm">{tr("No Quotations Dispatched to Vendors Yet")}</p>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  {tr("Quotations will automatically appear here as soon as they are sent to vendor partners.")}
+                </p>
+              </div>
+            ) : (
+              tr("No vendor dispatches match your search filter.")
+            )}
+          </div>
+        ) : (
+          Array.from(new Set(filteredRows.map((r) => r.quotationIndex))).map((qIdx) => {
+            const groupRows = filteredRows.filter((r) => r.quotationIndex === qIdx);
+            const head = groupRows[0];
+            return (
+              <div key={qIdx} className="border-b last:border-b-0 border-slate-200">
+                {/* Quotation header — shown once */}
+                <div className="px-4 py-2.5 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center gap-2">
+                  <FileText size={14} className="text-blue-600 shrink-0" />
+                  <span className="font-bold text-slate-900 text-xs sm:text-[0.8125rem] min-w-0 truncate" title={head.quotationTitle}>
+                    {tr(head.quotationTitle)}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[0.625rem] font-bold bg-white text-slate-700 border border-slate-200">
+                    v{head.quotationVersion}
+                  </span>
+                  {head.isPrimaryQuote && (
+                    <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                      <CheckCircle2 size={11} className="text-emerald-600" />{tr("Accepted")}
+                    </span>
+                  )}
+                  <div className="ms-auto flex items-center gap-3">
+                    {head.quotationTotal > 0 && (
+                      <span className="text-xs font-bold text-slate-700 whitespace-nowrap">
+                        {currencySymbol} {head.quotationTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      </span>
                     )}
-                  </td>
-                </tr>
-              ) : (
-                filteredRows.map((row, idx) => {
-                  const isUploadingThis = uploadingVendorId === row.id;
-
-                  return (
-                    <tr
-                      key={row.rowKey}
-                      className="hover:bg-slate-50/80 transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewQuotationIndex(qIdx);
+                        setIsPreviewModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 border border-blue-200/80 text-xs font-bold transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                      title={tr("View full {{quotationTitle}}", { quotationTitle: head.quotationTitle })}
                     >
-                      {/* # Index */}
-                      <td className="py-3.5 px-3.5 text-center font-mono text-xs text-slate-400 font-medium">
-                        {idx + 1}
-                      </td>
+                      <Eye size={13} />
+                      <span>{tr("View quotation")}</span>
+                    </button>
+                  </div>
+                </div>
 
-                      {/* Quotation Name */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                            {tr(row.quotationTitle)}
-                          </span>
-                          <span className="px-1.5 py-0.5 rounded text-[0.625rem] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                            v{tr(row.quotationVersion)}
-                          </span>
-                          {row.isPrimaryQuote && (
-                            <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                              <CheckCircle2 size={11} className="text-emerald-600" />{tr(" Primary")}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Dispatched Vendor */}
-                      <td className="py-3.5 px-4">
-                        <div className="space-y-0.5">
-                          <p className="font-bold text-slate-900 text-xs sm:text-sm">
-                            {tr(row.vendorName)}
-                          </p>
-                          {row.vendorEmail && (
-                            <p className="text-[0.6875rem] text-slate-500 font-normal truncate max-w-[12.5rem]" title={row.vendorEmail}>
-                              {tr(row.vendorEmail)}
-                            </p>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Sent Date & Time */}
-                      <td className="py-3.5 px-4">
-                        {row.sentAt ? (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
-                            <Clock size={13} className="text-slate-400 shrink-0" />
-                            <span>{formatDateTime(row.sentAt)}</span>
+                {/* One row per vendor */}
+                <div className="divide-y divide-slate-100">
+                  {groupRows.map((row) => {
+                    const isUploadingThis = uploadingVendorId === row.id;
+                    return (
+                      <div
+                        key={row.rowKey}
+                        className="px-4 py-3 grid grid-cols-1 md:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_2rem] gap-x-4 gap-y-2 items-center hover:bg-slate-50/60 transition-colors"
+                      >
+                        {/* Vendor */}
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
+                            {(row.vendorName || '?').trim().charAt(0).toUpperCase()}
                           </div>
-                        ) : (
-                          <span className="text-slate-400 text-xs">—</span>
-                        )}
-                      </td>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 text-xs sm:text-[0.8125rem] truncate" title={row.vendorName}>{tr(row.vendorName)}</p>
+                            {row.vendorEmail && (
+                              <p className="text-[0.6875rem] text-slate-500 truncate" title={row.vendorEmail}>{row.vendorEmail}</p>
+                            )}
+                          </div>
+                        </div>
 
-                      {/* Vendor Documents */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2 flex-wrap max-w-sm">
+                        {/* Sent */}
+                        <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium min-w-0">
+                          <Clock size={13} className="text-slate-400 shrink-0" />
+                          <span className="truncate">{row.sentAt ? formatDateTime(row.sentAt) : '—'}</span>
+                        </div>
+
+                        {/* Vendor documents */}
+                        <div className="flex items-center gap-2 flex-wrap min-w-0">
                           {row.attachments.map((doc, dIdx) => (
                             <div
                               key={dIdx}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium transition-colors"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium transition-colors max-w-full"
                             >
                               <FileText size={12} className="text-blue-600 shrink-0" />
-                              <span className="max-w-[6.25rem] truncate font-medium" title={doc.name}>
-                                {tr(doc.name)}
-                              </span>
+                              <span className="max-w-[8rem] truncate" title={doc.name}>{doc.name}</span>
                               {doc.url && (
-                                <a
-                                  href={doc.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-slate-400 hover:text-blue-600 p-0.5 transition-colors"
-                                  title={tr("Preview file")}
-                                >
+                                <a href={doc.url} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-blue-600 p-0.5 transition-colors" title={tr("Preview file")}>
                                   <Eye size={12} />
                                 </a>
                               )}
-                              {!isReadOnly && (
+                              {!isReadOnly && canEditOrder && (
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    handleRemoveVendorAttachment(row.quotationIndex, row.id, dIdx)
-                                  }
+                                  onClick={() => handleRemoveVendorAttachment(row.quotationIndex, row.id, dIdx)}
                                   className="text-slate-400 hover:text-rose-600 p-0.5 cursor-pointer transition-colors"
                                   title={tr("Remove document")}
                                 >
@@ -780,64 +810,48 @@ export function InteriorConfirmedOrderStageView({
                               )}
                             </div>
                           ))}
-
-                          {/* Show + Upload button only if no document is uploaded yet */}
-                          {row.attachments.length === 0 && !isReadOnly && (
-                            (canEditOrder) && (
+                          {row.attachments.length === 0 && (
+                            !isReadOnly && canEditOrder ? (
                               <button
                                 type="button"
                                 onClick={() => triggerVendorUpload(row.quotationIndex, row.id)}
                                 disabled={isUploadingThis}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 rounded-md text-xs font-semibold transition-all shadow-2xs cursor-pointer shrink-0 active:scale-95"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-dashed border-slate-300 hover:border-slate-400 rounded-md text-xs font-semibold transition-all cursor-pointer shrink-0"
                                 title={tr("Upload vendor PDF / photo document")}
                               >
                                 <UploadCloud size={12} className="text-slate-500" />
                                 <span>{isUploadingThis ? tr("Uploading...") : tr("+ Upload")}</span>
                               </button>
+                            ) : (
+                              <span className="text-[0.6875rem] text-slate-400">{tr("No documents")}</span>
                             )
                           )}
                         </div>
-                      </td>
 
-                      {/* Action */}
-                      <td className="py-3.5 px-3.5 text-center">
-                        <div className="inline-flex items-center gap-1.5 justify-center">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPreviewQuotationIndex(row.quotationIndex);
-                              setIsPreviewModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95"
-                            title={tr("View full {{quotationTitle}}", { quotationTitle: row.quotationTitle })}
-                          >
-                            <Eye size={13} />
-                            <span>{tr("View")}</span>
-                          </button>
-                          {row.hasVendor && !isReadOnly && (
-                            (canEditOrder) && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveVendorFromQuote(row.quotationIndex, row.id)}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                title={tr("Delete vendor dispatch row")}
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            )
+                        {/* Remove vendor */}
+                        <div className="flex md:justify-end">
+                          {row.hasVendor && !isReadOnly && canEditOrder && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveVendorFromQuote(row.quotationIndex, row.id)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title={tr("Delete vendor dispatch row")}
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
-      {/* 2. GENERAL CLIENT CONTRACT / WASTE ATTACHMENTS */}
+      {/* 3. GENERAL CLIENT CONTRACT / WASTE ATTACHMENTS */}
       <div className="p-4 bg-white border border-slate-200/90 rounded-xl shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div>

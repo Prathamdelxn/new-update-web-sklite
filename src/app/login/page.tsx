@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Eye, EyeOff, Lock, Mail, Loader2, ArrowLeft, CheckCircle2, HardHat, Palette } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
@@ -167,7 +167,6 @@ function LoginForm() {
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
                     }`}
                   >
-                    <HardHat className="w-4 h-4" />
                     Construction
                   </button>
                   <button
@@ -180,7 +179,6 @@ function LoginForm() {
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
                     }`}
                   >
-                    <Palette className="w-4 h-4" />
                     Interior
                   </button>
                 </div>

@@ -31,6 +31,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useQuery } from '@tanstack/react-query';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
+import { ScrollPane } from '@/components/ui/ScrollPane';
 
 interface InteriorLeadFollowUpsTabProps {
   lead: any;
@@ -439,6 +440,7 @@ const { hasPermission: canDo } = usePermissions();
             </span>
           </div>
 
+          <ScrollPane>
           <div className="relative border-s-2 border-[hsl(var(--border))] ms-2.5 sm:ms-4 ps-4 sm:ps-6 space-y-4 sm:space-y-5 min-w-0">
             {allFollowUps.map((item: any, idx: number) => {
               const isItemActive = item._id === currentFollowUp?._id;
@@ -524,6 +526,7 @@ const { hasPermission: canDo } = usePermissions();
               );
             })}
           </div>
+          </ScrollPane>
         </div>
 
       </div>

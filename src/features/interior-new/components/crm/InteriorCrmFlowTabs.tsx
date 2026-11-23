@@ -12,6 +12,7 @@ import {
   Calculator,
   FileText,
   XCircle,
+  Trophy,
 } from 'lucide-react';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
@@ -35,13 +36,15 @@ interface InteriorCrmFlowTabsProps {
 
 const FLOW_STAGES: { id: InteriorCrmStage; label: string; icon: React.ElementType; moduleKey: string }[] = [
   { id: 'leads', label: 'All Leads', icon: Users, moduleKey: 'crm_leads' },
+  // Outcome tabs sit next to All Leads so they're visible without scrolling
+  { id: 'won_projects', label: 'Converted', icon: Trophy, moduleKey: 'crm_leads' },
+  { id: 'lost_leads', label: 'Lost Leads', icon: XCircle, moduleKey: 'crm_leads' },
   { id: 'follow_ups', label: 'Follow-ups', icon: PhoneCall, moduleKey: 'crm_followups' },
   { id: 'requirement_design', label: 'Requirements', icon: PenTool, moduleKey: 'crm_requirements' },
   { id: 'site_visits', label: 'Site Visits', icon: MapPin, moduleKey: 'crm_site_visits' },
   { id: 'drawing', label: 'Drawings', icon: Ruler, moduleKey: 'crm_drawings' },
   { id: 'boq', label: 'BOQ', icon: Calculator, moduleKey: 'crm_boq' },
   { id: 'quotations', label: 'Quotations', icon: FileText, moduleKey: 'crm_quotations' },
-  { id: 'lost_leads', label: 'Lost Leads', icon: XCircle, moduleKey: 'crm_leads' },
 ];
 
 export const InteriorCrmFlowTabs: React.FC<InteriorCrmFlowTabsProps> = ({

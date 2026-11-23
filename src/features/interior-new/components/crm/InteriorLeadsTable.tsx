@@ -1089,7 +1089,7 @@ export const InteriorLeadsTable: React.FC<InteriorLeadsTableProps> = ({
                           )}
 
                           {/* Master Leads Actions */}
-                          {(activeTab === 'leads' || activeTab === 'lost_leads') && (
+                          {(activeTab === 'leads' || activeTab === 'lost_leads' || activeTab === 'won_projects') && (
                             <>
                               {lead.status === 'New Lead' && onPassToFollowUp && (
                                 (canDo('crm_leads', 'update') || canDo('crm_followups', 'update') || canDo('crm_followups', 'create')) && (

@@ -4195,5 +4195,20 @@
  "🎉 Successfully converted to Project!": "Workspace ID copied to clipboard",
  "🏢 Back to Vendor List": "🏢 العودة إلى قائمة الموردين",
  "📐 2D Working Drawings (": "📐 مخططات العمل ثنائية الأبعاد (",
- "🧊 3D Models & Renders (": "🧊 النماذج ثلاثية الأبعاد والتصورات ("
+ "🧊 3D Models & Renders (": "🧊 النماذج ثلاثية الأبعاد والتصورات (",
+ "Accepted quotation": "عرض السعر المقبول",
+ "Agreed amount": "المبلغ المتفق عليه",
+ "Advance received": "الدفعة المقدمة المستلمة",
+ "Balance due": "الرصيد المستحق",
+ "Vendors on this order": "الموردون في هذا الطلب",
+ "View quotation": "عرض السعر",
+ "No documents": "لا توجد مستندات",
+ "More": "المزيد",
+ "Top": "الأعلى",
+ "Expand all": "توسيع الكل",
+ "Collapse all": "طي الكل",
+ "specs": "مواصفات",
+ "Specifications filled": "المواصفات المكتملة",
+ "{{count}}/3 recorded": "{{count}}/3 مسجّلة",
+ "Site constraints reported": "تم الإبلاغ عن قيود في الموقع"
 }

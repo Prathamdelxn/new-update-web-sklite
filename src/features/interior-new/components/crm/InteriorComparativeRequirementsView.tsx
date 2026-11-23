@@ -33,6 +33,7 @@ import {
   Droplets,
   Armchair,
   Edit3,
+  ChevronDown,
 } from 'lucide-react';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
@@ -71,6 +72,15 @@ export function InteriorComparativeRequirementsView({
   const [isUpdatingExpiry, setIsUpdatingExpiry] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedPhotoModal, setSelectedPhotoModal] = useState<string | null>(null);
+  // Room cards are collapsed to a one-line title so every space fits on one screen
+  const [openRooms, setOpenRooms] = useState<Set<number>>(() => new Set());
+  const toggleRoom = (i: number) =>
+    setOpenRooms((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
 
   const shareSettings = lead?.shareSettings;
   const isLinkExpired = Boolean(
@@ -987,78 +997,156 @@ export function InteriorComparativeRequirementsView({
             </div>
           )}
 
-          {/* Room Cards List */}
-          <div className="space-y-3.5">
+          {/* Room Cards List — accordion: every space fits on one screen, open what you need */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2 px-0.5 pb-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("Spaces")}</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-[hsl(var(--muted))] text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))]">
+                  {unifiedRooms.length}
+                </span>
+              </div>
+              {unifiedRooms.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenRooms(
+                      openRooms.size === unifiedRooms.length ? new Set() : new Set(unifiedRooms.map((_: any, i: number) => i))
+                    )
+                  }
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[0.6875rem] font-semibold text-[hsl(var(--foreground))] transition-colors cursor-pointer"
+                >
+                  <ChevronDown
+                    size={13}
+                    className={cn('transition-transform duration-200', openRooms.size === unifiedRooms.length && 'rotate-180')}
+                  />
+                  {openRooms.size === unifiedRooms.length ? tr("Collapse all") : tr("Expand all")}
+                </button>
+              )}
+            </div>
             {unifiedRooms.map((room: any, idx: number) => {
-              const hasFunctional = Boolean(
-                room.roomUsage ||
-                room.furnitureRequirements ||
-                room.storage ||
-                room.electricalPoints ||
-                room.lightingRequirements ||
-                room.plumbingRequirements ||
-                room.circulation
-              );
-
-              const hasAesthetic = Boolean(
-                room.designStyle ||
-                room.theme ||
-                room.colours ||
-                room.materials ||
-                room.flooring ||
-                room.ceiling ||
-                room.wallFinishes ||
-                room.furnitureStyle
-              );
+              const isOpen = openRooms.has(idx);
+              const functionalFields = [
+                room.roomUsage,
+                room.furnitureRequirements,
+                room.storage,
+                room.electricalPoints,
+                room.lightingRequirements,
+                room.plumbingRequirements,
+                room.circulation,
+              ];
+              const aestheticFields = [
+                room.designStyle || room.theme,
+                room.colours,
+                room.materials,
+                room.flooring,
+                room.ceiling,
+                room.wallFinishes,
+                room.furnitureStyle,
+              ];
+              const hasFunctional = functionalFields.some(Boolean);
+              const hasAesthetic = aestheticFields.some(Boolean);
+              const specTotal = functionalFields.length + aestheticFields.length;
+              const specFilled = [...functionalFields, ...aestheticFields].filter(Boolean).length;
+              const specPct = Math.round((specFilled / specTotal) * 100);
+              const metaBits = [room.interiorType, room.designStyle || room.theme, room.dimensions].filter(Boolean);
 
               return (
                 <div
                   key={idx}
-                  className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-2xs hover:border-[hsl(var(--border))]/90 transition-all"
+                  className={cn(
+                    'bg-[hsl(var(--card))] border rounded-xl overflow-hidden transition-all duration-200',
+                    isOpen
+                      ? 'border-[hsl(var(--primary)/0.35)] shadow-sm ring-1 ring-[hsl(var(--primary)/0.08)]'
+                      : 'border-[hsl(var(--border))] shadow-2xs hover:border-[hsl(var(--primary)/0.25)]'
+                  )}
                 >
-                  {/* Room Title Header */}
-                  <div className="bg-[hsl(var(--muted)/0.35)] px-4 py-2.5 border-b border-[hsl(var(--border))] flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="w-6 h-6 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold text-xs flex items-center justify-center shrink-0">
-                        {idx + 1}
+                  {/* Room Title Header — click to open / close */}
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => toggleRoom(idx)}
+                    className={cn(
+                      'w-full text-start px-3.5 sm:px-4 py-3 flex items-center gap-3 cursor-pointer select-none transition-colors',
+                      isOpen ? 'bg-[hsl(var(--primary)/0.04)]' : 'hover:bg-[hsl(var(--muted)/0.4)]'
+                    )}
+                  >
+                    {/* Number */}
+                    <span
+                      className={cn(
+                        'w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 transition-colors',
+                        isOpen
+                          ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                          : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'
+                      )}
+                    >
+                      {idx + 1}
+                    </span>
+
+                    {/* Name + one-line summary */}
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))] truncate">{tr(room.roomName)}</span>
+                        {room.source === 'client' && (
+                          <span className="shrink-0 text-[0.5625rem] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                            {tr("Client Intake")}
+                          </span>
+                        )}
+                        {room.source === 'merged' && (
+                          <span className="shrink-0 text-[0.5625rem] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                            {tr("Merged")}
+                          </span>
+                        )}
                       </span>
-                      <h4 className="text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">{tr(room.roomName)}</h4>
-                      {room.interiorType && (
-                        <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">({tr(room.interiorType)})</span>
-                      )}
-                      {room.source === 'client' && (
-                        <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                          {tr("Client Intake")}
+                      {metaBits.length > 0 && (
+                        <span className="mt-0.5 flex items-center gap-1 text-[0.6875rem] text-[hsl(var(--muted-foreground))] min-w-0">
+                          {(room.designStyle || room.theme) && <Palette size={11} className="shrink-0 text-purple-500" />}
+                          <span className="truncate">{metaBits.map((b: string) => tr(b)).join(' · ')}</span>
                         </span>
                       )}
-                      {room.source === 'merged' && (
-                        <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                          {tr("Merged")}
-                        </span>
-                      )}
-                    </div>
+                    </span>
 
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {(room.designStyle || room.theme) && (
-                        <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 flex items-center gap-1">
-                          <Palette size={10} /> {room.designStyle || room.theme}
-                        </span>
-                      )}
-                      {room.dimensions && (
-                        <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                          {tr(room.dimensions)}
-                        </span>
-                      )}
-                      {room.budget && (
-                        <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
-                          {tr(currencySymbol)} {tr(room.budget)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                    {/* Budget */}
+                    {room.budget && (
+                      <span className="hidden sm:inline-flex shrink-0 text-[0.6875rem] font-bold px-2 py-1 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                        {tr(currencySymbol)} {tr(room.budget)}
+                      </span>
+                    )}
 
-                  {/* Room Details Body */}
-                  <div className="p-4 space-y-3.5 text-xs">
+                    {/* Specs filled */}
+                    <span className="hidden md:flex shrink-0 flex-col items-end gap-1 w-20" title={tr("Specifications filled")}>
+                      <span className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))]">
+                        {specFilled}/{specTotal} {tr("specs")}
+                      </span>
+                      <span className="h-1 w-full rounded-full bg-[hsl(var(--muted))] overflow-hidden">
+                        <span
+                          className={cn('block h-full rounded-full', specPct >= 70 ? 'bg-emerald-500' : specPct >= 35 ? 'bg-amber-500' : 'bg-rose-400')}
+                          style={{ width: `${specPct}%` }}
+                        />
+                      </span>
+                    </span>
+
+                    {/* Chevron */}
+                    <span
+                      className={cn(
+                        'w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all duration-200',
+                        isOpen ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))]'
+                      )}
+                    >
+                      <ChevronDown size={16} className={cn('transition-transform duration-300', isOpen && 'rotate-180')} />
+                    </span>
+                  </button>
+
+                  {/* Room Details Body — slides open */}
+                  <div
+                    className={cn(
+                      'grid transition-[grid-template-rows] duration-300 ease-out',
+                      isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                    )}
+                    inert={!isOpen}
+                  >
+                  <div className="min-h-0 overflow-hidden">
+                  <div className="p-4 space-y-3.5 text-xs border-t border-[hsl(var(--border))]">
                     {/* Dual Section Grid: Functional Requirements vs Aesthetic Requirements */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 min-w-0">
                       {/* 1. Functional Requirements Card */}
@@ -1232,6 +1320,8 @@ export function InteriorComparativeRequirementsView({
                         </p>
                       </div>
                     )}
+                  </div>
+                  </div>
                   </div>
                 </div>
               );

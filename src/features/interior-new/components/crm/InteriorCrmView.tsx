@@ -17,7 +17,6 @@ import { InteriorRequirementDesignView } from './InteriorRequirementDesignView';
 import { InteriorDrawingsView } from './InteriorDrawingsView';
 import { InteriorBoqStageView } from './InteriorBoqStageView';
 import { InteriorQuotationsView } from './InteriorQuotationsView';
-import { InteriorWonProjectsView } from './InteriorWonProjectsView';
 import { InteriorCreateLeadModal } from './modals/InteriorCreateLeadModal';
 import { InteriorEditLeadModal } from './modals/InteriorEditLeadModal';
 import { InteriorScheduleFollowUpModal } from './modals/InteriorScheduleFollowUpModal';
@@ -189,7 +188,7 @@ export default function InteriorCrmView() {
   // Dynamic stage counts calculated immediately from local leads state (0ms update)
   const stageCounts = React.useMemo(() => {
     return {
-      leads: leads.filter((l) => l.status !== 'Lost').length,
+      leads: leads.length,
       follow_ups: leads.filter((l) => ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(l.status)).length,
       site_visits: leads.filter(
         (l) =>
@@ -224,7 +223,7 @@ export default function InteriorCrmView() {
             'Converted',
           ].includes(l.status) || (l.quotations && l.quotations.length > 0)
       ).length,
-      won_projects: leads.filter((l) => ['Won', 'Converted'].includes(l.status)).length,
+      won_projects: leads.filter((l) => ['Won', 'Converted'].includes(l.status) || Boolean(l.linkedProject)).length,
       lost_leads: leads.filter((l) => l.status === 'Lost').length,
     };
   }, [serverStats, leads]);
@@ -232,7 +231,7 @@ export default function InteriorCrmView() {
   // Derive filtered leads based on the current tab
   const getFilteredLeads = () => {
     if (activeTab === 'leads') {
-      return leads.filter(l => l.status !== 'Lost'); // Show ALL leads except Lost ones in the master Leads tab
+      return leads; // All Leads shows every lead, including Lost and Converted
     }
     if (activeTab === 'follow_ups') {
       return leads.filter(l => ['New Lead', 'Contacted', 'Meeting Scheduled'].includes(l.status));
@@ -282,6 +281,9 @@ export default function InteriorCrmView() {
     }
     if (activeTab === 'lost_leads') {
       return leads.filter(l => l.status === 'Lost');
+    }
+    if (activeTab === 'won_projects') {
+      return leads.filter(l => ['Won', 'Converted'].includes(l.status) || Boolean(l.linkedProject));
     }
     // Default fallback
     return leads;
@@ -567,7 +569,8 @@ export default function InteriorCrmView() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-        {canAddToStage && (
+        {/* only when some open lead can actually be brought into this stage */}
+        {canAddToStage && stageCandidates.length > 0 && (
           <button
             onClick={() => setIsStagePickerOpen(true)}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 border border-[hsl(var(--primary)/0.4)] text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
@@ -642,9 +645,7 @@ export default function InteriorCrmView() {
             onCreateQuotation={openQuotationBuilderModal}
             onMarkAsLost={openMarkAsLostModal}
           />
-        ) : activeTab === 'won_projects' ? (
-          <InteriorWonProjectsView />
-        ) : (activeTab === 'leads' || activeTab === 'lost_leads') ? (
+        ) : (activeTab === 'leads' || activeTab === 'lost_leads' || activeTab === 'won_projects') ? (
           <InteriorLeadsTable
             leads={getFilteredLeads()}
             isLoading={isLoading}
