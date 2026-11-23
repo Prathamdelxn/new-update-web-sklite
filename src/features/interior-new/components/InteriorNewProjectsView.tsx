@@ -205,7 +205,7 @@ function InteriorNewProjectsSkeleton() {
 export default function InteriorNewProjectsView() {
   const toast = useToast();
   const { hasPermission: canDo } = usePermissions();
-  const { currencySymbol, formatCurrency } = useCurrency();
+  const { currencySymbol, formatCurrency, currencyCode } = useCurrency();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -398,7 +398,8 @@ export default function InteriorNewProjectsView() {
         type: formData.type,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        budget: { amount: budgetNum, currency: 'INR' },
+        // the organisation's currency (was hard-coded INR, so the phone app showed INR for QAR orgs)
+        budget: { amount: budgetNum, currency: currencyCode || 'INR' },
         totalBudget: budgetNum,
         location: {
           city: (formData.city || '').trim(),

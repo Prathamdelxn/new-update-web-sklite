@@ -11,6 +11,7 @@ import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import interiorApiClient from '@/services/interiorApi.client';
 import { loginInterior } from '@/lib/interiorAuth';
+import { AuthVisualPanel } from '@/components/auth/AuthVisualPanel';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -126,96 +127,35 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen xl:h-screen xl:overflow-hidden bg-[#E6F0FF] flex items-center justify-center p-4 sm:p-6 xl:p-0">
-      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6 xl:gap-8 w-full max-w-md xl:max-w-5xl">
+    <div className="min-h-screen bg-[#E6F0FF] flex items-center justify-center p-4 sm:p-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 w-full max-w-md xl:max-w-4xl">
         
-        {/* Left Marketing Banner - Hidden on mobile, shown on desktop (xl+) */}
-        <div className="hidden xl:flex order-2 xl:order-1 rounded-3xl bg-[#0A2952] p-6 xl:p-8 text-white overflow-hidden relative flex-col justify-between shadow-xl">
-          {/* Construction Background Image with Brand Gradient Overlays */}
-          <div className="absolute inset-0 pointer-events-none">
-            <img
-              src="/construction-bg.jpg"
-              alt="SkyStruct Construction"
-              className="h-full w-full object-cover object-center"
-            />
-            {/* Rich gradient & blue tint overlay to guarantee contrast & text legibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#061d3d] via-[#092b57]/80 to-[#0e3b7b]/75 mix-blend-multiply" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0E3B7B]/70 via-transparent to-[#071c36]/90" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15),_transparent_40%)]" />
-          </div>
-
-          <div className="relative z-10 flex h-full flex-col justify-between space-y-6">
-            <div>
-              <div className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white">
-                <img
-                  src="/SS-Emblem.svg"
-                  alt="SkyStruct Logo"
-                  className="w-5 h-5 object-contain brightness-0 invert"
-                />
-                SkyStruct Lite
-              </div>
-
-              <h1 className="mt-4 xl:mt-6 text-2xl xl:text-3xl font-extrabold leading-tight tracking-tight">
-                Build better projects
-                <span className="text-[#8AC7FF]"> with one Sign In</span>
-              </h1>
-
-              <p className="mt-3 xl:mt-4 max-w-xl text-blue-100/90 text-xs xl:text-sm leading-normal">
-                Access your workspace, manage teams, projects, and budgets seamlessly from one place.
-              </p>
-            </div>
-
-            <div className="mt-4 xl:mt-6 rounded-2xl border border-white/10 bg-white/10 p-5 xl:p-6 backdrop-blur-xl">
-              <p className="text-xs uppercase tracking-[0.24em] text-blue-100/80">Platform Features</p>
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
-                  <p className="text-xs xl:text-sm text-blue-100/90">Unified Sign In for Workspace Members & Super Admins</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
-                  <p className="text-xs xl:text-sm text-blue-100/90">Real-time project tracking, BOQs & budget management</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="grid size-6 shrink-0 place-items-center rounded-full bg-white/20 text-xs font-bold text-white">✓</div>
-                  <p className="text-xs xl:text-sm text-blue-100/90">Seamless sync across Web & Mobile app</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Left visual panel – imagery only (desktop) */}
+        <AuthVisualPanel industryType={industryType} className="hidden xl:flex order-2 xl:order-1" />
 
         {/* Right Sign In Card - Visible everywhere */}
-        <div className="order-1 xl:order-2 rounded-3xl bg-white p-5 sm:p-7 xl:p-8 border border-slate-200/80 flex flex-col justify-between w-full shadow-sm">
+        <div className="order-1 xl:order-2 rounded-3xl bg-white p-5 sm:p-6 border border-slate-200/80 flex flex-col justify-between w-full shadow-sm">
           <div>
-            {/* Mobile Brand Logo Header */}
-            <div className="xl:hidden flex items-center justify-center gap-2.5 mb-5">
-              <div className="w-8 h-8 rounded-xl bg-[#0E3B7B] flex items-center justify-center p-1.5 text-white">
-                <img
-                  src="/SS-Emblem.svg"
-                  alt="SkyStruct Logo"
-                  className="w-full h-full object-contain brightness-0 invert"
-                />
-              </div>
-              <span className="font-extrabold text-base tracking-tight text-[#0E3B7B]">SkyStruct Lite</span>
+            {/* Logo only on small screens – on desktop it sits on the photo panel */}
+            <div className="xl:hidden mb-4">
+              <img src="/SS-Logo-2025-Colour.svg" alt="SkyStruct" className="h-11 w-auto" />
             </div>
 
-            <div className="mb-4 sm:mb-5 flex items-center justify-between gap-4">
+            <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Sign In</h2>
+                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Welcome back</h2>
                 <p className="mt-0.5 text-xs text-slate-500">Enter your credentials to continue.</p>
               </div>
             </div>
 
             {registered && (
               <div className="mb-3 xl:mb-4 rounded-2xl border border-emerald-100/90 bg-emerald-50 p-2.5 text-xs text-emerald-800">
-                Sign up successful! Please sign in with your credentials.
+                Your workspace is ready. Enter your details to continue.
               </div>
             )}
 
-            <div className="space-y-4">
-              <div className="mb-4 sm:mb-5">
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Sign In Type</label>
+            <div className="space-y-3">
+              <div className="mb-4">
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -255,7 +195,7 @@ function LoginForm() {
                     className="mb-4 sm:mb-6 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 disabled:opacity-60"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to Sign In
+                    Back
                   </button>
 
                   {fpSent ? (
@@ -392,7 +332,7 @@ function LoginForm() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full rounded-xl bg-blue-600 px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 active:scale-95 cursor-pointer"
+                      className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 active:scale-95 cursor-pointer"
                     >
                       {isLoading ? (
                         <span className="inline-flex items-center justify-center gap-2">
@@ -408,7 +348,7 @@ function LoginForm() {
                   <div className="mt-4 text-center text-xs text-slate-500">
                     Don’t have an account?{' '}
                     <Link href="/register" className="font-semibold text-blue-600 hover:text-blue-700">
-                      Sign Up
+                      Create a workspace
                     </Link>
                   </div>
                 </>
@@ -416,7 +356,7 @@ function LoginForm() {
             </div>
           </div>
 
-          <div className="mt-5 sm:mt-6 text-center text-[11px] sm:text-xs text-slate-400">
+          <div className="mt-4 text-center text-[11px] text-slate-400">
             © 2026 SkyStruct Lite. All rights reserved.
           </div>
         </div>

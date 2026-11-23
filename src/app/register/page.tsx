@@ -8,7 +8,7 @@ import { useAuth } from '@/providers/AuthContext';
 import { useToast } from '@/providers/ToastContext';
 import api from '@/services/api.client';
 import { signupInterior, verifyInteriorEmail } from '@/lib/interiorAuth';
-import { CountryCodeSelect } from '@/components/ui/CountryCodeSelect';
+import { AuthVisualPanel } from '@/components/auth/AuthVisualPanel';
 import { fetchGlobalCountries, getLocalCountries, CountryInfo } from '@/services/country.service';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
@@ -34,9 +34,11 @@ export default function RegisterPage() {
 
   // Country & Currency Selection derived from Country Code
   const [countries, setCountries] = useState<CountryInfo[]>(() => getLocalCountries());
-  const [selectedCountryCode, setSelectedCountryCode] = useState('IN');
-  const [selectedCurrency, setSelectedCurrency] = useState('INR');
-  const [selectedTimezone, setSelectedTimezone] = useState('Asia/Kolkata');
+  // Default: Qatar / QAR (client region); the user can pick another country and the
+  // currency + time zone follow it.
+  const [selectedCountryCode, setSelectedCountryCode] = useState('QA');
+  const [selectedCurrency, setSelectedCurrency] = useState('QAR');
+  const [selectedTimezone, setSelectedTimezone] = useState('Asia/Qatar');
 
   const { register, login } = useAuth();
   const toast = useToast();
@@ -50,8 +52,9 @@ export default function RegisterPage() {
   }, []);
 
   const currentCountry = useMemo(() => {
-    return countries.find((c) => c.cca2 === selectedCountryCode) || countries.find((c) => c.cca2 === 'IN') || countries[0];
+    return countries.find((c) => c.cca2 === selectedCountryCode) || countries.find((c) => c.cca2 === 'QA') || countries[0];
   }, [countries, selectedCountryCode]);
+
 
   const handleCountryChange = (cca2: string) => {
     setSelectedCountryCode(cca2);
@@ -76,7 +79,7 @@ export default function RegisterPage() {
         return toast.error('Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number');
       }
       setIsLoading(true);
-      const fullPhone = interiorPhone.trim() ? `${currentCountry?.phoneCode || '+91'} ${interiorPhone.trim()}` : '';
+      const fullPhone = interiorPhone.trim(); // international format from the phone field, e.g. +97455012345
 
       try {
         await signupInterior({
@@ -86,9 +89,9 @@ export default function RegisterPage() {
           email,
           password,
           phone: fullPhone,
-          country: currentCountry?.name || 'India',
-          currency: selectedCurrency || currentCountry?.currencyCode || 'INR',
-          timezone: selectedTimezone || currentCountry?.primaryTimezone || 'Asia/Kolkata',
+          country: currentCountry?.name || 'Qatar',
+          currency: selectedCurrency || currentCountry?.currencyCode || 'QAR',
+          timezone: selectedTimezone || currentCountry?.primaryTimezone || 'Asia/Qatar',
         });
         toast.success('Registration code sent to your email!');
         setShowOtp(true);
@@ -178,61 +181,43 @@ export default function RegisterPage() {
   const inputClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20';
 
   return (
-    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-[#E6F0FF] flex items-center justify-center px-4 sm:px-6 py-6 lg:py-0">
-      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-[1.2fr_1fr]">
-        <aside className="order-2 lg:order-1 relative overflow-hidden rounded-3xl bg-[#0A2952] p-6 lg:p-8 text-white shadow-xl flex flex-col justify-between">
-          {/* Construction Background Image with Brand Gradient Overlays */}
-          <div className="absolute inset-0 pointer-events-none">
-            <img
-              src="/construction-bg.jpg"
-              alt="SkyStruct Construction"
-              className="h-full w-full object-cover object-center"
-            />
-            {/* Rich gradient & blue tint overlay to guarantee contrast & text legibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#061d3d] via-[#092b57]/80 to-[#0e3b7b]/75 mix-blend-multiply" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0E3B7B]/70 via-transparent to-[#071c36]/90" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15),_transparent_40%)]" />
-          </div>
+    <div className="min-h-screen bg-[#E6F0FF] flex items-center justify-center px-4 sm:px-6 py-6">
+      <style jsx global>{`
+                        .PhoneInputInput {
+                          border: none;
+                          background: transparent;
+                          outline: none;
+                          font-size: 0.75rem;
+                          width: 100%;
+                          margin-left: 8px;
+                        }
+                        .PhoneInputCountry {
+                          margin-right: 8px;
+                        }
+                      `}</style>
 
-          <div className="relative z-10 flex h-full flex-col justify-between space-y-6">
-            <div>
-              <Link href="/" className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold shadow-sm">
-                <img
-                  src="/SS-Emblem.svg"
-                  alt="SkyStruct Logo"
-                  className="w-5 h-5 object-contain brightness-0 invert"
-                />
-                SkyStruct Lite
-              </Link>
-              <h1 className="mt-4 lg:mt-6 text-3xl font-extrabold leading-tight tracking-tight">A unified workspace for your<br /><span className="text-[#8AC7FF]">entire project lifecycle.</span></h1>
-              <p className="mt-3 lg:mt-4 max-w-xl text-sm leading-normal text-blue-100/90">Keep drawings, BOQs, site execution, and stakeholders aligned from day one.</p>
-            </div>
-            <div className="mt-4 lg:mt-6 rounded-2xl border border-white/10 bg-white/10 p-4 lg:p-5 backdrop-blur-xl">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-100/80">What happens next</p>
-              <div className="mt-4 space-y-3">{[
-                ['1', 'Create your workspace', 'Add your organization details and primary account.'],
-                ['2', 'Verify your email', 'Confirm your account securely with a one-time code.'],
-                ['3', 'Invite your team', 'Bring the right people into your first project.'],
-              ].map(([number, title, detail]) => <div key={number} className="flex gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-white text-xs font-bold text-[#0E3B7B]">{number}</span><div><p className="text-sm font-semibold">{title}</p><p className="mt-0.5 text-xs leading-5 text-blue-100/75">{detail}</p></div></div>)}</div>
-            </div>
-          </div>
-        </aside>
+      <div className="mx-auto grid w-full max-w-md lg:max-w-4xl grid-cols-1 gap-5 lg:grid-cols-2">
+        {/* Left visual panel – imagery only (desktop) */}
+        <AuthVisualPanel industryType={industryType} className="hidden lg:flex order-2 lg:order-1" />
 
         <section className="order-1 lg:order-2 rounded-3xl border border-slate-200/80 bg-white p-5 lg:p-6 shadow-xl shadow-slate-200/60 flex flex-col justify-between">
           {showOtp ? <div>
-            <button onClick={() => setShowOtp(false)} className="mb-4 inline-flex items-center gap-2 text-xs font-semibold text-slate-600 transition hover:text-slate-900"><ArrowLeft className="size-4" /> Back to registration</button>
+            <button onClick={() => setShowOtp(false)} className="mb-4 inline-flex items-center gap-2 text-xs font-semibold text-slate-600 transition hover:text-slate-900"><ArrowLeft className="size-4" /> Back</button>
             <div className="text-center"><div className="mx-auto grid size-12 place-items-center rounded-2xl bg-blue-50 text-blue-600"><KeyRound className="size-5" /></div><h2 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">Verify your workspace</h2><p className="mx-auto mt-2 max-w-sm text-xs leading-normal text-slate-500">We sent a 6-digit code to <span className="font-semibold text-slate-900">{email}</span>. Enter it below to complete setup.</p></div>
             <form onSubmit={handleVerify} className="mt-6 space-y-4"><div><label className="text-xs font-semibold text-slate-700">Verification code</label><div className="relative mt-1"><KeyRound className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input type="text" maxLength={6} required value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, ''))} className={`${inputClass} pr-10 text-center font-mono text-base tracking-[0.45em]`} placeholder="000000" /></div></div><button type="submit" disabled={isVerifying || otp.length !== 6} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60">{isVerifying && <Loader2 className="size-4 animate-spin" />}{isVerifying ? 'Verifying...' : 'Verify workspace'}</button></form>
             <p className="mt-4 text-center text-xs text-slate-500">Didn&apos;t receive a code? <button type="button" onClick={handleResend} disabled={resendLoading} className="font-bold text-blue-600 hover:text-blue-700 disabled:opacity-50">{resendLoading ? 'Resending...' : 'Resend code'}</button></p>
           </div> : <>
-            <div className="mb-4 sm:mb-5">
-              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Create Workspace</h2>
+            {/* Logo only on small screens – on desktop it sits on the photo panel */}
+            <div className="lg:hidden mb-4">
+              <img src="/SS-Logo-2025-Colour.svg" alt="SkyStruct" className="h-11 w-auto" />
+            </div>
+            <div className="mb-3 sm:mb-4">
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Get started</h2>
               <p className="mt-0.5 text-xs text-slate-500">Enter your details to get started.</p>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-2.5">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Select Your SignUp Type</label>
-                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setIndustryType('construction')}
@@ -274,30 +259,19 @@ export default function RegisterPage() {
                   <div>
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-semibold text-slate-700">Contact Number</label>
-                      <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                        Currency: {currentCountry?.currencySymbol} {selectedCurrency}
-                      </span>
                     </div>
-                    <div className="mt-1 flex gap-2">
-                      {/* Country Code Picker with Instant Search */}
-                      <CountryCodeSelect
-                        countries={countries}
-                        value={selectedCountryCode}
-                        onChange={handleCountryChange}
-                        className="w-28 shrink-0"
+                    {/* Same flag phone field as Construction; the chosen country also sets the
+                        workspace currency + time zone */}
+                    <div className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900 outline-none transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
+                      <PhoneInput
+                        international
+                        defaultCountry={selectedCountryCode as any}
+                        value={interiorPhone}
+                        onChange={(value) => setInteriorPhone(value || '')}
+                        onCountryChange={(country) => { if (country) handleCountryChange(country); }}
+                        placeholder="Enter mobile number"
+                        style={{ display: 'flex', alignItems: 'center' }}
                       />
-
-                      {/* Phone Input */}
-                      <div className="relative flex-1">
-                        <Phone className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
-                        <input
-                          type="tel"
-                          value={interiorPhone}
-                          onChange={(e) => setInteriorPhone(e.target.value.replace(/[^\d\s-]/g, ''))}
-                          className={`${inputClass} pl-8.5`}
-                          placeholder="555 019 2834"
-                        />
-                      </div>
                     </div>
                   </div>
                   <div>
@@ -332,25 +306,13 @@ export default function RegisterPage() {
                     <div className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 text-xs text-slate-900 outline-none transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20">
                       <PhoneInput
                         international
-                        defaultCountry="US"
+                        key={selectedCountryCode}
+                        defaultCountry={selectedCountryCode as any}
                         value={phoneNumber}
                         onChange={(value) => setPhoneNumber(value || '')}
                         placeholder="Enter mobile number"
                         style={{ display: 'flex', alignItems: 'center' }}
                       />
-                      <style jsx global>{`
-                        .PhoneInputInput {
-                          border: none;
-                          background: transparent;
-                          outline: none;
-                          font-size: 0.75rem;
-                          width: 100%;
-                          margin-left: 8px;
-                        }
-                        .PhoneInputCountry {
-                          margin-right: 8px;
-                        }
-                      `}</style>
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
