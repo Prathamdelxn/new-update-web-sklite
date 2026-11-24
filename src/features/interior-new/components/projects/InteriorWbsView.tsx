@@ -101,24 +101,26 @@ export default function InteriorWbsView({ projectId }: InteriorWbsViewProps) {
   const [activityIsMilestone, setActivityIsMilestone] = useState(false);
   const [submittingActivity, setSubmittingActivity] = useState(false);
 
-  const fetchData = async () => {
+  // silent = refresh after an edit: no full-page spinner, keep expansion, don't refetch members.
+  const fetchData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [wbsRes, tasksRes, membersRes] = await Promise.all([
         interiorProjectService.getWbs(projectId).catch(() => ({ data: [] })),
         interiorProjectService.getTasks(projectId).catch(() => ({ data: [] })),
-        interiorProjectService.getProjectMembers(projectId).catch(() => ({ data: [] })),
+        silent ? Promise.resolve(null) : interiorProjectService.getProjectMembers(projectId).catch(() => ({ data: [] })),
       ]);
 
       const rawWbs = wbsRes?.success && wbsRes?.data ? wbsRes.data : wbsRes?.data || [];
       setWbsData(rawWbs);
       setTasks(tasksRes?.success && tasksRes?.data ? tasksRes.data : tasksRes?.data || []);
 
-      // Auto-expand all nodes by default so user easily views activities
-      if (rawWbs.length > 0) {
+      // Auto-expand all nodes on first load so user easily views activities
+      if (!silent && rawWbs.length > 0) {
         setExpandedNodes(rawWbs.map((n: any) => n.id));
       }
 
+      if (!membersRes) return;
       const rawMembers = membersRes?.success && membersRes?.data ? membersRes.data : membersRes?.data || [];
       const formattedMembers = rawMembers.map((m: any) => ({
         id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
@@ -325,7 +327,7 @@ const getAllDescendantIds = (node: any): string[] => {
       }
 
       setIsModalOpen(false);
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       console.error('Save WBS Node failed', err);
       toast.error(err?.response?.data?.error || tr("Failed to save WBS element"));
@@ -346,7 +348,7 @@ const getAllDescendantIds = (node: any): string[] => {
     try {
       await interiorProjectService.deleteWbsNode(projectId, type || 'building', id);
       toast.success(tr("WBS element deleted successfully"));
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || tr("Failed to delete WBS element"));
     }
@@ -399,7 +401,7 @@ const getAllDescendantIds = (node: any): string[] => {
     try {
       await interiorProjectService.deleteTask(projectId, taskId);
       toast.success(tr("Activity deleted successfully"));
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       console.error('Delete activity error', err);
       toast.error(err?.response?.data?.error || tr("Failed to delete activity"));
@@ -451,7 +453,7 @@ const getAllDescendantIds = (node: any): string[] => {
         if (res?.success || res?.data) {
           toast.success(tr("Activity updated successfully!"));
           setIsActivityModalOpen(false);
-          fetchData();
+          fetchData(true);
         }
       } else {
         if (!selectedNodeForActivity?.id) {
@@ -479,7 +481,7 @@ const getAllDescendantIds = (node: any): string[] => {
           if (!expandedNodes.includes(selectedNodeForActivity.id)) {
             setExpandedNodes((prev) => [...prev, selectedNodeForActivity.id]);
           }
-          fetchData();
+          fetchData(true);
         }
       }
     } catch (err: any) {
@@ -501,7 +503,7 @@ const getAllDescendantIds = (node: any): string[] => {
         completedAt: newStatus === 'completed' ? new Date().toISOString() : null,
       });
       toast.success(newStatus === 'completed' ? tr("Activity completed!") : tr("Activity reopened"));
-      fetchData();
+      fetchData(true);
     } catch (err) {
       toast.error(tr("Failed to update activity"));
     }

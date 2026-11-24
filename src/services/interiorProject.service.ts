@@ -119,6 +119,12 @@ export const interiorProjectService = {
   // Utilities
   getUtilities: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/utilities`).then((res) => res.data),
   updateUtility: (projectId: string, data: any) => interiorApiClient.put(`/projects/${projectId}/utilities`, data).then((res) => res.data),
+  addUtility: (projectId: string, data: { label: string; checkpoints?: string[] }) =>
+    interiorApiClient.post(`/projects/${projectId}/utilities`, data).then((res) => res.data),
+  detectUtilities: (projectId: string) =>
+    interiorApiClient.post(`/projects/${projectId}/utilities`, { action: 'detect' }).then((res) => res.data),
+  deleteUtility: (projectId: string, systemId: string) =>
+    interiorApiClient.delete(`/projects/${projectId}/utilities`, { params: { systemId } }).then((res) => res.data),
 
   // Photos
   getPhotos: (projectId: string) => interiorApiClient.get(`/projects/${projectId}/photos`).then((res) => res.data),

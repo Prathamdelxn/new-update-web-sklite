@@ -51,6 +51,7 @@ import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 import { format } from 'date-fns';
 import { ScrollPane } from '@/components/ui/ScrollPane';
 import { AccordionCard, AccordionToolbar } from '@/components/ui/AccordionCard';
+import { BriefBody } from '@/components/ui/BriefBody';
 
 export default function Lead360View() {
   const { currencySymbol, currencyCode, formatExactCurrency, formatCurrency } = useCurrency();
@@ -76,6 +77,10 @@ const { hasPermission: canDo } = usePermissions();
   const [isSiteVisitModalOpen, setIsSiteVisitModalOpen] = useState(false);
   // Site Visits tab: which survey sections are open (all collapsed by default)
   const [siteOpen, setSiteOpen] = useState<Set<string>>(() => new Set());
+  // Stage Briefing cards: collapsed to one line once the stage has content (open while it's empty)
+  const [briefOpen, setBriefOpen] = useState<Record<string, boolean>>({});
+  const isBrief = (key: string, dflt: boolean) => briefOpen[key] ?? dflt;
+  const toggleBrief = (key: string, dflt: boolean) => setBriefOpen((p) => ({ ...p, [key]: !(p[key] ?? dflt) }));
   const [isSendToSiteVisitOpen, setIsSendToSiteVisitOpen] = useState(false);
   const [isSiteVisitHistoryOpen, setIsSiteVisitHistoryOpen] = useState(false);
   const [isSendToReqOpen, setIsSendToReqOpen] = useState(false);
@@ -1928,31 +1933,11 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                       </div>
 
-                      {/* Instructions Note Box */}
-                      <div className="bg-purple-500/[0.04] border border-purple-500/20 rounded-lg p-3 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-[0.625rem] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1">
-                            <MessageSquare size={12} className="text-purple-600" />
-                            {tr("Site Visit Instructions")}
-                          </p>
-                          {siteVisitInfo.activity?.createdAt && (
-                            <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
-                              {tr("Added ")}{new Date(siteVisitInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] bg-[hsl(var(--card))] p-2.5 rounded border border-purple-500/15">
-                          {siteVisitInfo.note || tr("Lead passed to Site Visit and assigned to site team.")}
-                        </p>
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-[0.625rem] text-[hsl(var(--muted-foreground))] font-medium">
-                          <span>{tr("Assigned Member: ")}<strong className="text-[hsl(var(--foreground))]">{tr(siteVisitInfo.assignedName)}</strong></span>
-                          {siteVisitInfo.activity?.user && (
-                            <span>{tr("Scheduled By: ")}<strong className="text-[hsl(var(--foreground))]">{tr(siteVisitInfo.schedulerName)}</strong></span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Key Metadata Badges */}
+                      {/* Briefing body — collapsed to one line once the stage has content */}
+                      <BriefBody
+                        open={isBrief('site', !lead.siteMeasurements)}
+                        onToggle={() => toggleBrief('site', !lead.siteMeasurements)}
+                        stats={
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <div className={cn(
                           "rounded-lg p-2.5 border",
@@ -2003,6 +1988,33 @@ const { hasPermission: canDo } = usePermissions();
                           </p>
                         </div>
                       </div>
+                        }
+                      >
+                      {/* Instructions Note Box */}
+                      <div className="bg-purple-500/[0.04] border border-purple-500/20 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[0.625rem] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1">
+                            <MessageSquare size={12} className="text-purple-600" />
+                            {tr("Site Visit Instructions")}
+                          </p>
+                          {siteVisitInfo.activity?.createdAt && (
+                            <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))]">
+                              {tr("Added ")}{new Date(siteVisitInfo.activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] bg-[hsl(var(--card))] p-2.5 rounded border border-purple-500/15">
+                          {siteVisitInfo.note || tr("Lead passed to Site Visit and assigned to site team.")}
+                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[0.625rem] text-[hsl(var(--muted-foreground))] font-medium">
+                          <span>{tr("Assigned Member: ")}<strong className="text-[hsl(var(--foreground))]">{tr(siteVisitInfo.assignedName)}</strong></span>
+                          {siteVisitInfo.activity?.user && (
+                            <span>{tr("Scheduled By: ")}<strong className="text-[hsl(var(--foreground))]">{tr(siteVisitInfo.schedulerName)}</strong></span>
+                          )}
+                        </div>
+                      </div>
+
+                      </BriefBody>
                     </div>
 
                     {/* Measurements Section */}
@@ -2394,20 +2406,11 @@ const { hasPermission: canDo } = usePermissions();
                         )}
                       </div>
 
-                      {/* Requirement Scope Notes */}
-                      {requirementsInfo.note && (
-                        <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-lg p-3 space-y-2">
-                          <p className="text-[0.625rem] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
-                            <MessageSquare size={12} className="text-emerald-600" />
-                            {tr("Requirement Handover & Scope Notes")}
-                          </p>
-                          <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed bg-[hsl(var(--card))] border border-emerald-500/15 p-2.5 rounded whitespace-pre-wrap">
-                            {tr(requirementsInfo.note)}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* 4 Metadata Badges Grid */}
+                      {/* Briefing body — collapsed to one line once the stage has content */}
+                      <BriefBody
+                        open={isBrief('requirements', !hasRequirements)}
+                        onToggle={() => toggleBrief('requirements', !hasRequirements)}
+                        stats={
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
                           <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
@@ -2447,6 +2450,22 @@ const { hasPermission: canDo } = usePermissions();
                           </p>
                         </div>
                       </div>
+                        }
+                      >
+                      {/* Requirement Scope Notes */}
+                      {requirementsInfo.note && (
+                        <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-lg p-3 space-y-2">
+                          <p className="text-[0.625rem] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                            <MessageSquare size={12} className="text-emerald-600" />
+                            {tr("Requirement Handover & Scope Notes")}
+                          </p>
+                          <p className="text-xs font-medium text-[hsl(var(--foreground))] leading-relaxed bg-[hsl(var(--card))] border border-emerald-500/15 p-2.5 rounded whitespace-pre-wrap">
+                            {tr(requirementsInfo.note)}
+                          </p>
+                        </div>
+                      )}
+
+                      </BriefBody>
                     </div>
 
                     {/* Global Scope / Timeline / Special Requests Banner if present */}
@@ -2684,6 +2703,50 @@ const { hasPermission: canDo } = usePermissions();
                         )}
                       </div>
 
+                      {/* Briefing body — collapsed to one line once the stage has content */}
+                      <BriefBody
+                        open={isBrief('drawing', !hasDesignFiles)}
+                        onToggle={() => toggleBrief('drawing', !hasDesignFiles)}
+                        stats={
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <User size={11} className="text-purple-500" />{tr(" Designer")}
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
+                            {tr(drawingInfo.assignedName)}
+                          </p>
+                        </div>
+
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Palette size={11} className="text-emerald-500" />{tr(" Style")}
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
+                            {lead.requirements?.find((r: any) => r.designStyle)?.designStyle || lead.requirements?.[0]?.theme || tr("Custom Style")}
+                          </p>
+                        </div>
+
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Layers size={11} className="text-cyan-500" />{tr(" Summary")}
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
+                            {twoDFiles.length} 2D • {threeDFiles.length} 3D
+                          </p>
+                        </div>
+
+                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
+                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
+                            <Building size={11} className="text-blue-500" />{tr(" Scope")}
+                          </p>
+                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
+                            {lead.propertyType || tr("Execution")}
+                          </p>
+                        </div>
+                      </div>
+                        }
+                      >
                       {/* Share Portal Ribbon */}
                       {hasDesignFiles && (
                         <div className="bg-indigo-500/[0.04] border border-indigo-500/20 rounded-lg p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -2723,44 +2786,7 @@ const { hasPermission: canDo } = usePermissions();
                         </div>
                       )}
 
-                      {/* Metadata Grid */}
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <User size={11} className="text-purple-500" />{tr(" Designer")}
-                          </p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {tr(drawingInfo.assignedName)}
-                          </p>
-                        </div>
-
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Palette size={11} className="text-emerald-500" />{tr(" Style")}
-                          </p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.requirements?.find((r: any) => r.designStyle)?.designStyle || lead.requirements?.[0]?.theme || tr("Custom Style")}
-                          </p>
-                        </div>
-
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Layers size={11} className="text-cyan-500" />{tr(" Summary")}
-                          </p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {twoDFiles.length} 2D • {threeDFiles.length} 3D
-                          </p>
-                        </div>
-
-                        <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
-                          <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1">
-                            <Building size={11} className="text-blue-500" />{tr(" Scope")}
-                          </p>
-                          <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5 truncate">
-                            {lead.propertyType || tr("Execution")}
-                          </p>
-                        </div>
-                      </div>
+                      </BriefBody>
                     </div>
 
                     {/* Switcher & File Grid */}
@@ -3183,7 +3209,11 @@ const { hasPermission: canDo } = usePermissions();
                         )}
                       </div>
 
-                      {/* Summary Metrics */}
+                      {/* Briefing body — collapsed to one line once the stage has content */}
+                      <BriefBody
+                        open={isBrief('boq', !hasBoqs)}
+                        onToggle={() => toggleBrief('boq', !hasBoqs)}
+                        stats={
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-2.5 border border-[hsl(var(--border))]">
                           <p className="text-[0.625rem] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">{tr("Total Amount")}</p>
@@ -3206,6 +3236,9 @@ const { hasPermission: canDo } = usePermissions();
                           <p className="font-bold text-xs text-[hsl(var(--foreground))] mt-0.5">{lead.propertyType || tr("Interior")}</p>
                         </div>
                       </div>
+                        }
+                      >
+                      </BriefBody>
                     </div>
 
                     {!hasBoqs ? (

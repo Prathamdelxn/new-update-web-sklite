@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   FileText,
-  Printer,
+  Download,
   Mail,
   CheckCircle2,
   XCircle,
@@ -38,6 +38,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { QuotationPreview } from '@/components/crm/QuotationPreview';
 import { cn, formatSmartCurrency } from '@/lib/utils';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
+import { downloadQuotationPdf } from '@/lib/pdf/quotationPdf';
 
 interface InteriorQuotationPreviewModalProps {
   isOpen: boolean;
@@ -92,6 +93,7 @@ const { hasPermission: canDo } = usePermissions();
   const [localDispatches, setLocalDispatches] = useState<any[]>([]);
 
   const [isDeletingQuotation, setIsDeletingQuotation] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const quote = quotationIndex !== null && lead?.quotations?.[quotationIndex] ? lead.quotations[quotationIndex] : null;
   const qtnNumber = quote?.quotationNumber || `QTN-V${quote?.version || (quotationIndex !== null ? quotationIndex + 1 : 1)}`;
@@ -539,8 +541,18 @@ const { hasPermission: canDo } = usePermissions();
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  // Generates a real A4 PDF (standard letterhead, page footer with terms) — never prints the app page.
+  const handleDownloadPdf = async () => {
+    if (quotationIndex === null || isExportingPdf) return;
+    setIsExportingPdf(true);
+    try {
+      await downloadQuotationPdf(lead, quotationIndex, currencySymbol);
+    } catch (err) {
+      console.error('Quotation PDF export failed', err);
+      toast.error(tr("Could not generate the PDF. Please try again."));
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const getStatusBadgeConfig = (st: string) => {
@@ -634,11 +646,12 @@ const { hasPermission: canDo } = usePermissions();
               {canDo('crm_quotations', 'export') && (
                 <button
                   type="button"
-                  onClick={handlePrint}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs"
-                  title={tr("Print or Save PDF")}
+                  onClick={handleDownloadPdf}
+                  disabled={isExportingPdf}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs disabled:opacity-60 disabled:cursor-wait"
+                  title={tr("Download PDF")}
                 >
-                  <Printer size={13} />{tr(" Print / PDF")}
+                  <Download size={13} />{isExportingPdf ? tr("Generating PDF...") : tr("Download PDF")}
                 </button>
               )}
 
@@ -670,9 +683,9 @@ const { hasPermission: canDo } = usePermissions();
           </div>
 
           {/* Main 2-Column Split View Body */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
             {/* LEFT SIDE: Pure A4 Document Preview (60-65% width) */}
-            <div className="lg:col-span-7 xl:col-span-8 overflow-y-auto p-4 sm:p-6 bg-slate-100/70 border-b lg:border-b-0 lg:border-e border-slate-200">
+            <div className="lg:col-span-7 xl:col-span-8 min-w-0 overflow-y-auto p-4 sm:p-6 bg-slate-100/70 border-b lg:border-b-0 lg:border-e border-slate-200">
               <QuotationPreview
                 lead={lead}
                 quotationIndex={quotationIndex}
@@ -839,62 +852,42 @@ const { hasPermission: canDo } = usePermissions();
                             const isVendor = item.remarks?.toLowerCase().includes('vendor');
                             const dateStr = item.createdAt || item.completedDate || item.date;
                             const formattedDate = dateStr
-                              ? new Date(dateStr).toLocaleString('en-IN', {
+                              ? new Date(dateStr).toLocaleString('en-GB', {
                                   day: 'numeric',
                                   month: 'short',
-                                  year: 'numeric',
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 })
                               : 'Recent';
 
+                            // Compact: who + when, then email + attachment. Full remark stays in the tooltip.
                             return (
                               <div
                                 key={item._id ? `disp-${item._id}` : `disp-idx-${idx}`}
-                                className="p-2.5 rounded-xl bg-white border border-slate-200 text-xs space-y-1.5 shadow-2xs"
+                                title={item.remarks || undefined}
+                                className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 text-xs shadow-2xs"
                               >
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex items-center gap-1.5 font-bold text-slate-900 min-w-0">
-                                    {isVendor ? (
-                                      <Building2 size={13} className="text-emerald-600 shrink-0" />
-                                    ) : (
-                                      <User size={13} className="text-indigo-600 shrink-0" />
-                                    )}
-                                    <span className="truncate">
-                                      {item.recipientName
-                                        ? `${isVendor ? 'Vendor' : 'Client'}: ${item.recipientName}`
-                                        : isVendor
-                                        ? tr("Vendor Partner Copy")
-                                        : tr("Client Approval Dispatch")}
-                                    </span>
-                                  </div>
-                                  <span className="text-[0.625rem] text-slate-400 shrink-0 font-medium">
-                                    {tr(formattedDate)}
-                                  </span>
+                                <div
+                                  className={cn(
+                                    'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
+                                    isVendor ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'
+                                  )}
+                                >
+                                  {isVendor ? <Building2 size={14} /> : <User size={14} />}
                                 </div>
-
-                                {item.quotationTitle && (
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-[0.625rem] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
-                                      📄 {tr(item.quotationTitle)}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-baseline justify-between gap-2">
+                                    <span className="font-bold text-slate-900 truncate">
+                                      {item.recipientName || (isVendor ? tr("Vendor") : tr("Client"))}
                                     </span>
-                                    {item.recipientEmail && (
-                                      <span className="text-[0.625rem] text-slate-500 font-mono">
-                                        ✉️ {tr(item.recipientEmail)}
-                                      </span>
-                                    )}
+                                    <span className="text-[0.625rem] text-slate-400 shrink-0">{formattedDate}</span>
                                   </div>
-                                )}
-
-                                <p className="text-[0.6875rem] text-slate-600 leading-snug break-words">
-                                  {tr(item.remarks)}
-                                </p>
-
-                                <div className="flex items-center justify-between text-[0.625rem] pt-1 border-t border-slate-100">
-                                  <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                                    <CheckCircle2 size={11} />{tr(" Dispatched via Email")}
-                                  </span>
-                                  <span className="text-slate-400 font-medium">{tr("PDF Attached")}</span>
+                                  <div className="flex items-center justify-between gap-2 mt-0.5 text-[0.6875rem] text-slate-500">
+                                    <span className="truncate">{item.recipientEmail || (isVendor ? tr("Vendor") : tr("Client"))}</span>
+                                    <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold shrink-0">
+                                      <CheckCircle2 size={11} />{tr("PDF sent")}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             );

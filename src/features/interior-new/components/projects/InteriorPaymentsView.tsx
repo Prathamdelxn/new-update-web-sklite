@@ -214,12 +214,10 @@ export default function InteriorPaymentsView({ projectId }: InteriorPaymentsView
   };
 
   const handlePrintInvoice = (record: PaymentRecord) => {
-    try {
-      printInvoice(record, project, currencySymbol);
-    } catch (err) {
+    printInvoice(record, project, currencySymbol).catch((err) => {
       console.error('Print invoice error', err);
       toast.error(tr("Failed to open print preview"));
-    }
+    });
   };
 
   const handlePoSelect = (poId: string) => {

@@ -31,6 +31,7 @@ import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import { Transaction, MaterialPurchase } from '@/types';
 import { formatCurrency, formatExactCurrency, MAX_INPUT_VALUE } from '@/lib/utils';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
+import { exportPdf, getPdfOrg, pdfHeaderHtml, pdfSlug, PDF_BASE_CSS, PDF_TERMS } from '@/lib/pdf/pdfExport';
 
 interface TransactionsTabProps {
   projectId: string;
@@ -268,7 +269,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
       <html lang="${rtl ? 'ar' : 'en'}" dir="${rtl ? 'rtl' : 'ltr'}">
         <head>
           <style>
-            body { font-family: ${rtl ? "var(--font-arabic), 'Segoe UI', Tahoma, Arial, sans-serif" : "'Helvetica', sans-serif"}; padding: 40px; color: #333; direction: ${rtl ? 'rtl' : 'ltr'}; }
+            body { font-family: ${rtl ? "'Segoe UI', Tahoma, Arial, sans-serif" : "'Helvetica', sans-serif"}; padding: 40px; color: #333; direction: ${rtl ? 'rtl' : 'ltr'}; }
             ${rtl ? '.doc-type, .label { letter-spacing: normal !important; text-transform: none !important; }' : ''}
             .header { display: flex; justify-content: space-between; border-bottom: 3px solid ${mainColor}; padding-bottom: 20px; }
             .title-box { text-align: end; }
@@ -283,20 +284,19 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             .amount-value { font-size: 42px; color: #0F172A; font-weight: 900; }
             .details-section { margin-top: 40px; padding: 20px; background: #F8FAFF; border-radius: 12px; }
             .footer { margin-top: 80px; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 20px; color: #94A3B8; font-size: 11px; }
+            ${PDF_BASE_CSS}
             .stamp { display: inline-block; margin-top: 20px; padding: 10px 20px; border: 3px double ${mainColor}; color: ${mainColor}; font-weight: bold; border-radius: 8px; transform: rotate(-5deg); opacity: 0.8; }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div>
-              <div class="company-name">SkyStruct Lite</div>
-              <div style="font-size: 13px; color: #64748B;">${tr('Construction Management Solutions')}</div>
-            </div>
-            <div class="title-box">
-              <div class="doc-type">${title}</div>
-              <div style="font-size: 13px; color: #64748B; margin-top: 5px;">${tr('Date:')} ${new Date().toLocaleDateString(rtl ? 'ar' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
-            </div>
-          </div>
+          ${pdfHeaderHtml({
+            docType: title,
+            org: getPdfOrg('construction'),
+            meta: [
+              [tr('Date'), new Date().toLocaleDateString(rtl ? 'ar' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })],
+              [tr('Reference No.'), txData.referenceNumber],
+            ],
+          })}
           <div class="info-section">
             <div class="info-block">
               <div class="label">${tr('Project Site')}</div>
@@ -326,10 +326,6 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
               <div><span class="label">${tr('Category:')}</span> <span class="value" style="font-size: 13px;">${tr(txData.category || 'Uncategorized')}</span></div>
             </div>
           </div>
-          <div class="footer">
-            ${tr('This document is a digitally generated {{docType}} from the SkyStruct Lite Web Platform.', { docType: rtl ? title : title.toLowerCase() })}<br/>
-            &copy; ${new Date().getFullYear()} ${tr('SkyStruct Lite Systems. All rights reserved.')}
-          </div>
         </body>
       </html>
     `;
@@ -343,21 +339,11 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
       const htmlContent = generateTransactionHTML(item, project);
       
       try {
-        // Dynamically import to avoid SSR issues
-        const html2pdf = (await import('html2pdf.js')).default;
-        
-        const element = document.createElement('div');
-        element.innerHTML = htmlContent;
-        
-        const opt = {
-          margin:       0,
-          filename:     `tx_inv_${item._id}.pdf`,
-          image:        { type: 'jpeg' as const, quality: 0.98 },
-          html2canvas:  { scale: 2 },
-          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' as const }
-        };
-
-        html2pdf().set(opt).from(element).save();
+        await exportPdf({
+          html: htmlContent,
+          filename: `${item.type === 'Incoming' ? 'Receipt' : 'Voucher'}_${pdfSlug(item.referenceNumber || item._id)}.pdf`,
+          terms: PDF_TERMS.voucher,
+        });
       } catch (err) {
         console.error('Error generating PDF:', err);
         toast.error(tr("Failed to generate PDF invoice."));

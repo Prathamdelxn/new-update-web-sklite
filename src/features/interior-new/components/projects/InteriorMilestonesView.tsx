@@ -69,9 +69,10 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
     setEditingId(null);
   };
 
-  const fetchMilestones = async () => {
+  // silent = refresh after an edit without the full-page spinner
+  const fetchMilestones = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await interiorProjectService.getMilestones(projectId);
       setMilestones(res?.success && res?.data ? res.data : []);
     } catch (err) {
@@ -136,7 +137,7 @@ export default function InteriorMilestonesView({ projectId }: InteriorMilestones
         setEditingId(null);
         setNewName('');
         setNewDueDate('');
-        fetchMilestones();
+        fetchMilestones(true);
       } else {
         toast.error(res?.message || tr("Failed to create milestone."));
       }

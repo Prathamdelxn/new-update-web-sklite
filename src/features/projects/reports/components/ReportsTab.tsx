@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/providers/AuthContext';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { hasProjectPermission } from '@/lib/permissions';
+import { exportPdf, getPdfOrg, pdfHeaderHtml, pdfSlug, PDF_BASE_CSS, PDF_TERMS } from '@/lib/pdf/pdfExport';
 
 interface ReportsTabProps {
   projectId: string;
@@ -300,9 +301,6 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
   const handleDownloadPDF = async () => {
     setDownloadingPDF(true);
     try {
-      // @ts-ignore
-      const html2pdf = (await import('html2pdf.js')).default;
-      
       const allCompletedTasks: any[] = [];
       milestones.forEach(m => {
         if (m.tasks) {
@@ -337,7 +335,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         <html lang="${rtl ? 'ar' : 'en'}" dir="${rtl ? 'rtl' : 'ltr'}">
         <head>
           <style>
-            body { font-family: ${rtl ? "var(--font-arabic), 'Segoe UI', Tahoma, Arial, sans-serif" : "'Helvetica Neue', Helvetica, Arial, sans-serif"}; padding: 24px; color: #1e293b; line-height: 1.5; direction: ${rtl ? 'rtl' : 'ltr'}; }
+            body { font-family: ${rtl ? "'Segoe UI', Tahoma, Arial, sans-serif" : "'Helvetica Neue', Helvetica, Arial, sans-serif"}; padding: 24px; color: #1e293b; line-height: 1.5; direction: ${rtl ? 'rtl' : 'ltr'}; }
             ${rtl ? 'h3, th { letter-spacing: normal !important; text-transform: none !important; } th { text-align: right !important; }' : ''}
             .header { margin-bottom: 24px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; }
             .project-label { color: #2563eb; font-size: 14px; font-weight: bold; margin: 0; }
@@ -353,14 +351,19 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
             .priority-medium { color: #d97706; font-weight: bold; }
             .priority-low { color: #2563eb; font-weight: bold; }
             small { color: #64748b; font-size: 8px; display: block; margin-top: 2px; }
+            ${PDF_BASE_CSS}
           </style>
         </head>
         <body>
-          <div class="header">
-            <p class="project-label">${tr('Project:')} ${project?.name || contextProject?.name || 'Sunrise Height'}</p>
-            <h2 class="report-title">${reportType === 'Daily' ? tr('Daily Project Report (Last 7 Days)') : tr('Monthly Project Report (Last 6 Months)')}</h2>
-            <p class="gen-date">${tr('Generated on:')} ${safeFormatDate(new Date())}</p>
-          </div>
+          ${pdfHeaderHtml({
+            docType: reportType === 'Daily' ? tr('Daily Project Report') : tr('Monthly Project Report'),
+            subtitle: reportType === 'Daily' ? tr('Last 7 Days') : tr('Last 6 Months'),
+            org: getPdfOrg('construction'),
+            meta: [
+              [tr('Project'), project?.name || contextProject?.name],
+              [tr('Generated on'), safeFormatDate(new Date())],
+            ],
+          })}
 
           <h3>${tr('Completed Tasks')}</h3>
           ${recentTasks.length === 0 ? `
@@ -477,18 +480,11 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         </html>
       `;
 
-      const element = document.createElement('div');
-      element.innerHTML = htmlContent;
-
-      const opt = {
-        margin:       0.3,
-        filename:     `Project_Report_${project?.name || 'Details'}_${reportType}.pdf`,
-        image:        { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const }
-      };
-
-      await html2pdf().set(opt).from(element).save();
+      await exportPdf({
+        html: htmlContent,
+        filename: `Project_Report_${pdfSlug(project?.name, 'Details')}_${reportType}.pdf`,
+        terms: PDF_TERMS.report,
+      });
       toast.success(tr("PDF report downloaded successfully"));
     } catch (err: any) {
       console.error(err);

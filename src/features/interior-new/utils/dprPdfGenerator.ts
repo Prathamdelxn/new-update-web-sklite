@@ -3,6 +3,8 @@
 // Generates official DPR sheets matching the standard SkyStruct Creations format.
 // =============================================================================
 
+import { exportPdf, getPdfOrg, pdfHeaderHtml, PDF_BASE_CSS, PDF_TERMS } from '@/lib/pdf/pdfExport';
+
 export interface DPRData {
   _id?: string;
   date: string | Date;
@@ -356,33 +358,13 @@ export function generateDprHtml(dpr: DPRData, project?: any): string {
           text-transform: uppercase;
           letter-spacing: 0.3px;
         }
+        ${PDF_BASE_CSS}
       </style>
     </head>
     <body>
-      <!-- WATERMARK -->
-      <div class="watermark">SKYSTRUCT LITE</div>
-
+      ${pdfHeaderHtml({ docType: 'Daily Progress Report', org: getPdfOrg('interior'), meta: [['Date', formattedDate], ['Project', projectName], ['Client', clientName]] })}
       <div class="dpr-container">
         <!-- TOP HEADER -->
-        <table class="header-table">
-          <tr>
-            <td class="logo-col">
-              <div class="logo-box">
-                <div class="brand-pill">SS</div>
-                <div class="brand-text">
-                  <span class="brand-name">SkyStruct Lite</span>
-                  <span class="brand-slogan">Design • Build • Inspire</span>
-                </div>
-              </div>
-            </td>
-            <td class="title-col">
-              <div class="main-title">DAILY PROGRESS REPORT</div>
-            </td>
-            <td class="date-col">
-              <span style="color: #64748b;">DATE:</span> <span style="font-weight: 800; color: #0f172a;">${formattedDate}</span>
-            </td>
-          </tr>
-        </table>
 
         <!-- PROJECT META ROW -->
         <div class="project-meta-bar">
@@ -524,12 +506,12 @@ export function generateDprHtml(dpr: DPRData, project?: any): string {
 
         <!-- 5. MINUTES OF MEETING (MOM) -->
         <div class="sec-title">5. Minutes of Meeting (MOM) & Site Directives</div>
-        <div class="mom-box">
+        <div class="mom-box pdf-avoid">
           ${momData ? momData.replace(/\n/g, '<br/>') : '<span style="color: #94a3b8; font-style: italic;">No specific Minutes of Meeting recorded for this date. Site progress execution conforms to active baseline schedule.</span>'}
         </div>
 
         <!-- EXECUTIVE SIGNATURES SECTION -->
-        <div class="signatures-grid">
+        <div class="signatures-grid pdf-avoid">
           <div class="sign-col">
             <div class="sign-line"></div>
             <div class="sign-title">Prepared By (Site Engineer)</div>
@@ -550,8 +532,6 @@ export function generateDprHtml(dpr: DPRData, project?: any): string {
 }
 
 export async function downloadDprPdf(dpr: DPRData, project?: any): Promise<void> {
-  const html2pdf = (await import('html2pdf.js')).default;
-  const html = generateDprHtml(dpr, project);
 
   const projectName = project?.name || (typeof dpr.projectName === 'string' ? dpr.projectName : '') || 'Project';
   const cleanName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -564,35 +544,19 @@ export async function downloadDprPdf(dpr: DPRData, project?: any): Promise<void>
     }
   }
 
-  const container = document.createElement('div');
-  container.innerHTML = html;
-  document.body.appendChild(container);
-
-  const opt = {
-    margin: [0.2, 0.2, 0.2, 0.2] as [number, number, number, number],
+  await exportPdf({
+    html: generateDprHtml(dpr, project),
     filename: `DPR_${cleanName}_${dateStr}.pdf`,
-    image: { type: 'jpeg' as const, quality: 0.98 },
-    html2canvas: { scale: 2.5, useCORS: true, letterRendering: true },
-    jsPDF: { unit: 'in' as const, format: 'a4' as const, orientation: 'portrait' as const }
-  };
-
-  try {
-    await html2pdf().set(opt).from(container).save();
-  } finally {
-    document.body.removeChild(container);
-  }
+    terms: PDF_TERMS.report,
+  });
 }
 
-export function printDpr(dpr: DPRData, project?: any): void {
-  const html = generateDprHtml(dpr, project);
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 250);
-  }
+/** Opens the generated PDF in a new tab (print from the PDF viewer). */
+export function printDpr(dpr: DPRData, project?: any): Promise<void> {
+  return exportPdf({
+    html: generateDprHtml(dpr, project),
+    filename: `DPR_${(project?.name || 'Project').replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`,
+    terms: PDF_TERMS.report,
+    action: 'open',
+  });
 }

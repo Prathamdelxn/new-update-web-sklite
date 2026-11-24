@@ -1,22 +1,22 @@
 'use client';
 import { tr } from '@/i18n';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import interiorApiClient from '@/services/interiorApi.client';
 import { useToast } from '@/providers/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, ClipboardList, Ruler, Image as ImageIcon, FileText, Calendar, MapPin, Maximize2, DoorOpen, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Pencil, Plus, Sliders, Palette, Sparkles, Sun, PenTool, Camera, CheckCircle2, ExternalLink, UploadCloud, Share2, Copy, Check, MessageCircle, Mail, Clock, PowerOff, RotateCcw, Settings, Edit3, Banknote } from 'lucide-react';
-import { uploadToCloudinary } from '@/lib/upload';
+import { Loader2, ClipboardList, Ruler, FileText, Calendar, MapPin, Maximize2, DoorOpen, Columns, Zap, Droplets, Wind, Armchair, AlertTriangle, Layers, Pencil, Plus, Sliders, Palette, Sparkles, Sun, PenTool, CheckCircle2, ExternalLink, Share2, Copy, Check, MessageCircle, Mail, Clock, PowerOff, RotateCcw, Settings, Edit3, Banknote } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { InteriorLogSiteVisitModal } from '@/features/interior-new/components/crm/modals/InteriorLogSiteVisitModal';
 import { InteriorLogRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorLogRequirementsModal';
 import { InteriorCrmShareModal } from '@/features/interior-new/components/crm/modals/InteriorCrmShareModal';
 import { InteriorSendRequirementsModal } from '@/features/interior-new/components/crm/modals/InteriorSendRequirementsModal';
 import { cn } from '@/lib/utils';
+import { AccordionCard, AccordionToolbar } from '@/components/ui/AccordionCard';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
-type TabType = 'requirements' | 'measurements' | 'photos' | 'all';
+type TabType = 'requirements' | 'measurements';
 
 export default function InteriorSiteDetailsView() {
   const { projectId } = useParams() as { projectId: string };
@@ -24,15 +24,29 @@ export default function InteriorSiteDetailsView() {
   const { hasPermission: canDo } = usePermissions();
   const canEditReq = canDo('crm_requirements', 'update') || canDo('projects', 'update') || canDo('projects', 'create');
   const canEditSiteVisit = canDo('crm_site_visits', 'update') || canDo('projects', 'update') || canDo('projects', 'create');
-  const canEditPhotos = canDo('photos', 'create') || canDo('photos', 'update') || canDo('crm_site_visits', 'update') || canDo('projects', 'update');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any>(null);
   const [projectInfo, setProjectInfo] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('requirements');
+  // Numbered dropdowns (rooms r0..rN, measurement cards m1..m4) — all start collapsed
+  const [openKeys, setOpenKeys] = useState<Set<string>>(() => new Set());
+  const toggleKey = (k: string) =>
+    setOpenKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  const setAllKeys = (keys: string[]) =>
+    setOpenKeys((prev) => {
+      const allOpen = keys.every((k) => prev.has(k));
+      const next = new Set(prev);
+      keys.forEach((k) => (allOpen ? next.delete(k) : next.add(k)));
+      return next;
+    });
+  const recorded = (...v: unknown[]) => v.filter(Boolean).length;
   const [isSiteVisitModalOpen, setIsSiteVisitModalOpen] = useState(false);
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
 
@@ -473,54 +487,6 @@ export default function InteriorSiteDetailsView() {
     setIsSiteVisitModalOpen(true);
   };
 
-  const handleDirectPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    try {
-      setUploadingPhotos(true);
-      const fileList = Array.from(files);
-      const uploadPromises = fileList.map(async (file) => {
-        return await uploadToCloudinary(file);
-      });
-      const newUrls = await Promise.all(uploadPromises);
-      const validUrls = newUrls.filter((u): u is string => typeof u === 'string' && u.length > 0);
-
-      if (validUrls.length > 0) {
-        // 1. Post to project execution photos
-        for (const url of validUrls) {
-          try {
-            await interiorApiClient.post(`/projects/${projectId}/photos`, {
-              url,
-              category: 'site_visit',
-            });
-          } catch {}
-        }
-
-        // 2. Update CRM customer if customerId exists
-        let currentCust = customerData;
-        if (!currentCust?._id && projectInfo) {
-          currentCust = await ensureSiteProfile(projectInfo);
-        }
-        if (currentCust?._id && currentCust._id !== projectInfo?._id) {
-          const existing = Array.isArray(currentCust.sitePhotos) ? currentCust.sitePhotos : [];
-          const updated = Array.from(new Set([...existing, ...validUrls]));
-          await interiorApiClient.patch(`/crm/customers/${currentCust._id}`, {
-            sitePhotos: updated,
-          });
-        }
-        toast.success(tr("Successfully uploaded {{validUrlsCount}} photo{{value}}", { validUrlsCount: validUrls.length, value: validUrls.length > 1 ? 's' : '' }));
-        await loadSiteDetails();
-      }
-    } catch (err: any) {
-      console.error('Failed to upload photos:', err);
-      toast.error(tr("Failed to upload some or all photos"));
-    } finally {
-      setUploadingPhotos(false);
-      if (e.target) e.target.value = '';
-    }
-  };
-
   // Normalize team and client requirements (declared at top-level before early returns)
   const teamRequirements: any[] = React.useMemo(() => {
     if (Array.isArray(customerData?.requirements)) return customerData.requirements;
@@ -616,27 +582,15 @@ export default function InteriorSiteDetailsView() {
   const isClientSubmittedOnly = teamRequirements.length === 0 && clientRequirements.length > 0;
   const isClientSubmitted = clientRequirements.length > 0;
 
-  const { siteMeasurements, sitePhotos = [] } = activeCustomer;
+  const { siteMeasurements } = activeCustomer;
   const hasRequirements = requirements.length > 0;
   const hasMeasurements = !!siteMeasurements;
-  const hasPhotos = sitePhotos.length > 0;
 
-  const showRequirements = activeTab === 'all' || activeTab === 'requirements';
-  const showMeasurements = activeTab === 'all' || activeTab === 'measurements';
-  const showPhotos = activeTab === 'all' || activeTab === 'photos';
+  const showRequirements = activeTab === 'requirements';
+  const showMeasurements = activeTab === 'measurements';
 
   return (
     <div className="space-y-5 max-w-7xl pb-12">
-      {/* Hidden file input for direct photo upload */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleDirectPhotoUpload}
-        multiple
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        className="hidden"
-      />
-
       {/* ── Tabs / Toggle Bar ── */}
       <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 bg-[hsl(var(--muted)/0.3)] p-1.5 rounded-xl border border-[hsl(var(--border))]">
         <div className="flex items-center gap-1.5">
@@ -682,40 +636,6 @@ export default function InteriorSiteDetailsView() {
                 {siteMeasurements?.carpetArea ? `${siteMeasurements.carpetArea} sqft` : tr("Active")}
               </span>
             )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('photos')}
-            className={cn(
-              'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap',
-              activeTab === 'photos'
-                ? 'bg-blue-600 text-white'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]'
-            )}
-          >
-            <Camera size={14} />
-            <span>{tr("Site Photos")}</span>
-            <span
-              className={cn(
-                'text-[0.625rem] px-1.5 py-0.5 rounded-md font-semibold',
-                activeTab === 'photos' ? 'bg-white/20 text-white' : 'bg-blue-500/10 text-blue-600'
-              )}
-            >
-              {sitePhotos.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('all')}
-            className={cn(
-              'px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap',
-              activeTab === 'all'
-                ? 'bg-[hsl(var(--foreground))] text-[hsl(var(--background))]'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]'
-            )}
-          >
-            <Layers size={14} />
-            <span>{tr("View All")}</span>
           </button>
         </div>
       </div>
@@ -1019,7 +939,8 @@ export default function InteriorSiteDetailsView() {
               </div>
 
               {hasRequirements ? (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <AccordionToolbar title={tr("Spaces")} count={requirements.length} allOpen={requirements.every((_: any, i: number) => openKeys.has(`r${i}`))} onToggleAll={() => setAllKeys(requirements.map((_: any, i: number) => `r${i}`))} />
                   {requirements.map((req: any, idx: number) => {
                     const hasFunctional = !!(
                       req.roomUsage ||
@@ -1042,33 +963,16 @@ export default function InteriorSiteDetailsView() {
                     );
 
                     return (
-                      <div key={idx} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-4 sm:p-5 space-y-4 min-w-0 overflow-hidden">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[hsl(var(--border))] min-w-0">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="w-6 h-6 rounded-md bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                              {idx + 1}
-                            </span>
-                            <h4 className="font-bold text-sm sm:text-base text-[hsl(var(--foreground))] truncate min-w-0">{req.roomName || tr("General Space")}</h4>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2 shrink-0">
-                            {(req.source === 'client' || isClientSubmittedOnly) && (
-                              <span className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-md flex items-center gap-1">
-                                <Sparkles size={10} />{tr(" Client Wishlist")}
-                              </span>
-                            )}
-                            {req.interiorType && (
-                              <span className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] rounded-md">
-                                {tr(req.interiorType)}
-                              </span>
-                            )}
-                            {(req.designStyle || req.theme) && (
-                              <span className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-md flex items-center gap-1">
-                                <Palette size={10} /> {req.designStyle || req.theme}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                      <AccordionCard
+                        key={idx}
+                        index={idx + 1}
+                        title={req.roomName || tr("General Space")}
+                        summary={[req.interiorType && tr(req.interiorType), req.designStyle || req.theme, (req.source === 'client' || isClientSubmittedOnly) && tr('Client Wishlist')].filter(Boolean).join(' · ') || undefined}
+                        aside={<span className="text-[0.625rem] font-semibold text-[hsl(var(--muted-foreground))]">{(hasFunctional ? 1 : 0) + (hasAesthetic ? 1 : 0)}/2 {tr("sections")}</span>}
+                        open={openKeys.has(`r${idx}`)}
+                        onToggle={() => toggleKey(`r${idx}`)}
+                      >
+                        <div className="space-y-4">
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
                           {/* Functional Specs */}
@@ -1192,7 +1096,8 @@ export default function InteriorSiteDetailsView() {
                             </p>
                           </div>
                         )}
-                      </div>
+                        </div>
+                      </AccordionCard>
                     );
                   })}
                 </div>
@@ -1265,18 +1170,22 @@ export default function InteriorSiteDetailsView() {
             )}
 
             {hasMeasurements ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
-                {/* Card 1: Room & Spatial Dimensions */}
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 space-y-4 hover:border-purple-500/30 transition-colors min-w-0 overflow-hidden">
-                  <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
-                      <Maximize2 size={15} className="text-purple-500" />
-                      {tr("Room & Spatial Dimensions")}
-                    </h3>
-                    <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                      {tr("Spatial")}
-                    </span>
-                  </div>
+              <div className="space-y-2">
+                <AccordionToolbar
+                  title={tr("Site Survey")}
+                  count={4}
+                  allOpen={['m1', 'm2', 'm3', 'm4'].every((k) => openKeys.has(k))}
+                  onToggleAll={() => setAllKeys(['m1', 'm2', 'm3', 'm4'])}
+                />
+                <AccordionCard
+                  index={1}
+                  icon={<Maximize2 size={14} className="text-purple-500" />}
+                  title={tr("Room & Spatial Dimensions")}
+                  summary={[siteMeasurements.carpetArea && `${siteMeasurements.carpetArea} ${tr("Sq.Ft")}`, siteMeasurements.ceilingHeight && `${tr("Ceiling Height")} ${siteMeasurements.ceilingHeight} ${tr("Ft")}`].filter(Boolean).join(' · ') || tr("Not recorded")}
+                  open={openKeys.has('m1')}
+                  onToggle={() => toggleKey('m1')}
+                >
+                  <div className="space-y-4">
 
                   <div className="grid grid-cols-2 gap-2.5 min-w-0">
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
@@ -1318,19 +1227,17 @@ export default function InteriorSiteDetailsView() {
                       </p>
                     </div>
                   </div>
-                </div>
-
-                {/* Card 2: Openings & Structural Elements */}
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 space-y-4 hover:border-blue-500/30 transition-colors min-w-0 overflow-hidden">
-                  <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
-                      <DoorOpen size={15} className="text-blue-500" />
-                      {tr("Openings & Structural Specs")}
-                    </h3>
-                    <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                      {tr("Structure")}
-                    </span>
                   </div>
+                </AccordionCard>
+                <AccordionCard
+                  index={2}
+                  icon={<DoorOpen size={14} className="text-blue-500" />}
+                  title={tr("Openings & Structural Specs")}
+                  summary={tr("{{count}}/{{total}} recorded", { count: recorded(siteMeasurements.doorDimensions, siteMeasurements.windowDimensions, siteMeasurements.wallThickness, siteMeasurements.columnBeamDimensions), total: 4 })}
+                  open={openKeys.has('m2')}
+                  onToggle={() => toggleKey('m2')}
+                >
+                  <div className="space-y-4">
 
                   <div className="grid grid-cols-1 gap-2.5 min-w-0">
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
@@ -1369,19 +1276,17 @@ export default function InteriorSiteDetailsView() {
                       </p>
                     </div>
                   </div>
-                </div>
-
-                {/* Card 3: MEP & Utility Services */}
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 space-y-4 hover:border-amber-500/30 transition-colors min-w-0 overflow-hidden">
-                  <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
-                      <Zap size={15} className="text-amber-500" />
-                      {tr("MEP & Utility Services")}
-                    </h3>
-                    <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                      {tr("MEP")}
-                    </span>
                   </div>
+                </AccordionCard>
+                <AccordionCard
+                  index={3}
+                  icon={<Zap size={14} className="text-amber-500" />}
+                  title={tr("MEP & Utility Services")}
+                  summary={tr("{{count}}/{{total}} recorded", { count: recorded(siteMeasurements.electricalPoints, siteMeasurements.plumbingPoints, siteMeasurements.acLocations), total: 3 })}
+                  open={openKeys.has('m3')}
+                  onToggle={() => toggleKey('m3')}
+                >
+                  <div className="space-y-4">
 
                   <div className="grid grid-cols-1 gap-2.5 min-w-0">
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
@@ -1411,19 +1316,17 @@ export default function InteriorSiteDetailsView() {
                       </p>
                     </div>
                   </div>
-                </div>
-
-                {/* Card 4: Furniture, Constraints & Notes */}
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 space-y-4 hover:border-emerald-500/30 transition-colors min-w-0 overflow-hidden">
-                  <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-2">
-                      <Armchair size={15} className="text-emerald-500" />
-                      {tr("Furniture & Site Constraints")}
-                    </h3>
-                    <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      {tr("Conditions")}
-                    </span>
                   </div>
+                </AccordionCard>
+                <AccordionCard
+                  index={4}
+                  icon={<Armchair size={14} className="text-emerald-500" />}
+                  title={tr("Furniture & Site Constraints")}
+                  summary={siteMeasurements.siteConstraints ? tr("Site constraints reported") : tr("{{count}}/{{total}} recorded", { count: recorded(siteMeasurements.furnitureDimensions, siteMeasurements.siteConstraints, siteMeasurements.notes), total: 3 })}
+                  open={openKeys.has('m4')}
+                  onToggle={() => toggleKey('m4')}
+                >
+                  <div className="space-y-4">
 
                   <div className="grid grid-cols-1 gap-2.5 min-w-0">
                     <div className="bg-[hsl(var(--muted)/0.3)] rounded-lg p-3 border border-[hsl(var(--border))] min-w-0">
@@ -1453,7 +1356,8 @@ export default function InteriorSiteDetailsView() {
                       </p>
                     </div>
                   </div>
-                </div>
+                  </div>
+                </AccordionCard>
               </div>
             ) : (
               <div className="bg-[hsl(var(--card))] border border-dashed border-[hsl(var(--border))] rounded-xl p-10 text-center space-y-3">
@@ -1477,93 +1381,6 @@ export default function InteriorSiteDetailsView() {
           </motion.div>
         )}
 
-        {/* ── TAB 3: SITE PHOTOS ── */}
-        {showPhotos && (
-          <motion.div
-            key="photos-section"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            className="space-y-4"
-          >
-            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 md:p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--border))]">
-                <div className="flex items-center gap-2">
-                  <ImageIcon size={16} className="text-blue-500" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
-                    {tr("Site Photos & Visual Records")}
-                  </h3>
-                  <span className="text-xs font-semibold text-blue-600 bg-blue-500/10 px-2.5 py-0.5 rounded-md border border-blue-500/20">
-                    {sitePhotos.length}{tr(" Photos")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {canEditPhotos && (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingPhotos}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg border border-blue-500/20 transition-colors active:scale-[0.98] disabled:opacity-50"
-                    >
-                      {uploadingPhotos ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
-                      {uploadingPhotos ? tr("Uploading...") : tr("Upload Photos")}
-                    </button>
-                  )}
-                  {canEditSiteVisit && (
-                    <button
-                      onClick={handleOpenSiteVisitModal}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted)/0.8)] px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] transition-colors active:scale-[0.98]"
-                    >
-                      <Pencil size={12} />{tr(" Manage in Visit")}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {hasPhotos ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {sitePhotos.map((photo: any, idx: number) => {
-                    const photoUrl = typeof photo === 'string' ? photo : photo?.url || '';
-                    if (!photoUrl) return null;
-                    return (
-                      <a
-                        key={idx}
-                        href={photoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="aspect-square rounded-lg overflow-hidden border border-[hsl(var(--border))] hover:border-[hsl(var(--foreground)/0.4)] transition-all relative group bg-[hsl(var(--muted)/0.2)] block"
-                      >
-                        <img loading="lazy" decoding="async"
-                          src={photoUrl}
-                          alt={tr("Site Photo {{value}}", { value: idx + 1 })}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
-                          <ImageIcon className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-10 flex flex-col items-center justify-center border border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--muted)/0.2)] text-center space-y-2">
-                  <ImageIcon className="w-8 h-8 text-[hsl(var(--muted-foreground))] opacity-60" />
-                  <p className="text-xs font-bold text-[hsl(var(--foreground))]">{tr("No Site Photos Uploaded")}</p>
-                  <p className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">{tr("Upload site inspection photos & progress views.")}</p>
-                  {canEditPhotos && (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingPhotos}
-                      className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors active:scale-[0.98] disabled:opacity-50"
-                    >
-                      {uploadingPhotos ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                      {uploadingPhotos ? tr("Uploading...") : tr("Upload Site Photos")}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
       </AnimatePresence>
 
       {/* Modals for Editing & Sharing */}

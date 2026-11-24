@@ -340,3 +340,28 @@ html[dir="rtl"] input[type="number"] {
   .lp-ready .lp-reveal { opacity: 1; transform: none; transition: none; }
   .lp-bar, .lp-float, .lp-drift, .lp-marquee-track, .lp-rise { animation: none !important; }
 }
+
+/* CRM lead page — collapsed Briefing card: the 4 stat tiles become one inline line */
+.brief-compact > div {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.25rem !important;
+}
+.brief-compact > div > div {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+.brief-compact > div > div > div:first-child { display: flex; align-items: center; }
+.brief-compact > div > div > p,
+.brief-compact > div > div > div > p { margin-top: 0 !important; white-space: nowrap; }
+.brief-compact > div > div > p:first-child,
+.brief-compact > div > div > div:first-child > p { font-size: 0.625rem; }
+/* tiles with extra sub-lines: keep label + value only */
+.brief-compact > div > div > p:nth-child(n + 3) { display: none; }

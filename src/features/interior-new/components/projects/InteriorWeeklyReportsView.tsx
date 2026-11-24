@@ -239,7 +239,7 @@ export default function InteriorWeeklyReportsView({ projectId }: InteriorWeeklyR
 
   // Print Report
   const handlePrint = (report: any) => {
-    printWpr(report, project);
+    printWpr(report, project).catch((err) => console.error('WPR print failed', err));
   };
 
   // Delete Report

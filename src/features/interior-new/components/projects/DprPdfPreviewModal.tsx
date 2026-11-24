@@ -47,12 +47,10 @@ export const DprPdfPreviewModal: React.FC<DprPdfPreviewModalProps> = ({
   };
 
   const handlePrint = () => {
-    try {
-      printDpr(dpr, project);
-    } catch (err: any) {
+    printDpr(dpr, project).catch((err: any) => {
       console.error('Error printing:', err);
       toast.error(tr("Failed to open print dialog"));
-    }
+    });
   };
 
   const htmlPreview = generateDprHtml(dpr, project);

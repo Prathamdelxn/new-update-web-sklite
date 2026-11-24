@@ -3,7 +3,6 @@ import { tr } from '@/i18n';
 
 import React, { useState } from 'react';
 import {
-  Printer,
   Download,
   CheckCircle2,
   XCircle,
@@ -27,6 +26,7 @@ import { useToast } from '@/providers/ToastContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { cn, parseMaxBudget, formatInternational, formatMillionBillion, formatSmartCurrency } from '@/lib/utils';
 import { useConfirm } from '@/providers/ConfirmContext';
+import { downloadQuotationPdf } from '@/lib/pdf/quotationPdf';
 
 interface QuotationPreviewProps {
   lead: any;
@@ -52,6 +52,7 @@ export function QuotationPreview({
   const [isConverting, setIsConverting] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const quote = lead?.quotations ? lead.quotations[quotationIndex] : null;
 
@@ -175,8 +176,18 @@ export function QuotationPreview({
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  // Real A4 PDF in the standard format (not a print of the app page).
+  const handleDownloadPdf = async () => {
+    if (isExportingPdf) return;
+    setIsExportingPdf(true);
+    try {
+      await downloadQuotationPdf(lead, quotationIndex, currencySymbol);
+    } catch (err) {
+      console.error('Quotation PDF export failed', err);
+      toast.error(tr("Could not generate the PDF. Please try again."));
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const isConverted = lead?.status === 'Won' || lead?.status === 'Converted' || lead?.status === 'Lost' || Boolean(lead?.linkedProject);
@@ -198,7 +209,7 @@ export function QuotationPreview({
   const hasCustomTitle = Boolean(rawTitle && rawTitle.toLowerCase() !== 'commercial quotation');
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0">
       {/* ── Toolbar Actions (Hidden on print or if hideToolbar is true) ── */}
       {!hideToolbar && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[hsl(var(--card))] p-3.5 sm:p-4 rounded-2xl border border-[hsl(var(--border))] shadow-xs print:hidden">
@@ -278,10 +289,11 @@ export function QuotationPreview({
 
             <button
               type="button"
-              onClick={handlePrint}
-              className="text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
+              onClick={handleDownloadPdf}
+              disabled={isExportingPdf}
+              className="text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer disabled:opacity-60 disabled:cursor-wait"
             >
-              <Printer size={15} />{tr(" Print / PDF")}
+              <Download size={15} />{isExportingPdf ? tr("Generating PDF...") : tr("Download PDF")}
             </button>
 
             {!isConverted && (
@@ -314,9 +326,9 @@ export function QuotationPreview({
       )}
 
       {/* ── A4 Printable Document Container ── */}
-      <div className="overflow-x-auto w-full py-2">
+      <div className="overflow-x-auto overscroll-x-contain w-full max-w-full py-2">
         <div
-          className="bg-white border border-slate-200/90 mx-auto rounded-3xl shadow-xl relative overflow-hidden print:border-none print:shadow-none print:m-0 w-full max-w-[210mm] min-h-[297mm] print:min-h-0 text-slate-900"
+          className="bg-white border border-slate-200/90 mx-auto rounded-3xl shadow-xl relative overflow-hidden print:border-none print:shadow-none print:m-0 w-full min-w-[720px] max-w-[210mm] min-h-[297mm] print:min-h-0 text-slate-900"
           style={{ boxSizing: 'border-box' }}
         >
           {/* Top Gradient Stripe Accent */}

@@ -379,7 +379,7 @@ export default function InteriorDprView({ projectId }: InteriorDprViewProps) {
   };
 
   const handlePrintDpr = (dpr: any) => {
-    printDpr(dpr, project);
+    printDpr(dpr, project).catch((err) => console.error('DPR print failed', err));
   };
 
   const handleDownloadBlankTemplate = async () => {

@@ -23,7 +23,6 @@ import {
   Award,
   Search,
   ArrowUpRight,
-  Printer,
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
@@ -32,12 +31,40 @@ import { interiorProjectService } from '@/services/interiorProject.service';
 import { useToast } from '@/providers/ToastContext';
 import { useConfirm } from '@/providers/ConfirmContext';
 import { cn } from '@/lib/utils';
+import { downloadHandoverPdf } from '@/lib/pdf/handoverPdf';
 import { uploadToCloudinary } from '@/lib/upload';
 import { useProjectPermissions } from '@/features/interior-new/hooks/useProjectPermissions';
 import { sectionFromPath, useCanOpenSection } from '@/features/interior-new/lib/projectSectionAccess';
 
 interface InteriorHandoverViewProps {
   projectId: string;
+}
+
+/** Small circular progress used for open checklist items. */
+function MiniRing({ value }: { value: number }) {
+  const r = 13;
+  const c = 2 * Math.PI * r;
+  return (
+    <span className="relative w-8 h-8 shrink-0">
+      <svg viewBox="0 0 32 32" className="w-full h-full -rotate-90">
+        <circle cx="16" cy="16" r={r} stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
+        <circle
+          cx="16"
+          cy="16"
+          r={r}
+          stroke="hsl(var(--primary))"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c - (Math.max(0, Math.min(100, value)) / 100) * c}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[0.5625rem] font-bold text-[hsl(var(--foreground))] tabular-nums">
+        {value}
+      </span>
+    </span>
+  );
 }
 
 export default function InteriorHandoverView({ projectId }: InteriorHandoverViewProps) {
@@ -67,6 +94,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
   const [docSearch, setDocSearch] = useState('');
   const [docFilterType, setDocFilterType] = useState<'all' | 'warranty' | 'manual' | 'certificate'>('all');
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
+  const [isCertPdfBusy, setIsCertPdfBusy] = useState(false);
 
   // Fetch project data in parallel
   const fetchAllData = async (showLoading = true) => {
@@ -218,6 +246,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
             ? `${completedTasks} of ${totalTasks} activities completed (${avgWbsProgress}%)`
             : `${avgWbsProgress}% overall progress`,
         passed: isWbsDone,
+        progress: isWbsDone ? 100 : avgWbsProgress,
         tag: `${avgWbsProgress}%`,
         href: `/interior-new/projects/${projectId}/wbs`,
       },
@@ -226,6 +255,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
         title: 'All activities & tasks completed',
         subtitle: totalTasks > 0 ? `${completedTasks} of ${totalTasks} completed` : 'No tasks scheduled',
         passed: isTasksDone,
+        progress: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
         tag: totalTasks > 0 ? `${completedTasks}/${totalTasks}` : '0/0',
         href: `/interior-new/projects/${projectId}/tasks`,
       },
@@ -234,6 +264,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
         title: 'All drawings approved',
         subtitle: totalDrawings > 0 ? `${approvedDrawings} of ${totalDrawings} approved` : 'No drawings uploaded',
         passed: isDrawingsDone,
+        progress: totalDrawings > 0 ? Math.round((approvedDrawings / totalDrawings) * 100) : 0,
         tag: totalDrawings > 0 ? `${approvedDrawings}/${totalDrawings}` : '0/0',
         href: `/interior-new/projects/${projectId}/drawings`,
       },
@@ -242,6 +273,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
         title: 'Snag list rectification verify',
         subtitle: openSnags === 0 ? 'Zero open snags on site' : `${openSnags} open snag${openSnags > 1 ? 's' : ''} remaining`,
         passed: isSnagsDone,
+        progress: totalSnags > 0 ? Math.round(((totalSnags - openSnags) / totalSnags) * 100) : 100,
         tag: openSnags === 0 ? 'Verified' : `${openSnags} Open`,
         href: `/interior-new/projects/${projectId}/snags`,
       },
@@ -250,6 +282,7 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
         title: 'Interior Care & Appliance Manuals',
         subtitle: docs.length === 0 ? 'No manuals or warranties uploaded yet' : `${docs.length} document${docs.length > 1 ? 's' : ''} registered`,
         passed: isDocsDone,
+        progress: isDocsDone ? 100 : 0,
         tag: docs.length === 0 ? 'Pending' : `${docs.length} Uploaded`,
         href: '#closeout-docs',
       },
@@ -428,36 +461,60 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
 
       {/* Main 2-Column Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left: Clean Circular Ready Card */}
-        <Card className="flex flex-col justify-center items-center p-6 text-center bg-white border border-[hsl(var(--border))] rounded-xl shadow-xs">
-          <div className="relative w-36 h-36 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle cx="72" cy="72" r="60" stroke="hsl(var(--muted))" strokeWidth="10" fill="transparent" />
-              <circle
-                cx="72"
-                cy="72"
-                r="60"
-                stroke={readinessPercentage === 100 ? '#10b981' : 'hsl(var(--primary))'}
-                strokeWidth="10"
-                fill="transparent"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                className="transition-all duration-700 ease-out"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">
-                {tr(readinessPercentage)}%
-              </span>
-              <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider mt-0.5">
-                {tr("Handover Ready")}
-              </span>
+        {/* Left: readiness ring + what is still open */}
+        <Card className="flex flex-col p-6 bg-white border border-[hsl(var(--border))] rounded-xl shadow-xs">
+          <div className="flex flex-col items-center text-center">
+            <div className="relative w-36 h-36">
+              {/* viewBox keeps the ring inside its box at any rem/zoom (it was clipped before) */}
+              <svg viewBox="0 0 144 144" className="w-full h-full -rotate-90">
+                <circle cx="72" cy="72" r="60" stroke="hsl(var(--muted))" strokeWidth="10" fill="none" />
+                <circle
+                  cx="72"
+                  cy="72"
+                  r="60"
+                  stroke={readinessPercentage === 100 ? '#10b981' : 'hsl(var(--primary))'}
+                  strokeWidth="10"
+                  fill="none"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  className="transition-all duration-700 ease-out"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-3xl font-extrabold tracking-tight text-[hsl(var(--foreground))]">{readinessPercentage}%</span>
+                <span className="text-[0.625rem] text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wider mt-0.5">
+                  {tr("Handover Ready")}
+                </span>
+              </div>
             </div>
+            <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mt-3">
+              {tr("{{done}} of {{total}} requirements met", { done: completedCount, total: totalCount })}
+            </p>
           </div>
-          <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mt-3">
-            {tr(completedCount)}{tr(" of ")}{tr(totalCount)}{tr(" Requirements Met")}
-          </p>
+
+          {checklistItems.some((i) => !i.passed) ? (
+            <div className="mt-5 pt-4 border-t border-[hsl(var(--border))] space-y-2.5">
+              <p className="text-[0.625rem] font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">{tr("Still to finish")}</p>
+              {checklistItems
+                .filter((i) => !i.passed)
+                .map((i) => (
+                  <div key={i.id} className="space-y-1">
+                    <div className="flex items-center justify-between gap-2 text-[0.6875rem]">
+                      <span className="font-medium text-[hsl(var(--foreground))] truncate">{tr(i.title)}</span>
+                      <span className="font-semibold text-[hsl(var(--muted-foreground))] tabular-nums shrink-0">{i.progress}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[hsl(var(--muted))] overflow-hidden">
+                      <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${i.progress}%` }} />
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="mt-5 pt-4 border-t border-[hsl(var(--border))] text-center text-xs font-semibold text-emerald-700">
+              {tr("All requirements met — ready for handover")}
+            </div>
+          )}
         </Card>
 
         {/* Right: Modern, Clean Single-Row Checklist */}
@@ -486,20 +543,17 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                     : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:bg-slate-50'
                 )}
               >
-                {/* Checkbox Icon + Title */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={cn(
-                      'w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all',
-                      item.passed
-                        ? 'bg-emerald-500 text-white'
-                        : 'border border-[hsl(var(--border))] bg-white'
-                    )}
-                  >
-                    {item.passed && <Check className="w-3 h-3 stroke-[3]" />}
-                  </div>
+                {/* Status indicator + title */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {item.passed ? (
+                    <span className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 stroke-[3]" />
+                    </span>
+                  ) : (
+                    <MiniRing value={item.progress} />
+                  )}
 
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <span
                       className={cn(
                         'text-xs font-semibold block truncate',
@@ -511,6 +565,11 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
                     <span className="text-[0.6875rem] text-[hsl(var(--muted-foreground))]">
                       {tr(item.subtitle)}
                     </span>
+                    {!item.passed && (
+                      <div className="mt-1.5 h-1 rounded-full bg-[hsl(var(--muted))] overflow-hidden max-w-xs">
+                        <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${item.progress}%` }} />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -701,9 +760,25 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
               <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
                 <span className="text-sm font-bold text-slate-900">{tr("Certificate of Practical Completion")}</span>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => window.print()}>
-                    <Printer className="w-3.5 h-3.5" />
-                    {tr("Print")}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1"
+                    disabled={isCertPdfBusy}
+                    onClick={async () => {
+                      setIsCertPdfBusy(true);
+                      try {
+                        await downloadHandoverPdf(project, checklistItems as any, readinessPercentage);
+                      } catch (err) {
+                        console.error('Handover PDF export failed', err);
+                        toast.error(tr("Could not generate the PDF. Please try again."));
+                      } finally {
+                        setIsCertPdfBusy(false);
+                      }
+                    }}
+                  >
+                    <FileDown className="w-3.5 h-3.5" />
+                    {isCertPdfBusy ? tr("Generating PDF...") : tr("Download PDF")}
                   </Button>
                   <button onClick={() => setIsCertModalOpen(false)} className="p-1 rounded hover:bg-slate-200 text-slate-500">
                     <X className="w-4 h-4" />

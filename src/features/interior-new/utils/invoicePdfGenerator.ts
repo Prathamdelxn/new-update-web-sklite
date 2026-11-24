@@ -3,6 +3,8 @@
 // Generates clean, standard, highly professional corporate tax invoices & payment receipts.
 // =============================================================================
 
+import { esc, exportPdf, getPdfOrg, pdfHeaderHtml, PDF_BASE_CSS, PDF_TERMS } from '@/lib/pdf/pdfExport';
+
 export interface InvoicePaymentData {
   _id?: string;
   invoiceNo?: string;
@@ -90,45 +92,22 @@ export function generateInvoiceHtml(
         }
         table { border-collapse: collapse; width: 100%; }
         td, th { vertical-align: top; }
+        ${PDF_BASE_CSS}
       </style>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111827; background-color: #ffffff; padding: 36px 40px; font-size: 13px; line-height: 1.4;">
       <div class="invoice-box" style="width: 100%; max-width: 780px; margin: 0 auto; background-color: #ffffff;">
 
-        <!-- ── HEADER ── -->
-        <table style="width: 100%; border-bottom: 2px solid #111827; padding-bottom: 20px; margin-bottom: 24px;">
-          <tr>
-            <td style="vertical-align: top; width: 55%;">
-              <div style="font-size: 22px; font-weight: 800; color: #111827; letter-spacing: -0.5px; margin-bottom: 4px;">SKYSTRUCT LITE</div>
-              <div style="font-size: 12px; color: #4b5563; font-weight: 600; margin-bottom: 4px;">Interior Architecture &amp; Construction Management</div>
-              <div style="font-size: 11px; color: #6b7280; line-height: 1.4;">
-                Project Operations &amp; Site Finance<br />
-                Email: accounts@skystruct.com &bull; Web: www.skystruct.com
-              </div>
-            </td>
-            <td style="vertical-align: top; width: 45%; text-align: right;">
-              <div style="font-size: 20px; font-weight: 800; color: #111827; letter-spacing: 0.5px; margin-bottom: 8px;">PAYMENT RECEIPT</div>
-              <table style="width: auto; margin-left: auto; font-size: 12px; border-collapse: collapse;">
-                <tr>
-                  <td style="color: #6b7280; font-weight: 500; padding: 2px 10px 2px 0; text-align: right;">Receipt / Invoice #:</td>
-                  <td style="color: #111827; font-weight: 700; text-align: right;">${invoiceNumber}</td>
-                </tr>
-                <tr>
-                  <td style="color: #6b7280; font-weight: 500; padding: 2px 10px 2px 0; text-align: right;">Receipt Date:</td>
-                  <td style="color: #111827; font-weight: 700; text-align: right;">${paymentDate}</td>
-                </tr>
-                <tr>
-                  <td style="color: #6b7280; font-weight: 500; padding: 2px 10px 2px 0; text-align: right;">Status:</td>
-                  <td style="text-align: right;">
-                    <span style="display: inline-block; background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 700; font-size: 10.5px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
-                      ${status}
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
+        <!-- ── STANDARD LETTERHEAD ── -->
+        ${pdfHeaderHtml({
+          docType: 'Payment Receipt',
+          org: getPdfOrg('interior'),
+          meta: [
+            ['Receipt / Invoice #', invoiceNumber],
+            ['Receipt Date', paymentDate],
+            ['Status', status],
+          ],
+        })}
 
         <!-- ── ADDRESSES & PROJECT SECTION ── -->
         <table style="width: 100%; margin-bottom: 24px;">
@@ -182,7 +161,7 @@ export function generateInvoiceHtml(
         </table>
 
         <!-- ── SUMMARY & NOTES ── -->
-        <table style="width: 100%; margin-bottom: 36px;">
+        <table class="pdf-avoid" style="width: 100%; margin-bottom: 36px;">
           <tr>
             <td style="width: 55%; vertical-align: top; padding-right: 24px;">
               <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px 14px;">
@@ -222,7 +201,7 @@ export function generateInvoiceHtml(
         </table>
 
         <!-- ── SIGNATURES ── -->
-        <table style="width: 100%; margin-top: 40px;">
+        <table class="pdf-avoid" style="width: 100%; margin-top: 40px;">
           <tr>
             <td style="width: 45%; text-align: center; vertical-align: bottom;">
               <div style="border-bottom: 1px solid #9ca3af; height: 40px; margin-bottom: 8px;"></div>
@@ -233,16 +212,11 @@ export function generateInvoiceHtml(
             <td style="width: 45%; text-align: center; vertical-align: bottom;">
               <div style="border-bottom: 1px solid #9ca3af; height: 40px; margin-bottom: 8px;"></div>
               <div style="font-size: 12px; font-weight: 700; color: #111827;">Authorized Signatory</div>
-              <div style="font-size: 11px; color: #6b7280;">For SkyStruct Interiors</div>
+              <div style="font-size: 11px; color: #6b7280;">For ${esc(getPdfOrg('interior').name)}</div>
             </td>
           </tr>
         </table>
 
-        <!-- ── FOOTER ── -->
-        <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 12px; text-align: center; font-size: 11px; color: #9ca3af;">
-          This is an official computer-generated tax invoice &amp; payment receipt issued by SkyStruct Lite.<br />
-          &copy; ${new Date().getFullYear()} SkyStruct Interiors. All rights reserved.
-        </div>
       </div>
     </body>
     </html>
@@ -254,70 +228,26 @@ export async function downloadInvoicePdf(
   project?: any,
   currencySymbol: string = 'QAR'
 ): Promise<void> {
-  const html = generateInvoiceHtml(payment, project, currencySymbol);
   const cleanInvNo = (payment.invoiceNo || 'INV').replace(/[^a-zA-Z0-9_-]/g, '_');
   const clientName = resolveClientName(project);
   const cleanClient = (clientName !== 'Valued Client' ? clientName : (project?.name || 'Client') as string).replace(/[^a-zA-Z0-9_-]/g, '_');
-
-  // Create an offscreen wrapper for html2pdf
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.left = '0';
-  container.style.top = '0';
-  container.style.width = '794px';
-  container.style.backgroundColor = '#ffffff';
-  container.style.zIndex = '-9999';
-  container.style.opacity = '0';
-  container.style.pointerEvents = 'none';
-  container.innerHTML = html;
-
-  document.body.appendChild(container);
-
-  try {
-    const html2pdf = (await import('html2pdf.js')).default;
-    const targetElement = (container.querySelector('.invoice-box') as HTMLElement) || container;
-
-    const opt = {
-      margin: [0.3, 0.3, 0.3, 0.3] as [number, number, number, number],
-      filename: `Invoice_${cleanInvNo}_${cleanClient}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        letterRendering: true,
-        backgroundColor: '#ffffff',
-        width: 794,
-        windowWidth: 794,
-        logging: false,
-      },
-      jsPDF: { unit: 'in' as const, format: 'a4' as const, orientation: 'portrait' as const },
-    };
-
-    await html2pdf().set(opt).from(targetElement).save();
-  } catch (pdfErr) {
-    console.warn('Direct html2pdf export error, falling back to print dialog:', pdfErr);
-    printInvoice(payment, project, currencySymbol);
-  } finally {
-    if (document.body.contains(container)) {
-      document.body.removeChild(container);
-    }
-  }
+  await exportPdf({
+    html: generateInvoiceHtml(payment, project, currencySymbol),
+    filename: `Invoice_${cleanInvNo}_${cleanClient}.pdf`,
+    terms: PDF_TERMS.receipt,
+  });
 }
 
+/** Opens the generated PDF in a new tab (print from the PDF viewer). */
 export function printInvoice(
   payment: InvoicePaymentData,
   project?: any,
   currencySymbol: string = 'QAR'
-): void {
-  const html = generateInvoiceHtml(payment, project, currencySymbol);
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 300);
-  }
+): Promise<void> {
+  return exportPdf({
+    html: generateInvoiceHtml(payment, project, currencySymbol),
+    filename: `Invoice_${(payment.invoiceNo || 'INV').replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`,
+    terms: PDF_TERMS.receipt,
+    action: 'open',
+  });
 }

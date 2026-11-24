@@ -152,13 +152,14 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
   const [activityIsMilestone, setActivityIsMilestone] = useState(false);
   const [submittingActivity, setSubmittingActivity] = useState(false);
 
-  const fetchData = async () => {
+  // silent = refresh after an edit: no full-page spinner, and the member list isn't refetched.
+  const fetchData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [taskRes, wbsRes, memberRes, milestoneRes, inventoryRes] = await Promise.allSettled([
         interiorProjectService.getTasks(projectId),
         interiorProjectService.getWbs(projectId),
-        interiorProjectService.getProjectMembers(projectId),
+        silent ? Promise.resolve(null) : interiorProjectService.getProjectMembers(projectId),
         interiorProjectService.getMilestones(projectId),
         interiorProjectService.getInventory(projectId),
       ]);
@@ -184,7 +185,9 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       }
       setWbsPackages(packages);
 
-      if (memberRes.status === 'fulfilled' && memberRes.value?.success) {
+      if (silent) {
+        // keep the members already loaded
+      } else if (memberRes.status === 'fulfilled' && memberRes.value?.success) {
         const rawMembers = memberRes.value.data || [];
         const formattedMembers = rawMembers.map((m: any) => ({
           id: String(m.userId?._id || m.userId?.id || m.userId || m._id || ''),
@@ -321,7 +324,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
           if (selectedTask?._id === editingTaskId) {
             setSelectedTask((prev: any) => ({ ...prev, ...payload }));
           }
-          fetchData();
+          fetchData(true);
         }
       } else {
         const payload: any = {
@@ -342,7 +345,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         if (res?.success || res?.data) {
           toast.success(tr("Activity created successfully!"));
           setIsActivityModalOpen(false);
-          fetchData();
+          fetchData(true);
         }
       }
     } catch (err: any) {
@@ -451,7 +454,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
         setProofNotes('');
         setMaterialUsages([]);
         toast.success(tr("Task marked as Completed with Material Usage logged!"));
-        fetchData();
+        fetchData(true);
       }
     } catch (err: any) {
       console.error('Failed to complete task', err);
@@ -530,7 +533,7 @@ export default function InteriorTasksView({ projectId }: InteriorTasksViewProps)
       await interiorProjectService.deleteTask(projectId, task._id);
       toast.success(tr("Task deleted successfully"));
       if (selectedTask?._id === task._id) setSelectedTask(null);
-      fetchData();
+      fetchData(true);
     } catch (err) {
       console.error('Failed to delete task', err);
       toast.error(tr("Failed to delete task"));

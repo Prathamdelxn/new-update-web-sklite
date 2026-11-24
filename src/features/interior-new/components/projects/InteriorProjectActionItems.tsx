@@ -138,7 +138,8 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
   const canOpen = useCanOpenSection(projectId);
   const { formatCurrency } = useCurrency();
   const [scope, setScope] = useState<'mine' | 'all' | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const PAGE = 5;
+  const [page, setPage] = useState(0);
 
   // Resolved once permissions load; null = still loading
   const allowed = useMemo(() => {
@@ -234,7 +235,14 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
 
     // RFIs
     for (const r of data.rfis) {
-      if (r.status === 'open') {
+      if (r.status === 'open' && !r.assignedTo) {
+        // Raiser wasn't sure who to ask: someone has to route it
+        out.push({
+          id: `rfi-${idOf(r)}`, kind: 'rfi', section: 'rfis', priority: r.priority,
+          action: 'Assign RFI to someone', title: clip(r.subject || r.question), meta: r.rfiNumber,
+          due: toDate(r.dueDate), mine: false,
+        });
+      } else if (r.status === 'open') {
         out.push({
           id: `rfi-${idOf(r)}`, kind: 'rfi', section: 'rfis', priority: r.priority,
           action: 'Answer RFI', title: clip(r.subject || r.question), meta: r.rfiNumber,
@@ -384,8 +392,12 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
   }, [visible, today]);
 
   const overdueCount = visible.filter((i) => bucketOf(i, today) === 'overdue').length;
-  const LIMIT = 8;
-  let shown = 0;
+  // Page of 5 across all groups (overdue first)
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageStart = safePage * PAGE;
+  const pageEnd = pageStart + PAGE;
+  let seen = 0;
 
   const loadingState = allowed === null || (isLoading && !data);
 
@@ -412,7 +424,7 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
                 <button
                   key={k}
                   type="button"
-                  onClick={() => { setScope(k); setExpanded(false); }}
+                  onClick={() => { setScope(k); setPage(0); }}
                   className={`px-2.5 py-1 rounded-md font-semibold whitespace-nowrap transition-colors ${activeScope === k ? 'bg-[hsl(var(--primary))] text-white' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}
                 >
                   {k === 'mine' ? tr("Assigned to me ({{mineCount}})", { mineCount: mineCount }) : tr("All ({{itemsCount}})", { itemsCount: items.length })}
@@ -449,11 +461,14 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
             </p>
           </div>
         ) : (
+          <div className="space-y-2">
           <div className="space-y-4">
             {grouped.map((group) => {
-              if (!expanded && shown >= LIMIT) return null;
-              const take = expanded ? group.items : group.items.slice(0, Math.max(0, LIMIT - shown));
-              shown += take.length;
+              const from = seen;
+              seen += group.items.length;
+              // only the part of this group that falls on the current page
+              const take = group.items.slice(Math.max(0, pageStart - from), Math.max(0, pageEnd - from));
+              if (take.length === 0) return null;
               return (
                 <div key={group.key} className="space-y-1.5">
                   <p className={`text-[0.6875rem] font-bold uppercase tracking-wider ${group.tone}`}>
@@ -502,14 +517,36 @@ export default function InteriorProjectActionItems({ projectId, projectStatus }:
                 </div>
               );
             })}
-            {visible.length > LIMIT && (
-              <button
-                type="button"
-                onClick={() => setExpanded((v) => !v)}
-                className="w-full text-xs font-semibold text-[hsl(var(--primary))] hover:underline py-1"
-              >
-                {expanded ? tr("Show less") : tr("Show all {{visibleCount}}", { visibleCount: visible.length })}
-              </button>
+          </div>
+            {visible.length > PAGE && (
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-[hsl(var(--border))] text-xs">
+                <span className="text-[hsl(var(--muted-foreground))] tabular-nums">
+                  {tr("{{from}}–{{to}} of {{total}}", { from: pageStart + 1, to: Math.min(pageEnd, visible.length), total: visible.length })}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={safePage === 0}
+                    onClick={() => setPage(safePage - 1)}
+                    className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg border border-[hsl(var(--border))] font-semibold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5 rotate-180 rtl:rotate-0" />
+                    {tr("Prev")}
+                  </button>
+                  <span className="text-[hsl(var(--muted-foreground))] tabular-nums">
+                    {safePage + 1} / {pageCount}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={safePage >= pageCount - 1}
+                    onClick={() => setPage(safePage + 1)}
+                    className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg border border-[hsl(var(--border))] font-semibold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {tr("Next")}
+                    <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}

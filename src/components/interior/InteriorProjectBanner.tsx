@@ -43,7 +43,7 @@ const CATEGORIES = (projectId: string) => [
     icon: '📂',
     items: [
       { label: 'Drawings', href: `/interior-new/projects/${projectId}/drawings` },
-      { label: 'Site Photos', href: `/interior-new/projects/${projectId}/photos` },
+      { label: 'Site Images', href: `/interior-new/projects/${projectId}/photos` },
       { label: 'RFIs Tracker', href: `/interior-new/projects/${projectId}/rfis` },
       { label: 'Utility Checks', href: `/interior-new/projects/${projectId}/utilities` },
     ],
@@ -98,7 +98,7 @@ const TAB_ACCESS: Record<string, string[]> = {
   'Confirm Order': ['confirm_order'],
   'Team & Members': ['users'],
   Drawings: ['drawings'],
-  'Site Photos': ['photos'],
+  'Site Images': ['photos'],
   'RFIs Tracker': ['rfis'],
   'Utility Checks': ['utilities'],
   'WBS Hierarchy': ['wbs'],
