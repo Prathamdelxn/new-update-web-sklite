@@ -189,7 +189,10 @@ export default function InteriorProjectQuotationView() {
   }, [lead]);
 
   const hasQuotations = quotations.length > 0;
-  const latestQuote = hasQuotations ? quotations[quotations.length - 1] : null;
+  // The quotation the project was won on (accepted) wins over a later revision; else the latest
+  const latestQuote = hasQuotations
+    ? [...quotations].reverse().find((q: any) => q?.status === 'Accepted' || q?.status === 'Approved') || quotations[quotations.length - 1]
+    : null;
   const isLatestQuoteRejected = Boolean(latestQuote && latestQuote.status === 'Rejected');
   const hasAcceptedQuote = Boolean(
     quotations.some((q: any) => q.status === 'Accepted' || q.status === 'Approved')

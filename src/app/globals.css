@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* `dark:` follows a `.dark` class (none is set today), NOT the operating system theme.
+   Without this, Windows/macOS dark mode switched 295 `dark:` styles on over the light UI
+   and made text unreadable. Add the class to <html> to build a real dark mode later. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #F8FAFF;
   --foreground: #0F172A;

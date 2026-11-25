@@ -111,10 +111,22 @@ export default function FinancePage() {
   // Org totals use the currency most projects are in; each project row uses its own
   const orgCurrency = dominantCurrency(projects);
   const currencyByProject = new Map(summaries.map((s) => [String(s._id), s.currency]));
-  const totalBudget = summaries.reduce((s, p) => s + p.budget, 0);
-  const totalIncoming = summaries.reduce((s, p) => s + p.totalIncoming, 0);
-  const totalOutgoing = summaries.reduce((s, p) => s + p.totalOutgoing + p.totalPurchases, 0);
+  // Totals per currency — projects in different currencies are never added into one figure.
+  const totalsByCurrency: Record<string, { budget: number; incoming: number; outgoing: number }> = {};
+  summaries.forEach((p) => {
+    const t = (totalsByCurrency[p.currency] ||= { budget: 0, incoming: 0, outgoing: 0 });
+    t.budget += p.budget;
+    t.incoming += p.totalIncoming;
+    t.outgoing += p.totalOutgoing + p.totalPurchases;
+  });
+  const mainTotals = totalsByCurrency[orgCurrency] || { budget: 0, incoming: 0, outgoing: 0 };
+  const otherCurrencies = Object.entries(totalsByCurrency).filter(([c]) => c !== orgCurrency);
+  const totalBudget = mainTotals.budget;
+  const totalIncoming = mainTotals.incoming;
+  const totalOutgoing = mainTotals.outgoing;
   const netBalance = totalIncoming - totalOutgoing;
+  const otherValue = (key: 'budget' | 'incoming' | 'outgoing' | 'net', t: { budget: number; incoming: number; outgoing: number }) =>
+    key === 'net' ? t.incoming - t.outgoing : t[key];
 
   const recentTx = [...transactions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -137,10 +149,10 @@ export default function FinancePage() {
         {/* Top-level KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Total Budget', value: totalBudget, icon: Wallet, color: 'text-blue-600', bg: 'bg-blue-50', prefix: orgCurrency },
-            { label: 'Total Incoming', value: totalIncoming, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', prefix: orgCurrency },
-            { label: 'Total Outgoing', value: totalOutgoing, icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50', prefix: orgCurrency },
-            { label: 'Net Balance', value: netBalance, icon: CreditCard, color: netBalance >= 0 ? 'text-emerald-600' : 'text-red-600', bg: netBalance >= 0 ? 'bg-emerald-50' : 'bg-red-50', prefix: orgCurrency },
+            { key: 'budget' as const, label: 'Total Budget', value: totalBudget, icon: Wallet, color: 'text-blue-600', bg: 'bg-blue-50', prefix: orgCurrency },
+            { key: 'incoming' as const, label: 'Total Incoming', value: totalIncoming, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', prefix: orgCurrency },
+            { key: 'outgoing' as const, label: 'Total Outgoing', value: totalOutgoing, icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50', prefix: orgCurrency },
+            { key: 'net' as const, label: 'Net Balance', value: netBalance, icon: CreditCard, color: netBalance >= 0 ? 'text-emerald-600' : 'text-red-600', bg: netBalance >= 0 ? 'bg-emerald-50' : 'bg-red-50', prefix: orgCurrency },
           ].map((stat, i) => (
             <GlassCard key={i} className="p-6 border-gray-200" gradient>
               <div className="flex items-center justify-between mb-4">
@@ -152,6 +164,11 @@ export default function FinancePage() {
               <p className={cn('text-2xl font-extrabold', stat.color)}>
                 {stat.prefix} {Math.abs(stat.value).toLocaleString()}
               </p>
+              {otherCurrencies.map(([cur, t]) => (
+                <p key={cur} className="text-xs font-semibold text-slate-500 mt-1">
+                  + {cur} {Math.abs(otherValue(stat.key, t)).toLocaleString()}
+                </p>
+              ))}
             </GlassCard>
           ))}
         </div>
@@ -159,7 +176,10 @@ export default function FinancePage() {
         {/* Monthly Cash Flow Chart */}
         {(() => {
           const monthMap: Record<string, { in: number; out: number }> = {};
-          [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).forEach(tx => {
+          // Plot only the main currency — amounts in different currencies can't share one line
+          [...transactions]
+            .filter((tx: any) => (currencyByProject.get(String(tx.projectId)) || orgCurrency) === orgCurrency)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).forEach(tx => {
             const key = new Date(tx.date).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
             if (!monthMap[key]) monthMap[key] = { in: 0, out: 0 };
             const meta = getTxMeta(tx);

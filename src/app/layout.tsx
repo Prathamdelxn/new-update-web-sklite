@@ -32,8 +32,8 @@ const labelMono = Geist_Mono({
 export const metadata: Metadata = {
   // absolute base for the link-preview image (app/opengraph-image.png)
   metadataBase: new URL("https://skystructlite.vercel.app"),
-  title: "SkyStruct Lite | Construction Management",
-  description: "Next-gen construction management platform",
+  title: "SkyStruct Lite | Interior & Construction Management",
+  description: "Project management for interior fit-out and construction teams: CRM, BOQs, quotations, site progress, procurement and handover.",
   openGraph: {
     siteName: "SkyStruct Lite",
     type: "website",

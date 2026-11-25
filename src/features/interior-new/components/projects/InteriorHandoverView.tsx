@@ -292,7 +292,12 @@ export default function InteriorHandoverView({ projectId }: InteriorHandoverView
   // Overall Score
   const completedCount = checklistItems.filter((i) => i.passed).length;
   const totalCount = checklistItems.length;
-  const readinessPercentage = Math.round((completedCount / totalCount) * 100);
+  // Average of each requirement's own progress (WBS 20%, drawings 3/4 = 75%…), so partial work
+  // counts — not just finished items. 100% only when every item is fully met.
+  const readinessPercentage =
+    completedCount === totalCount
+      ? 100
+      : Math.min(99, Math.round(checklistItems.reduce((sum, i) => sum + (i.passed ? 100 : i.progress), 0) / totalCount));
 
   // Sync with backend model in background
   useEffect(() => {

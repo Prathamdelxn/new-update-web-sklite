@@ -6,7 +6,8 @@ import { tr } from '@/i18n';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Bell, LogOut, ChevronDown, User, Settings, Menu, Globe } from 'lucide-react';
+import { NotificationBell } from '@/components/interior/NotificationBell';
+import { Search, LogOut, ChevronDown, User, Settings, Menu, Globe } from 'lucide-react';
 import { LanguageToggleButton } from './LanguageSwitcher';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Button } from '@/components/interior/ui';
@@ -53,10 +54,7 @@ export function InteriorHeader({ user, onMobileMenuClick }: InteriorHeaderProps)
 
       <div className="flex items-center gap-2 ms-4">
         <LanguageToggleButton className="hidden sm:inline-flex" />
-        <Button variant="outline" size="sm" className="relative text-[hsl(var(--muted-foreground))] px-2">
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-[hsl(var(--destructive))] rounded-full" />
-        </Button>
+        <NotificationBell />
 
         <div className="relative" ref={menuRef}>
           <button

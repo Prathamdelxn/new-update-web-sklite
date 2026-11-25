@@ -4395,5 +4395,11 @@
  "Show {{count}} more": "عرض {{count}} أخرى",
  "{{from}}–{{to}} of {{total}}": "{{from}}–{{to}} من {{total}}",
  "Prev": "السابق",
- "Next": "التالي"
+ "Next": "التالي",
+ "Mark all read": "تعليم الكل كمقروء",
+ "You're all caught up": "لا توجد إشعارات جديدة",
+ "just now": "الآن",
+ "{{n}}m ago": "قبل {{n}} د",
+ "{{n}}h ago": "قبل {{n}} س",
+ "{{n}}d ago": "قبل {{n}} يوم"
 }

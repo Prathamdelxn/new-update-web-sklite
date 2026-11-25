@@ -11,6 +11,22 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { InteriorLead } from './InteriorLeadsTable';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
 
+
+/** Closed deals: won / converted / lost / already a project — no more revisions. */
+const isClosedLead = (lead: any) =>
+  ['Won', 'Converted', 'Lost'].includes(lead?.status) || Boolean(lead?.linkedProject);
+
+/**
+ * The quotation a row should represent: the accepted one if the deal was won on it
+ * (a later rejected revision must not show the won deal as "Rejected"), else the latest.
+ */
+const primaryQuote = (lead: any) => {
+  const qs: any[] = Array.isArray(lead?.quotations) ? lead.quotations : [];
+  if (qs.length === 0) return null;
+  const accepted = [...qs].reverse().find((q) => q?.status === 'Accepted' || q?.status === 'Approved');
+  return accepted || qs[qs.length - 1];
+};
+
 export function InteriorQuotationsView({
   leads,
   onConvertToProject,
@@ -166,9 +182,7 @@ const { hasPermission: canDo } = usePermissions();
             <div className="block md:hidden divide-y divide-[hsl(var(--border))]">
               {paginatedLeads.map((lead, idx) => {
                 const latestQuote =
-                  lead.quotations && lead.quotations.length > 0
-                    ? lead.quotations[lead.quotations.length - 1]
-                    : null;
+                  primaryQuote(lead);
 
                 return (
                   <div
@@ -248,7 +262,7 @@ const { hasPermission: canDo } = usePermissions();
                         )
                       ) : (
                         <div className="flex items-center gap-1.5">
-                          {latestQuote.status === 'Rejected' ? (
+                          {latestQuote.status === 'Rejected' && !isClosedLead(lead) ? (
                             (canDo('crm_quotations', 'create')) && (
                               <button
                                 onClick={() => onCreateQuotation(lead._id)}
@@ -315,9 +329,7 @@ const { hasPermission: canDo } = usePermissions();
                 <tbody className="divide-y divide-[hsl(var(--border)/0.7)]">
                   {paginatedLeads.map((lead, idx) => {
                     const latestQuote =
-                      lead.quotations && lead.quotations.length > 0
-                        ? lead.quotations[lead.quotations.length - 1]
-                        : null;
+                      primaryQuote(lead);
 
                     return (
                       <tr
@@ -439,7 +451,7 @@ const { hasPermission: canDo } = usePermissions();
                               )
                             ) : (
                               <>
-                                {latestQuote.status === 'Rejected' ? (
+                                {latestQuote.status === 'Rejected' && !isClosedLead(lead) ? (
                                   (canDo('crm_quotations', 'create')) && (
                                     <button
                                       onClick={() => onCreateQuotation(lead._id)}
