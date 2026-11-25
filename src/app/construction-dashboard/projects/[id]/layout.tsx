@@ -1,6 +1,6 @@
 'use client';
 import { tr } from '@/i18n';
-import React, { useState, useRef, useEffect, useLayoutEffect, startTransition } from 'react';
+import React, { useState, useRef, useEffect, startTransition } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { SkeletonLoader } from '@/components/skeletons/SkeletonLoader';
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
@@ -12,10 +12,10 @@ import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import {
   Info, FileText, Banknote, Package, Files, Map,
   AlertCircle, ShieldAlert, Calendar,
-  TrendingUp, GanttChart, ClipboardList, CreditCard,
+  TrendingUp, ClipboardList, CreditCard,
   ChevronLeft, Pencil, MessageSquare,
   ClipboardCheck, History, LayoutGrid, Sofa, LayoutDashboard, // Clock (Attendance tab, hidden),
-  Lock, ArrowRight
+  Lock, ArrowRight, ChevronDown
 } from 'lucide-react';
 
 // ── All tab definitions ────────────────────────────────────────
@@ -49,15 +49,15 @@ type TabGroup = {
   tabIds: TabId[];
 };
 
-// ── Group definitions (order matters — first tab in group = default landing) ──
+// ── Navigation groups (like the interior project header): a few groups with dropdowns
+//    instead of one long strip of 16 tabs that had to be dragged / scrolled sideways ──
 const TAB_GROUPS: TabGroup[] = [
-  { id: 'overview',  label: 'Overview',  icon: LayoutDashboard, tabIds: [ 'details'] },
-  { id: 'work',      label: 'Work',      icon: Calendar,        tabIds: ['boq', 'milestones', 'reports'] },
-  { id: 'finance',   label: 'Finance',   icon: Banknote,      tabIds: ['transactions'] },
-  { id: 'site',      label: 'Site',      icon: Map,             tabIds: ['plans', 'documents', 'materials', 'site-survey' /* , 'attendance' */] },
-  { id: 'quality',   label: 'Quality',   icon: ShieldAlert,     tabIds: ['issues', 'risks', 'handover', 'audit'] },
+  { id: 'overview',  label: 'Overview',  icon: LayoutDashboard, tabIds: ['details'] },
+  { id: 'planning',  label: 'Planning',  icon: Map,             tabIds: ['site-survey', 'plans', 'documents', 'boq', 'rooms', 'ffe'] },
+  { id: 'execution', label: 'Execution', icon: Calendar,        tabIds: ['milestones', 'materials', 'issues', 'risks'] },
+  { id: 'finance',   label: 'Finance',   icon: Banknote,        tabIds: ['transactions', 'reports'] },
+  { id: 'closeout',  label: 'Closeout',  icon: ClipboardCheck,  tabIds: ['handover', 'audit'] },
   { id: 'chat',      label: 'Chat',      icon: MessageSquare,   tabIds: ['chat'] },
-  { id: 'interior',  label: 'Interior',  icon: Sofa,            tabIds: ['rooms', 'ffe'] },
 ];
 
 // ── Builds visible tabs respecting project type & surveyor & admin role ──
@@ -83,18 +83,6 @@ const statusBadgeColor: Record<string, string> = {
   'On Hold':             'bg-slate-50 text-slate-600 border-slate-200/80',
   'Cancelled':           'bg-red-50 text-red-700 border-red-200/80',
 };
-
-// Tab highlight motion — same feel as the mobile app's Animated.spring (bounciness 4):
-// accelerates, overshoots ~4% and settles. CSS linear() encodes the spring curve;
-// older browsers get a close cubic-bezier with a small overshoot.
-const TAB_SPRING = 'linear(0, 0.0228, 0.0816, 0.1643, 0.2608, 0.3631, 0.4654, 0.5631, 0.6534, 0.7342, 0.8047, 0.8646, 0.9141, 0.954, 0.9851, 1.0084, 1.0251, 1.0362, 1.0427, 1.0456, 1.0458, 1.0439, 1.0406, 1.0365, 1.0319, 1.0272, 1.0225, 1.0182, 1.0142, 1.0107, 1.0077, 1.0051, 1.0031, 1.0014, 1.0002, 0.9992, 0.9986, 0.9982, 0.998, 0.9979, 1)';
-let springSupported: boolean | null = null;
-function tabSpringEasing() {
-  if (springSupported === null) {
-    springSupported = typeof CSS !== 'undefined' && CSS.supports('transition-timing-function', 'linear(0, 1)');
-  }
-  return springSupported ? TAB_SPRING : 'cubic-bezier(0.34, 1.25, 0.64, 1)';
-}
 
 // Skeleton shown while the project loads — same shape each tab uses for its own
 // loading state, so the placeholder doesn't change shape when the tab takes over.
@@ -123,71 +111,25 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const visibleTabs = getVisibleTabs(headerInfo?.projectType, project?.siteSurveyor, isAdmin);
   const activeTab = (ALL_TABS as readonly { id: string }[]).find(t => pathname.includes(`/${t.id}`))?.id || 'dashboard';
 
-  const tabsContainerRef = useRef<HTMLDivElement>(null);
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const scrollLeftRef = useRef(0);
-  const hasDraggedRef = useRef(false);
-  const [isGrabbing, setIsGrabbing] = useState(false);
-
-  // Mouse wheel horizontal scrolling
-  const handleTabsWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (e.deltaY !== 0 && e.deltaX === 0) {
-      e.currentTarget.scrollLeft += e.deltaY;
-    }
-  };
-
-  // Hold & drag to scroll
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return; // Only primary mouse button
-    const el = tabsContainerRef.current;
-    if (!el) return;
-    isDraggingRef.current = true;
-    hasDraggedRef.current = false;
-    startXRef.current = e.pageX - el.offsetLeft;
-    scrollLeftRef.current = el.scrollLeft;
-    setIsGrabbing(true);
-  };
-
-  // Global mousemove and mouseup listeners to smoothly track drag even if cursor moves slightly outside the bar
+  // Which group dropdown is open; closes on outside click / Escape
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      const el = tabsContainerRef.current;
-      if (!el) return;
-      e.preventDefault();
-      const x = e.pageX - el.offsetLeft;
-      const walk = x - startXRef.current;
-      if (Math.abs(walk) > 4) {
-        hasDraggedRef.current = true;
-      }
-      el.scrollLeft = scrollLeftRef.current - walk;
+    if (!openGroup) return;
+    const onDown = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setOpenGroup(null);
     };
-
-    const handleGlobalMouseUp = () => {
-      if (isDraggingRef.current) {
-        isDraggingRef.current = false;
-        setIsGrabbing(false);
-        setTimeout(() => {
-          hasDraggedRef.current = false;
-        }, 80);
-      }
-    };
-
-    window.addEventListener('mousemove', handleGlobalMouseMove);
-    window.addEventListener('mouseup', handleGlobalMouseUp);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenGroup(null);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
     return () => {
-      window.removeEventListener('mousemove', handleGlobalMouseMove);
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
     };
-  }, []);
+  }, [openGroup]);
 
-  const handleTabClick = (tabId: string, e: React.MouseEvent) => {
-    if (hasDraggedRef.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
+  const handleTabClick = (tabId: string) => {
+    setOpenGroup(null);
     if (tabId === activeTab) return;
     // Move the highlight now; start the (heavier) page render only after the
     // browser has painted the first animation frame, and as a non-urgent update.
@@ -207,39 +149,6 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     tabIdsKey.split(',').forEach((id) => router.prefetch(`/construction-dashboard/projects/${projectId}/${id}`));
   }, [projectId, tabIdsKey, router]);
 
-  // Sliding highlight: one element moved with a CSS transform (runs on the compositor,
-  // so it stays smooth even while React renders the next tab)
-  const [indicator, setIndicator] = useState<{ x: number; w: number; animate: boolean } | null>(null);
-  useLayoutEffect(() => {
-    const el = tabsContainerRef.current;
-    if (!el) return;
-    const measure = (animate: boolean) => {
-      const btn = el.querySelector<HTMLElement>('[data-active="true"]');
-      if (!btn) { setIndicator(null); return; }
-      setIndicator((prev) => ({ x: btn.offsetLeft, w: btn.offsetWidth, animate: animate && !!prev }));
-    };
-    measure(true);
-    // Re-measure without animating when labels/sizes change (language switch, resize)
-    const ro = new ResizeObserver(() => measure(false));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [shownTab, tabIdsKey]);
-
-  // Keep the active tab centred in the bar, like the mobile app (only scrolls the
-  // tab strip — never the page)
-  useEffect(() => {
-    const el = tabsContainerRef.current;
-    if (!el) return;
-    const activeBtn = el.querySelector<HTMLElement>('[data-active="true"]');
-    if (!activeBtn || el.scrollWidth <= el.clientWidth) return;
-    const centred = activeBtn.offsetLeft + activeBtn.offsetWidth / 2 - el.clientWidth / 2;
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    const target = Math.max(0, Math.min(maxScroll, centred));
-    // RTL strips scroll with negative scrollLeft (0 = right edge)
-    const isRtl = getComputedStyle(el).direction === 'rtl';
-    el.scrollTo({ left: isRtl ? target - maxScroll : target, behavior: 'smooth' });
-  }, [shownTab]);
-
   const isSurveyPending = (project?.status === 'Site Survey' || (project?.status === 'Initialized' && project?.needSiteSurvey)) && (project as any)?.surveyStatus !== 'Approved';
   const isRestrictedTab = isSurveyPending && RESTRICTED_TABS.includes(activeTab);
 
@@ -249,43 +158,6 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const projectsListRoute = (project?.projectType === 'Interior' || (!project && isInteriorOrg)) ? '/interior-new/projects' : '/construction-dashboard/projects';
 
   const canEditProject = !isProjectLocked(project) && hasProjectPermission(user, project, 'projects:update');
-
-  const headerContent = project ? (
-    <div className="flex items-center justify-between w-full pe-4">
-      <div className="flex items-center gap-3 min-w-0">
-        <button
-          onClick={() => router.push(projectsListRoute)}
-          className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-2xs active:scale-95 transition-all duration-200 shrink-0 cursor-pointer"
-          title={tr("Back to Projects")}
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <h1 className="text-sm md:text-base font-black text-slate-900 tracking-tight truncate max-w-[150px] sm:max-w-xs md:max-w-md">
-          {tr(project.name)}
-        </h1>
-        <span className={cn(
-          'hidden sm:inline-block shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border',
-          statusBadgeColor[project.status] || 'bg-blue-50/80 text-blue-700 border-blue-200/60'
-        )}>
-          {tr(project.status)}
-        </span>
-        {project.projectType && (
-          <span className="hidden md:inline shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border bg-slate-50 text-slate-600 border-slate-200/80">
-            {tr(project.projectType)}
-          </span>
-        )}
-      </div>
-      {canEditProject && (
-        <button
-          onClick={() => setIsEditModalOpen(true)}
-          title={tr("Edit project")}
-          className="hidden sm:inline-flex shrink-0 p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 shadow-2xs active:scale-95 transition-all duration-200 cursor-pointer"
-        >
-          <Pencil className="w-4 h-4" />
-        </button>
-      )}
-    </div>
-  ) : null;
 
   // Loaded but nothing came back → not-found / access-denied card.
   // Otherwise the header and tab bar render straight away (like Interior); only the
@@ -357,52 +229,62 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          {/* ── Navigation card (Hold & Drag to Scroll) ── */}
-          <div className="bg-white border border-slate-200/80 rounded-xl p-1.5 overflow-hidden">
-            <div
-              ref={tabsContainerRef}
-              onMouseDown={handleMouseDown}
-              onWheel={handleTabsWheel}
-              className={cn(
-                'relative flex items-center gap-1 overflow-x-auto scrollbar-hide select-none',
-                !isGrabbing && 'scroll-smooth'
-              )}
-            >
-              {indicator && (
-                <span
-                  aria-hidden
-                  className={cn(
-                    'absolute top-0 bottom-0 left-0 rounded-lg bg-blue-600 pointer-events-none will-change-transform',
-                    indicator.animate && 'transition-[transform,width] motion-reduce:transition-none'
-                  )}
-                  style={{
-                    width: indicator.w,
-                    transform: `translate3d(${indicator.x}px,0,0)`,
-                    ...(indicator.animate ? { transitionDuration: '620ms', transitionTimingFunction: tabSpringEasing() } : {}),
-                  }}
-                />
-              )}
-              {visibleTabs.map((tab) => {
-                const isActive = shownTab === tab.id;
-                const TabIcon = tab.icon;
-                return (
+          {/* ── Grouped navigation (dropdowns, no sideways scrolling) ── */}
+          <nav ref={navRef} className="relative z-20 bg-white border border-slate-200/80 rounded-xl px-1.5 py-1.5 flex flex-wrap items-center gap-1">
+            {TAB_GROUPS.map((group) => {
+              const tabs = group.tabIds
+                .map((id) => visibleTabs.find((t) => t.id === id))
+                .filter(Boolean) as (typeof visibleTabs)[number][];
+              if (tabs.length === 0) return null;
+              const activeInGroup = tabs.find((t) => t.id === shownTab);
+              const GroupIcon = activeInGroup?.icon || group.icon;
+              const single = tabs.length === 1;
+              const isOpen = openGroup === group.id;
+              return (
+                <div key={group.id} className="relative">
                   <button
-                    key={tab.id}
-                    data-active={isActive}
-                    onClick={(e) => handleTabClick(tab.id, e)}
+                    type="button"
+                    onClick={() => (single ? handleTabClick(tabs[0].id) : setOpenGroup(isOpen ? null : group.id))}
+                    aria-expanded={single ? undefined : isOpen}
                     className={cn(
-                      'group relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 select-none cursor-pointer',
-                      'transition-colors duration-300 ease-in-out',
-                      isActive ? 'text-white' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+                      'flex items-center gap-2 h-9 px-3 rounded-lg text-[13px] font-medium whitespace-nowrap transition-colors cursor-pointer',
+                      activeInGroup ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     )}
                   >
-                    <TabIcon className={cn("relative w-4 h-4 shrink-0 transition-colors duration-300 ease-in-out", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600")} />
-                    <span className="relative">{tr(tab.name)}</span>
+                    <GroupIcon className={cn('w-4 h-4 shrink-0', activeInGroup ? 'text-white' : 'text-slate-400')} />
+                    <span>{tr(activeInGroup && !single ? activeInGroup.name : group.label)}</span>
+                    {!single && <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', isOpen && 'rotate-180', activeInGroup ? 'text-white/80' : 'text-slate-400')} />}
                   </button>
-                );
-              })}
-            </div>
-          </div>
+
+                  {isOpen && !single && (
+                    <div className="absolute top-full start-0 mt-1.5 z-50 min-w-[13rem] py-1.5 rounded-xl border border-slate-200 bg-white shadow-xl">
+                      <div className="px-3 pt-0.5 pb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">{tr(group.label)}</div>
+                      {tabs.map((tab) => {
+                        const TabIcon = tab.icon;
+                        const locked = isSurveyPending && RESTRICTED_TABS.includes(tab.id);
+                        const active = shownTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => handleTabClick(tab.id)}
+                            className={cn(
+                              'w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-start transition-colors cursor-pointer',
+                              active ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'
+                            )}
+                          >
+                            <TabIcon className={cn('w-4 h-4 shrink-0', active ? 'text-blue-600' : 'text-slate-400')} />
+                            <span className="flex-1">{tr(tab.name)}</span>
+                            {locked && <Lock className="w-3.5 h-3.5 text-slate-400" aria-label={tr('Locked until the site survey is approved')} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
 
           {!project ? (
             <SkeletonLoader loading preset={TAB_SKELETON[shownTab] ?? 'list'}>{null}</SkeletonLoader>

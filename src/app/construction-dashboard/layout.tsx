@@ -1,7 +1,7 @@
 'use client';
 import { tr } from '@/i18n';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sidebar } from '@/components/layouts/Sidebar';
@@ -30,6 +30,11 @@ function ConstructionDashboardLayoutInner({
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
+  // Only <main> scrolls now, so reset it on navigation (the browser used to reset the window)
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [pathname]);
 
   const isInterior =
     (user as any)?.industryType === 'interior' ||
@@ -71,27 +76,26 @@ function ConstructionDashboardLayoutInner({
     );
   }
 
+  // App-style frame (same as interior): the window never scrolls — header and sidebar
+  // stay put and only <main> scrolls. Padding uses logical `ps-`, so Arabic (RTL) mirrors.
   return (
-    <div className="min-h-screen w-full bg-[#F8FAFF]">
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
+    <div className="h-screen h-dvh w-full overflow-hidden bg-[#F8FAFF]">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
         isCollapsed={isCollapsed}
         onToggleCollapse={handleToggleCollapse}
       />
-      
-      <div 
+
+      <div
         className={cn(
-          "flex flex-col min-h-screen w-full min-w-0 transition-all duration-200",
+          "flex flex-col h-full w-full min-w-0 transition-[padding] duration-200",
           isCollapsed ? "lg:ps-[60px]" : "lg:ps-[260px]"
         )}
       >
-        <Topnav 
-          onMenuClick={() => setIsSidebarOpen(true)} 
-          isSidebarCollapsed={isCollapsed}
-        />
-        
-        <main className="flex-1 w-full min-w-0 px-4 md:px-6 pt-20 pb-8">
+        <Topnav onMenuClick={() => setIsSidebarOpen(true)} />
+
+        <main ref={mainRef} className="flex-1 min-h-0 w-full min-w-0 overflow-y-auto overflow-x-hidden px-4 md:px-6 pt-6 pb-8">
           <div className="w-full">
             <motion.div
               key={pathname}

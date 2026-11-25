@@ -2181,5 +2181,9 @@
  "• Floor": "• الطابق",
  "• Has Notes": "• يحتوي ملاحظات",
  "• Qty:": "• الكمية:",
- "Loading project": "جارٍ تحميل المشروع"
+ "Loading project": "جارٍ تحميل المشروع",
+ "Overview": "نظرة عامة",
+ "Execution": "التنفيذ",
+ "Closeout": "الإغلاق",
+ "Locked until the site survey is approved": "مقفل حتى اعتماد مسح الموقع"
 }

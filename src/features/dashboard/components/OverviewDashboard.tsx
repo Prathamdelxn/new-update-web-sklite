@@ -246,18 +246,37 @@ export const OverviewDashboard = () => {
     return res;
   }, [data, activeTimeRange]);
 
+  // Project statuses (Project model enum) grouped into the dashboard's buckets.
+  // Counting only the bucket names missed projects in e.g. "Initialized" / "Ongoing".
+  const statusGroups = useMemo(() => {
+    const groupOf = (status: string) => {
+      if (['Planning', 'Initialized'].includes(status)) return 'Planning';
+      if (['Completed', 'Handover Completed'].includes(status)) return 'Completed';
+      if (status === 'On Hold') return 'On Hold';
+      if (status === 'Cancelled') return 'Cancelled';
+      return 'In Progress'; // Ongoing, Execution, Site Survey, snagging & handover stages…
+    };
+    const groups: Record<string, number> = {};
+    Object.entries(ps.statusCounts || {}).forEach(([status, count]) => {
+      const g = groupOf(status);
+      groups[g] = (groups[g] || 0) + (Number(count) || 0);
+    });
+    return groups;
+  }, [ps]);
+
   // Project Health Donut chart slices
   const healthSlices = useMemo(() => {
-    const counts = ps.statusCounts || {};
     const raw = [
-      { name: 'In Progress', value: counts['In Progress'] || 0, color: '#2563EB' },
-      { name: 'Planning', value: counts['Planning'] || 0, color: '#D97706' },
-      { name: 'Completed', value: counts['Completed'] || 0, color: '#16A34A' },
-      { name: 'On Hold', value: counts['On Hold'] || 0, color: '#64748B' },
+      { name: 'In Progress', value: statusGroups['In Progress'] || 0, color: '#2563EB' },
+      { name: 'Planning', value: statusGroups['Planning'] || 0, color: '#D97706' },
+      { name: 'Completed', value: statusGroups['Completed'] || 0, color: '#16A34A' },
+      { name: 'On Hold', value: statusGroups['On Hold'] || 0, color: '#64748B' },
+      { name: 'Cancelled', value: statusGroups['Cancelled'] || 0, color: '#DC2626' },
     ].filter((s) => s.value > 0);
 
-    return raw.length > 0 ? raw : [{ name: 'No Projects', value: 1, color: '#E2E8F0' }];
-  }, [ps]);
+    // Grey placeholder ring only (never listed in the legend)
+    return raw.length > 0 ? raw : [{ name: 'No Projects', value: 1, color: '#E2E8F0', placeholder: true }];
+  }, [statusGroups]);
 
   const healthTotal = ps.total || allProjects.length || 0;
 
@@ -272,7 +291,7 @@ export const OverviewDashboard = () => {
   const kpiCards = [
     {
       title: 'Active Projects',
-      value: ps.statusCounts?.['In Progress'] || 0,
+      value: statusGroups['In Progress'] || 0,
       badge: 'Live',
       badgeColor: 'text-blue-700 bg-blue-50 border-blue-100',
       valueColor: 'text-blue-600',
@@ -283,7 +302,7 @@ export const OverviewDashboard = () => {
     },
     {
       title: 'Completed Projects',
-      value: ps.statusCounts?.['Completed'] || 0,
+      value: statusGroups['Completed'] || 0,
       badge: 'Delivered',
       badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-100',
       valueColor: 'text-emerald-600',
@@ -568,7 +587,7 @@ export const OverviewDashboard = () => {
                       {tr("No active projects in this workspace")}
                     </p>
                   ) : (
-                    healthSlices.map((item) => (
+                    healthSlices.filter((item) => !('placeholder' in item)).map((item) => (
                       <div key={item.name} className="flex items-center justify-between text-sm">
                         <span className="flex items-center gap-2">
                           <span

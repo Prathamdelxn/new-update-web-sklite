@@ -58,12 +58,9 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
   })();
 
   return (
-    <header
-      className={cn(
-        "fixed top-0 end-0 start-0 z-30 h-16 bg-white border-b border-slate-200/80 transition-all duration-200",
-        isSidebarCollapsed ? 'lg:left-[60px]' : 'lg:left-[260px]'
-      )}
-    >
+    // Part of the page frame (not position:fixed): it can't overlap content or
+    // mis-align in RTL, and the content area below it is what scrolls.
+    <header className="relative z-30 h-16 shrink-0 bg-white border-b border-slate-200/80">
       <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
         {/* Left Section: Mobile Menu & Header Content */}
         <div className="flex items-center gap-3 flex-1 min-w-0">

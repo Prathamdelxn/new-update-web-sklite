@@ -169,11 +169,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // Unified Login (Mobile Logic): Try Super Admin login first, then Regular User login
+    // Unified Login: try the regular user login first (almost every login is one),
+    // then Super Admin. Trying Super Admin first cost every user an extra failed round trip.
+    let response;
     try {
-      await handleSuperAdminLogin(payload);
-    } catch {
-      const response = await api.post('/auth/login', payload);
+      response = await api.post('/auth/login', payload);
+    } catch (orgError) {
+      try {
+        await handleSuperAdminLogin(payload);
+        return;
+      } catch {
+        throw orgError; // show the regular login's error (e.g. "Invalid credentials")
+      }
+    }
+    {
       const { token, refreshToken, user: userData } = response.data;
 
       localStorage.setItem('token', token);
