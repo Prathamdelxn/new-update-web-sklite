@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Arabic, Geist_Mono } from "next/font/google";
+import { Outfit, Noto_Sans_Arabic, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/providers/AuthContext";
 import { ToastProvider } from "@/providers/ToastContext";
@@ -7,9 +7,10 @@ import { ConfirmProvider } from "@/providers/ConfirmContext";
 import { SocketProvider } from "@/providers/SocketContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 
-const inter = Inter({
+// Brand UI font for the whole web app (Latin). Arabic text uses Noto Sans Arabic below.
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-outfit",
   display: "swap",
 });
 
@@ -47,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${notoArabic.variable} ${labelMono.variable} antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${outfit.variable} ${notoArabic.variable} ${labelMono.variable} antialiased`} suppressHydrationWarning>
       <body className="font-sans min-h-screen bg-[#F8FAFF] text-slate-900 selection:bg-blue-100 overflow-x-hidden" suppressHydrationWarning>
         {/* Subtle background accent */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">

@@ -43,7 +43,7 @@
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
-  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-sans: var(--font-outfit), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
 
 @layer base {
@@ -71,7 +71,7 @@
    the construction app (no .interior-os-theme) keep their normal size. */
 @media (min-width: 1024px) {
   html:has(.interior-os-theme) {
-    font-size: 85%;
+    font-size: 90%;
   }
 }
 
@@ -213,7 +213,7 @@ svg.recharts-surface:focus-visible,
    Arabic / right-to-left (set on <html lang="ar" dir="rtl"> by the I18nProvider)
    ============================================================================= */
 html[lang="ar"] {
-  --font-sans: var(--font-arabic), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+  --font-sans: var(--font-arabic), var(--font-outfit), -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
 }
 html[lang="ar"] body {
   font-family: var(--font-sans);
