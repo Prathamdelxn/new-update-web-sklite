@@ -4401,5 +4401,16 @@
  "just now": "الآن",
  "{{n}}m ago": "قبل {{n}} د",
  "{{n}}h ago": "قبل {{n}} س",
- "{{n}}d ago": "قبل {{n}} يوم"
+ "{{n}}d ago": "قبل {{n}} يوم",
+ "Request a change": "طلب تعديل",
+ "What needs to change in this drawing? The designer will see this.": "ما الذي يجب تعديله في هذا المخطط؟ سيطّلع المصمم على ذلك.",
+ "e.g. Move the cove light 300 mm towards the window wall": "مثال: انقل إضاءة الكوف 300 مم باتجاه جدار النافذة",
+ "Drawing approved": "تم اعتماد المخطط",
+ "Change requested": "تم طلب التعديل",
+ "Approved on {{date}}. To change it, upload a new revision.": "تم الاعتماد في {{date}}. لتعديله، ارفع مراجعة جديدة.",
+ "To change it, upload a new revision.": "لتعديله، ارفع مراجعة جديدة.",
+ "Changes requested": "مطلوب تعديلات",
+ "Superseded": "مستبدَل",
+ "In review": "قيد المراجعة",
+ "Change requested:": "التعديل المطلوب:"
 }

@@ -191,11 +191,32 @@ export function getFileBadge(fileName: string = '', url: string = '', category: 
   };
 }
 
+// Per-version review state (each revision keeps its own outcome)
+const VERSION_DOT: Record<string, string> = {
+  approved: 'bg-emerald-500',
+  rejected: 'bg-rose-500',
+  superseded: 'bg-slate-300',
+};
+const VERSION_PILL: Record<string, string> = {
+  approved: 'bg-emerald-50 text-emerald-700',
+  rejected: 'bg-rose-50 text-rose-700',
+  superseded: 'bg-slate-100 text-slate-500',
+  submitted: 'bg-blue-50 text-blue-700',
+};
+const VERSION_LABEL: Record<string, string> = {
+  approved: 'Approved',
+  rejected: 'Changes requested',
+  superseded: 'Superseded',
+  submitted: 'In review',
+  under_review: 'In review',
+  draft: 'Draft',
+};
+
 export default function ProjectDrawingStudioPage() {
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, prompt } = useConfirm();
   const queryClient = useQueryClient();
 
   const projectId = (params?.projectId || params?.id || '') as string;
@@ -406,6 +427,7 @@ const { can: canDo } = useProjectPermissions(projectId);
       });
     }
 
+    const lastIdx = revs.length - 1;
     return revs.map((r: any, idx: number) => ({
       versionNumber: r.versionNumber || idx + 1,
       revision: r.revision || `Rev ${idx}`,
@@ -415,7 +437,11 @@ const { can: canDo } = useProjectPermissions(projectId);
       changes: r.changes || (idx === 0 ? 'Initial release' : `Revision ${idx}`),
       uploadedAt: r.uploadedAt || r.createdAt || drawing.createdAt,
       uploadedBy: r.uploadedBy?.name || r.uploadedByName || 'Project Engineer',
-      status: r.status || drawing.status || 'draft',
+      // Each revision's own outcome. Older data has none stored: only the latest revision takes
+      // the drawing's status; earlier ones were replaced by a newer upload ("superseded").
+      status: r.status || (idx === lastIdx ? drawing.status || 'draft' : 'superseded'),
+      rejectionReason: r.rejectionReason,
+      decidedAt: r.decidedAt,
     }));
   }, [drawing]);
 
@@ -426,7 +452,9 @@ const { can: canDo } = useProjectPermissions(projectId);
   const activeUrl = activeVersion?.url || '';
   const activeTitle = drawing?.title || activeVersion?.name || 'Architectural Blueprint';
   const activeVersionNum = activeVersion?.versionNumber || 1;
-  const activeStatus = drawing?.status || activeVersion?.status || 'approved';
+  // Workflow actions follow the drawing (its latest revision); the badge shows the version being viewed
+  const activeStatus = drawing?.status || activeVersion?.status || 'draft';
+  const viewedStatus = activeVersion?.status || activeStatus;
 
   function detectExt(str?: string) {
     if (!str) return '';
@@ -1287,14 +1315,31 @@ const { can: canDo } = useProjectPermissions(projectId);
   const handleStatusChange = async (newStatus: string) => {
     const targetDrawingId = drawing?._id || drawing?.id || drawingId;
     if (!targetDrawingId) return;
+    // Requesting a change must say what to change — the designer sees this reason
+    let rejectionReason: string | undefined;
+    if (newStatus === 'rejected') {
+      const reason = await prompt({
+        title: tr("Request a change"),
+        message: tr("What needs to change in this drawing? The designer will see this."),
+        placeholder: tr("e.g. Move the cove light 300 mm towards the window wall"),
+      });
+      if (!reason || !reason.trim()) return;
+      rejectionReason = reason.trim();
+    }
     try {
       const res = await interiorProjectService.updateDrawing(projectId, {
         drawingId: String(targetDrawingId),
         status: newStatus,
+        ...(rejectionReason ? { rejectionReason } : {}),
       });
       if (res.success) {
-        toast.success(tr("Status updated: {{value}}", { value: newStatus.replace('_', ' ').toUpperCase() }));
-        setDrawing((prev: any) => ({ ...prev, status: newStatus }));
+        toast.success(newStatus === 'approved' ? tr("Drawing approved") : newStatus === 'rejected' ? tr("Change requested") : tr("Status updated: {{value}}", { value: newStatus.replace('_', ' ').toUpperCase() }));
+        setDrawing((prev: any) => ({
+          ...prev,
+          status: newStatus,
+          ...(newStatus === 'approved' ? { approvedAt: new Date().toISOString() } : {}),
+          ...(rejectionReason ? { rejectionReason } : {}),
+        }));
         queryClient.invalidateQueries({ queryKey: ['interior-project-drawings', projectId] });
         refetchDrawings();
       }
@@ -1384,6 +1429,14 @@ const { can: canDo } = useProjectPermissions(projectId);
           dot: 'bg-rose-500',
           icon: XCircle,
         };
+      case 'superseded':
+        // an older revision that a newer upload replaced
+        return {
+          label: 'Superseded',
+          bg: 'bg-slate-100 text-slate-600 border-slate-200',
+          dot: 'bg-slate-400',
+          icon: History,
+        };
       default:
         return {
           label: 'Draft',
@@ -1394,7 +1447,7 @@ const { can: canDo } = useProjectPermissions(projectId);
     }
   };
 
-  const statusPill = getStatusPill(activeStatus);
+  const statusPill = getStatusPill(viewedStatus);
 
   // Professional Architectural Color Themes
   const getAnnoTheme = (type?: string) => {
@@ -1639,7 +1692,7 @@ const { can: canDo } = useProjectPermissions(projectId);
                   <span
                     className={cn(
                       'w-1.5 h-1.5 rounded-full',
-                      ver.status === 'approved' ? 'bg-emerald-400' : 'bg-blue-400'
+                      VERSION_DOT[ver.status] || 'bg-blue-400'
                     )}
                   />
                   <span>v{tr(ver.versionNumber)}</span>
@@ -2312,27 +2365,53 @@ const { can: canDo } = useProjectPermissions(projectId);
                       </div>
                     </div>
 
-                    {/* Quick Approval Actions */}
+                    {/* Approval: actions depend on the drawing's real status */}
                     <div className="space-y-2">
                       <span className="text-xs font-bold text-slate-700">{tr("Approval Workflow")}</span>
-                      <div className="grid grid-cols-2 gap-2">
-                        {canDo('drawings', 'approve') && (
-                          <button
-                            onClick={() => handleStatusChange('approved')}
-                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <CheckCircle2 size={14} />{tr(" Approve")}
-                          </button>
-                        )}
-                        {canDo('drawings', 'approve') && (
-                          <button
-                            onClick={() => handleStatusChange('rejected')}
-                            className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <XCircle size={14} />{tr(" Request Change")}
-                          </button>
-                        )}
-                      </div>
+                      {drawing?.status === 'approved' ? (
+                        // Approved: nothing left to decide here — changes go through "Upload Next Revision"
+                        <div className="flex items-start gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
+                          <CheckCircle2 size={15} className="text-emerald-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-bold text-emerald-800">{tr("Approved")}</p>
+                            <p className="text-emerald-700 mt-0.5">
+                              {drawing?.approvedAt
+                                ? tr("Approved on {{date}}. To change it, upload a new revision.", { date: new Date(drawing.approvedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) })
+                                : tr("To change it, upload a new revision.")}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {drawing?.status === 'rejected' && (
+                            <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs">
+                              <XCircle size={15} className="text-rose-600 shrink-0 mt-0.5" />
+                              <div className="min-w-0">
+                                <p className="font-bold text-rose-800">{tr("Changes requested")}</p>
+                                {drawing?.rejectionReason && <p className="text-rose-700 mt-0.5 break-words">{drawing.rejectionReason}</p>}
+                              </div>
+                            </div>
+                          )}
+                          {canDo('drawings', 'approve') && (
+                            <div className={cn('grid gap-2', drawing?.status === 'rejected' ? 'grid-cols-1' : 'grid-cols-2')}>
+                              <button
+                                onClick={() => handleStatusChange('approved')}
+                                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <CheckCircle2 size={14} />{tr(" Approve")}
+                              </button>
+                              {drawing?.status !== 'rejected' && (
+                                <button
+                                  onClick={() => handleStatusChange('rejected')}
+                                  className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                  <XCircle size={14} />{tr(" Request Change")}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
 
                     {/* Action Buttons */}
@@ -2388,16 +2467,24 @@ const { can: canDo } = useProjectPermissions(projectId);
                               <span
                                 className={cn(
                                   'w-2 h-2 rounded-full',
-                                  ver.status === 'approved' ? 'bg-emerald-500' : 'bg-blue-500'
+                                  VERSION_DOT[ver.status] || 'bg-blue-500'
                                 )}
                               />
                               v{tr(ver.versionNumber)} ({tr(ver.revision)})
+                              <span className={cn('px-1.5 py-0.5 rounded text-[0.5625rem] font-bold uppercase tracking-wide', VERSION_PILL[ver.status] || VERSION_PILL.submitted)}>
+                                {tr(VERSION_LABEL[ver.status] || 'In review')}
+                              </span>
                             </span>
                             <span className="text-[0.625rem] text-slate-400 font-mono">
                               {ver.uploadedAt ? new Date(ver.uploadedAt).toLocaleDateString() : 'N/A'}
                             </span>
                           </div>
                           <p className="text-xs text-slate-600 leading-relaxed">{tr(ver.changes)}</p>
+                          {ver.status === 'rejected' && ver.rejectionReason && (
+                            <p className="text-[0.6875rem] text-rose-700 bg-rose-50 border border-rose-100 rounded-lg px-2 py-1 break-words">
+                              {tr("Change requested:")} {ver.rejectionReason}
+                            </p>
+                          )}
                           <div className="flex items-center justify-between pt-1 text-[0.625rem] text-slate-400">
                             <span>{tr("Uploaded by ")}{tr(ver.uploadedBy)}</span>
                             {isSelected && <span className="text-blue-600 font-bold">{tr("Active View")}</span>}
