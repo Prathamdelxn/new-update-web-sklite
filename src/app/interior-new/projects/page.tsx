@@ -1,17 +1,20 @@
-'use client';
+// Server component: loads the projects list on the server and ships it with the page.
+import { HydrationBoundary } from '@tanstack/react-query';
+import { dataOf, prefetchQueries } from '@/lib/server/interiorServerApi';
+import ProjectsClient from './ProjectsClient';
 
-import React from 'react';
-import { InteriorShell } from '@/components/interior/InteriorShell';
-import InteriorNewProjectsView from '@/features/interior-new/components/InteriorNewProjectsView';
-import { useInteriorAuthGuard } from '@/lib/useInteriorAuthGuard';
-
-export default function InteriorNewProjectsPage() {
-  const checked = useInteriorAuthGuard();
-  if (!checked) return null;
+export default async function InteriorNewProjectsPage() {
+  const state = await prefetchQueries([
+    {
+      key: ['interior-projects-list'], // same key + shape as InteriorNewProjectsView's useQuery
+      path: '/projects',
+      select: (r) => dataOf(r),
+    },
+  ]);
 
   return (
-    <InteriorShell>
-      <InteriorNewProjectsView />
-    </InteriorShell>
+    <HydrationBoundary state={state}>
+      <ProjectsClient />
+    </HydrationBoundary>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 import { isInteriorSession } from '@/lib/interiorAuth';
 import { ensureFreshInteriorUser } from '@/features/interior-new/hooks/usePermissions';
 
@@ -22,6 +23,12 @@ export function useInteriorAuthGuard() {
       if (token) {
         router.replace('/dashboard');
       } else {
+        // No browser session, but leftover login cookies would keep the server sending us
+        // back into the app (landing redirect / server-rendered data). Clear them first.
+        for (const name of ['token', 'interiorAccessToken', 'industryType']) {
+          Cookies.remove(name);
+          Cookies.remove(name, { path: '/' });
+        }
         router.replace('/login');
       }
       return;

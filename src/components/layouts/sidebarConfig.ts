@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
-export const SIDEBAR_EXPANDED_WIDTH = 295;
-export const SIDEBAR_COLLAPSED_WIDTH = 76;
+// Interior sidebar. 248px fits the longest label ("Vendor Management", "Audit Management")
+// with room for a count badge; the construction sidebar defines its own widths.
+export const SIDEBAR_EXPANDED_WIDTH = 248;
+export const SIDEBAR_COLLAPSED_WIDTH = 68;
 
 // Snappy, modern easing for sidebar toggle
 export const SIDEBAR_TRANSITION = {

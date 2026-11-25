@@ -108,6 +108,9 @@ interiorApiClient.interceptors.response.use(
 
         localStorage.setItem('interiorAccessToken', accessToken);
         localStorage.setItem('interiorRefreshToken', newRefreshToken);
+        // Keep the cookie in step: server-rendered pages read the token from it
+        Cookies.set('interiorAccessToken', accessToken, { expires: 7 });
+        Cookies.set('token', accessToken, { expires: 7 });
 
         processQueue(null, accessToken);
 

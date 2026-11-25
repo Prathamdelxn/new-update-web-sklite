@@ -346,7 +346,7 @@ export default function InteriorNewDashboardView() {
               </CardHeader>
               <CardContent>
                 <div className="h-[17.5rem] outline-none focus:outline-none [&_*]:outline-none">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" debounce={300}>
                     <AreaChart style={{ outline: 'none' }} data={data?.progressTrend || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <defs>
                         <linearGradient id="plannedGradient" x1="0" y1="0" x2="0" y2="1">
@@ -386,7 +386,7 @@ export default function InteriorNewDashboardView() {
               </CardHeader>
               <CardContent>
                 <div className="h-[12.5rem] outline-none focus:outline-none [&_*]:outline-none">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" debounce={300}>
                     <PieChart style={{ outline: 'none' }}>
                       <Pie
                         data={healthSlices}
@@ -453,7 +453,7 @@ export default function InteriorNewDashboardView() {
               </CardHeader>
               <CardContent>
                 <div className="h-[12.5rem] outline-none focus:outline-none [&_*]:outline-none">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" debounce={300}>
                     <BarChart style={{ outline: 'none' }} data={data?.leadsPipeline || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis dataKey="stage" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
@@ -484,7 +484,7 @@ export default function InteriorNewDashboardView() {
               </CardHeader>
               <CardContent>
                 <div className="h-[12.5rem] outline-none focus:outline-none [&_*]:outline-none">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" debounce={300}>
                     <BarChart style={{ outline: 'none' }} data={data?.procurementData || []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                       <XAxis dataKey="status" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />

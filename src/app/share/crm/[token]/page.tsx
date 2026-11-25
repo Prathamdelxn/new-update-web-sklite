@@ -1,1 +1,1 @@
-export { default } from '@/app/share/drawing/[token]/page';
+export { default, generateMetadata } from '@/app/share/drawing/[token]/page';

@@ -458,7 +458,7 @@ export const OverviewDashboard = () => {
                   </div>
                 ) : (
                   <div className="h-[280px] outline-none focus:outline-none [&_*]:outline-none">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" debounce={300}>
                       <AreaChart
                         style={{ outline: 'none' }}
                         data={activeTrajectoryList}
@@ -528,7 +528,7 @@ export const OverviewDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="relative h-[200px] outline-none focus:outline-none [&_*]:outline-none">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" debounce={300}>
                     <PieChart style={{ outline: 'none' }}>
                       <Pie
                         data={healthSlices}

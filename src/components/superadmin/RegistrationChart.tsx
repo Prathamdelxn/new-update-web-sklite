@@ -39,7 +39,7 @@ export default function RegistrationChart({
 
       <div className="h-80 outline-none focus:outline-none [&_*]:outline-none">
 
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" debounce={300}>
 
           <LineChart style={{ outline: 'none' }} data={data}>
 
