@@ -53,7 +53,11 @@ export function refreshInteriorUser(force = false): Promise<void> {
       const fresh = res?.data?.data?.user ?? res?.data?.user;
       if (!fresh) return;
       const cached = getInteriorUser();
-      const merged = { ...(cached || {}), ...fresh };
+      // `_permSynced` marks a user that has been through /auth/me at least once. The first
+      // sync after login is NOT a permission change (the login response can differ in shape),
+      // so it must not re-mount the page and refetch everything (charts animated twice).
+      const firstSyncAfterLogin = !(cached as any)?._permSynced;
+      const merged = { ...(cached || {}), ...fresh, _permSynced: true };
       localStorage.setItem('interiorUser', JSON.stringify(merged));
       // Keep the organisation fresh too — useCurrency reads its settings.currency,
       // so a currency change made on another device / browser reaches this one.
@@ -68,7 +72,7 @@ export function refreshInteriorUser(force = false): Promise<void> {
         }
       }
       window.dispatchEvent(new Event(USER_UPDATED_EVENT));
-      if (permissionSignature(cached) !== permissionSignature(merged)) {
+      if (!firstSyncAfterLogin && permissionSignature(cached) !== permissionSignature(merged)) {
         window.dispatchEvent(new Event(PERMISSIONS_CHANGED_EVENT));
       }
     })
