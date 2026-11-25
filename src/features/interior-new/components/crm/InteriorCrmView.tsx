@@ -1,4 +1,5 @@
 'use client';
+import { InteriorPageHeader } from '@/components/interior/InteriorPageHeader';
 import { tr } from '@/i18n';
 
 // =============================================================================
@@ -38,7 +39,7 @@ import { InteriorDeleteLeadModal } from './modals/InteriorDeleteLeadModal';
 import { InteriorMarkAsLostModal } from './modals/InteriorMarkAsLostModal';
 import { InteriorReopenLeadModal } from './modals/InteriorReopenLeadModal';
 import { InteriorStageLeadPickerModal } from './modals/InteriorStageLeadPickerModal';
-import { Calendar, Lightbulb, Users, MapPin, FileText, Trophy, Plus, TrendingUp } from 'lucide-react';
+import { Lightbulb, Users, MapPin, FileText, Trophy, Plus, TrendingUp } from 'lucide-react';
 import { interiorCrmService } from '@/services/interiorCrm.service';
 import { useToast } from '@/providers/ToastContext';
 import { usePermissions } from '@/features/interior-new/hooks/usePermissions';
@@ -552,42 +553,38 @@ export default function InteriorCrmView() {
   return (
     <div className="interior-os-theme p-3 sm:p-6 lg:p-8 space-y-3.5 sm:space-y-6 pb-20 max-w-full overflow-x-hidden">
 
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[hsl(var(--foreground))]">
-              {tr("CRM Workspace")}
-            </h1>
-            <span className="hidden xs:inline-flex items-center gap-1 text-[0.625rem] font-black uppercase tracking-widest bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-0.5 rounded-full border border-[hsl(var(--primary)/0.2)]">
-              {tr("Pipeline Live")}
-            </span>
-          </div>
-          <p className="text-[hsl(var(--muted-foreground))] mt-0.5 flex items-center gap-1.5 text-[0.6875rem] sm:text-xs font-medium">
-            <Calendar size={13} className="shrink-0" />{tr(" Manage customer journeys, site measurements & quotations")}
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-        {/* only when some open lead can actually be brought into this stage */}
-        {canAddToStage && stageCandidates.length > 0 && (
-          <button
-            onClick={() => setIsStagePickerOpen(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 border border-[hsl(var(--primary)/0.4)] text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
-          >
-            <Plus size={15} /> {tr(stageAdd!.label)}
-          </button>
-        )}
-        {hasPermission('crm_leads', 'create') && (
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
-          >
-            <Plus size={15} />{tr(" Add New Lead")}
-          </button>
-        )}
-        </div>
-      </div>
+      {/* Title + actions live in the top header bar (frees space for the pipeline) */}
+      <InteriorPageHeader
+        title={tr("CRM Workspace")}
+        badge={
+          <span className="inline-flex items-center gap-1 text-[0.625rem] font-black uppercase tracking-widest bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-0.5 rounded-full border border-[hsl(var(--primary)/0.2)]">
+            {tr("Pipeline Live")}
+          </span>
+        }
+        actions={
+          (canAddToStage && stageCandidates.length > 0) || hasPermission('crm_leads', 'create') ? (
+            <>
+              {/* only when some open lead can actually be brought into this stage */}
+              {canAddToStage && stageCandidates.length > 0 && (
+                <button
+                  onClick={() => setIsStagePickerOpen(true)}
+                  className="w-full md:w-auto inline-flex items-center justify-center gap-1.5 border border-[hsl(var(--primary)/0.4)] text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] hover:bg-[hsl(var(--primary)/0.12)] h-9 px-3.5 rounded-lg font-bold text-xs transition-all active:scale-95 cursor-pointer"
+                >
+                  <Plus size={15} /> {tr(stageAdd!.label)}
+                </button>
+              )}
+              {hasPermission('crm_leads', 'create') && (
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="w-full md:w-auto inline-flex items-center justify-center gap-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] h-9 px-3.5 rounded-lg font-bold text-xs transition-all active:scale-95 cursor-pointer"
+                >
+                  <Plus size={15} />{tr(" Add New Lead")}
+                </button>
+              )}
+            </>
+          ) : undefined
+        }
+      />
 
       <InteriorStageLeadPickerModal
         isOpen={isStagePickerOpen && !!stageAdd}

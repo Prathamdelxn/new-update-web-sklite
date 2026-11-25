@@ -1,4 +1,5 @@
 'use client';
+import { InteriorPageHeader } from '@/components/interior/InteriorPageHeader';
 import { tr } from '@/i18n';
 
 // =============================================================================
@@ -288,24 +289,18 @@ export default function InteriorNewDashboardView() {
 
   return (
     <div className="interior-os-theme p-6 lg:p-8 space-y-8 gradient-mesh min-h-full">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight capitalize text-[hsl(var(--foreground))]">
-            {tr("Good ")}{getGreeting()}, {user?.firstName || tr("there")}
-          </h1>
-          <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-            {tr("Here's the live status of your organizational fit-out portfolio today.")}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Page title + actions live in the top header bar */}
+      <InteriorPageHeader
+        title={<>{tr("Good ")}{getGreeting()}, <span className="capitalize">{user?.firstName || tr("there")}</span></>}
+        actions={
+          <>
           <Button variant="outline" size="sm" onClick={handleManualRefresh} disabled={refreshing}>
             {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin me-1.5" /> : <RefreshCw className="w-3.5 h-3.5 me-1.5" />}
             {tr("Refresh")}
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="space-y-8">
         {/* KPI Cards Row */}

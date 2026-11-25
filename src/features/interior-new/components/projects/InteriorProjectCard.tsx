@@ -10,6 +10,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   Calendar,
+  MapPin,
   Pencil,
   Trash2,
   ArrowUpRight,
@@ -148,7 +149,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
   }, [project.endDate, project.startDate, project.createdAt]);
 
   const city = project.location?.city || project.location?.address;
-  const clientSubtitle =  city;
+  const clientSubtitle = [project.client, city].filter(Boolean).join(' · ');
 
   // Keyboard accessibility
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -176,10 +177,10 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
           'group relative flex flex-col justify-between h-full',
           'bg-white text-slate-800',
           'border border-slate-200/90 hover:border-blue-400',
-          'rounded-2xl p-4 sm:p-4.5',
+          'rounded-2xl p-5 sm:p-6',
           'shadow-2xs hover:shadow-md hover:shadow-blue-500/5',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2',
-          'cursor-pointer transition-all duration-200 select-none space-y-3.5'
+          'cursor-pointer transition-all duration-200 select-none space-y-5'
         )}
       >
         {/* Top Row: Monospace Code + Type + Status Badge */}
@@ -207,24 +208,29 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
         </div>
 
         {/* Project Title & Client/Location Subtitle */}
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           <h3
-            className="text-[0.9375rem] sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug"
+            className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug"
             title={project.name}
           >
             {tr(project.name)}
           </h3>
-          
+          {clientSubtitle && (
+            <p className="flex items-center gap-1.5 text-xs sm:text-[0.8125rem] text-slate-500 truncate pt-0.5" title={clientSubtitle}>
+              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{tr(clientSubtitle)}</span>
+            </p>
+          )}
         </div>
 
         {/* Essential Metrics: Budget & Progress (Clean & Modern, No Box-in-Box) */}
-        <div className="space-y-2 pt-1">
+        <div className="space-y-2.5">
           <div className="flex items-baseline justify-between">
             <div>
               <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
                 {tr("Budget")}
               </span>
-              <span className="text-sm sm:text-base font-bold text-slate-900">
+              <span className="text-base sm:text-lg font-bold text-slate-900">
                 {tr(formattedBudget)}
               </span>
             </div>
@@ -233,7 +239,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
               <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
                 {tr("Progress")}
               </span>
-              <span className="text-xs sm:text-sm font-bold text-slate-900">
+              <span className="text-sm sm:text-base font-bold text-slate-900">
                 {tr(progressVal)}%
               </span>
             </div>
@@ -245,7 +251,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
             aria-valuenow={progressVal}
             aria-valuemin={0}
             aria-valuemax={100}
-            className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden"
+            className="w-full h-2 rounded-full bg-slate-100 overflow-hidden"
           >
             <div
               className={cn('h-full rounded-full transition-all duration-500', health.bar)}
@@ -255,8 +261,8 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
         </div>
 
         {/* Clean Footer Row: Single Deadline on Left + Actions on Right */}
-        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 text-slate-500 text-[0.6875rem] truncate max-w-[9.375rem]">
+        <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-1.5 text-slate-500 text-xs min-w-0 truncate">
             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="truncate">{tr(deadlineText)}</span>
           </div>
@@ -271,7 +277,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
                   e.stopPropagation();
                   onEdit(project);
                 }}
-                className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -286,7 +292,7 @@ export const InteriorProjectCard: React.FC<InteriorProjectCardProps> = ({
                   e.stopPropagation();
                   onDelete(project);
                 }}
-                className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

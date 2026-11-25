@@ -1,4 +1,5 @@
 'use client';
+import { InteriorPageHeader } from '@/components/interior/InteriorPageHeader';
 import { tr } from '@/i18n';
 
 // =============================================================================
@@ -547,23 +548,12 @@ export default function InteriorNewProjectsView() {
   return (
     <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[100rem] mx-auto overflow-x-hidden font-sans">
       
-      {/* ── 1. Page Header & Primary Action ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              {tr("Projects")}
-            </h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-              {projects.length}{tr(" Total")}
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            {tr("Manage interior fit-out projects, contract budgets, execution progress, and milestones.")}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
+      {/* Page title + actions live in the top header bar */}
+      <InteriorPageHeader
+        title={tr("Projects")}
+        badge={<span className="inline-flex items-center text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">{projects.length}{tr(" Total")}</span>}
+        actions={
+          <>
           {canDo('projects', 'create') && (
             canDo('projects', 'create') && (
               <button
@@ -578,8 +568,9 @@ export default function InteriorNewProjectsView() {
               </button>
             )
           )}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* ── 2. Project Status Distribution Cards (Click to Filter) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -950,7 +941,7 @@ export default function InteriorNewProjectsView() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
         >
           {filteredProjects.map((project: any, i: number) => (
             <InteriorProjectCard

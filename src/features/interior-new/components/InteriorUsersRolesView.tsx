@@ -1,4 +1,5 @@
 'use client';
+import { InteriorPageHeader } from '@/components/interior/InteriorPageHeader';
 import { tr } from '@/i18n';
 
 // =============================================================================
@@ -1083,21 +1084,12 @@ export default function InteriorUsersRolesView() {
 
   return (
     <div className="interior-os-theme p-4 lg:p-6 space-y-4 gradient-mesh min-h-full max-w-[100rem] mx-auto font-sans">
-      {/* ── 1. Executive Header Ribbon (Matching Audit Management) ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-[hsl(var(--foreground))] flex items-center gap-2.5">
-            {tr("Users & Roles")}
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">
-              {users.length}{tr(" members")}
-            </span>
-          </h1>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            {tr("Organization user directory, role permissions matrix, and project assignment access.")}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
+      {/* Page title lives in the top header bar */}
+      <InteriorPageHeader
+        title={tr("Users & Roles")}
+        badge={<span className="inline-flex items-center text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">{users.length}{tr(" members")}</span>}
+      />
+      <div className="flex flex-wrap items-center justify-end gap-2">
           {/* Main Segment Switcher: Users vs Roles */}
           <div className="flex items-center gap-1 p-1 rounded-lg border border-slate-200 bg-white shadow-xs me-1">
             {showUsersTab && (
@@ -1152,7 +1144,6 @@ export default function InteriorUsersRolesView() {
               <span>{tr("Add Member")}</span>
             </Button>
           )}
-        </div>
       </div>
 
       {/* ── 2. KPI Stat Metrics Overview (Matching Audit Management) ── */}

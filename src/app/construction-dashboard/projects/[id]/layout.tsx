@@ -8,6 +8,7 @@ import { ProjectProvider, useProjectContext } from '@/features/projects/contexts
 import { useAuth } from '@/providers/AuthContext';
 import { useIsAdmin } from '@/hooks/usePermission';
 import { cn } from '@/lib/utils';
+import { InteriorPageHeader } from '@/components/interior/InteriorPageHeader';
 import { hasProjectPermission, isProjectLocked } from '@/lib/permissions';
 import {
   Info, FileText, Banknote, Package, Files, Map,
@@ -181,53 +182,54 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* ── Project Workspace Header ── */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/80 rounded-xl px-4 py-3 min-h-[58px]">
-            <div className="flex items-center gap-3 min-w-0">
+          {/* ── Project title, status and "Edit Details" live in the top bar (frees a whole row) ── */}
+          <InteriorPageHeader
+            leading={
               <button
                 onClick={() => router.push(projectsListRoute)}
                 className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors shrink-0 cursor-pointer"
                 title={tr("Back to Projects")}
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
               </button>
-              <div className="min-w-0">
-                {headerInfo ? (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate max-w-xs sm:max-w-md">
-                      {tr(headerInfo.name)}
-                    </h1>
-                    <span className={cn(
-                      'shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border',
-                      statusBadgeColor[headerInfo.status] || 'bg-blue-50 text-blue-700 border-blue-200/80'
-                    )}>
-                      {tr(headerInfo.status)}
+            }
+            title={
+              headerInfo ? (
+                tr(headerInfo.name)
+              ) : (
+                <span className="inline-block h-4 w-48 rounded bg-slate-200/80 animate-pulse align-middle" aria-label={tr("Loading project")} />
+              )
+            }
+            badge={
+              headerInfo ? (
+                <>
+                  <span className={cn(
+                    'shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border',
+                    statusBadgeColor[headerInfo.status] || 'bg-blue-50 text-blue-700 border-blue-200/80'
+                  )}>
+                    {tr(headerInfo.status)}
+                  </span>
+                  {headerInfo.projectType && (
+                    <span className="shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border bg-slate-50 text-slate-600 border-slate-200/80">
+                      {tr(headerInfo.projectType)}
                     </span>
-                    {headerInfo.projectType && (
-                      <span className="hidden sm:inline shrink-0 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border bg-slate-50 text-slate-600 border-slate-200/80">
-                        {tr(headerInfo.projectType)}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2" aria-busy="true" aria-label={tr("Loading project")}>
-                    <span className="inline-block h-4 w-48 rounded bg-slate-200/80 animate-pulse" />
-                    <span className="inline-block h-5 w-16 rounded-md bg-slate-100 animate-pulse" />
-                  </div>
-                )}
-              </div>
-            </div>
-            {project && canEditProject && (
-              <button
-                onClick={() => setIsEditModalOpen(true)}
-                title={tr("Edit project")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer text-xs font-medium shrink-0 self-start sm:self-auto"
-              >
-                <Pencil className="w-3.5 h-3.5 text-slate-500" />
-                <span>{tr("Edit Details")}</span>
-              </button>
-            )}
-          </div>
+                  )}
+                </>
+              ) : undefined
+            }
+            actions={
+              project && canEditProject ? (
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  title={tr("Edit project")}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer text-xs font-medium shrink-0"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{tr("Edit Details")}</span>
+                </button>
+              ) : undefined
+            }
+          />
 
           {/* ── Grouped navigation (dropdowns, no sideways scrolling) ── */}
           <nav ref={navRef} className="relative z-20 bg-white border border-slate-200/80 rounded-xl px-1.5 py-1.5 flex flex-wrap items-center gap-1">

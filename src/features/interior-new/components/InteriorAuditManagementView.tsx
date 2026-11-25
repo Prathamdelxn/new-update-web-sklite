@@ -1,4 +1,5 @@
 'use client';
+import { InteriorPageHeader } from '@/components/interior/InteriorPageHeader';
 import { tr } from '@/i18n';
 
 // =============================================================================
@@ -313,21 +314,12 @@ export default function InteriorAuditManagementView() {
 
   return (
     <div className="interior-os-theme p-4 lg:p-6 space-y-4 gradient-mesh min-h-full">
-      {/* ── Executive Header Ribbon ─────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-[hsl(var(--foreground))] flex items-center gap-2.5">
-            {tr("Audit Management")}
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">
-              {tr(totalCount)}{tr(" events logged")}
-            </span>
-          </h1>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            {tr("Complete organizational activity records, privilege monitoring, state change diffs, and access history.")}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
+      {/* Page title + actions live in the top header bar */}
+      <InteriorPageHeader
+        title={tr("Audit Management")}
+        badge={<span className="inline-flex items-center text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">{tr(totalCount)}{tr(" events logged")}</span>}
+        actions={
+          <>
           <Button
             variant="outline"
             size="sm"
@@ -349,8 +341,9 @@ export default function InteriorAuditManagementView() {
             <Download className={cn('w-3.5 h-3.5', exporting && 'animate-bounce')} />
             <span>{exporting ? tr("Exporting...") : tr("Export CSV")}</span>
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* ── KPI Stat Metrics Overview ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

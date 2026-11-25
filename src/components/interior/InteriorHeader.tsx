@@ -6,6 +6,7 @@ import { tr } from '@/i18n';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { HEADER_TITLE_SLOT, HEADER_ACTIONS_SLOT } from '@/components/interior/InteriorPageHeader';
 import { NotificationBell } from '@/components/interior/NotificationBell';
 import { Search, LogOut, ChevronDown, User, Settings, Menu, Globe } from 'lucide-react';
 import { LanguageToggleButton } from './LanguageSwitcher';
@@ -43,16 +44,17 @@ export function InteriorHeader({ user, onMobileMenuClick }: InteriorHeaderProps)
   const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : '?';
 
   return (
-    <header className="interior-os-theme h-16 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 shrink-0 gap-4">
+    <header className="interior-os-theme h-[4.5rem] border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 shrink-0 gap-4">
       <Button variant="outline" size="sm" onClick={onMobileMenuClick} className="md:hidden text-[hsl(var(--muted-foreground))] shrink-0 px-2">
         <Menu className="w-5 h-5" />
       </Button>
 
-      <div className="flex-1 max-w-md">
-       
-      </div>
+      {/* Page title slot: filled by <InteriorPageHeader> on each page */}
+      <div id={HEADER_TITLE_SLOT} className="flex-1 min-w-0 flex items-center" />
 
-      <div className="flex items-center gap-2 ms-4">
+      <div className="flex items-center gap-2 ms-4 shrink-0">
+        {/* Page actions slot (e.g. "Add New Lead"), md and up */}
+        <div id={HEADER_ACTIONS_SLOT} className="flex items-center me-1" />
         <LanguageToggleButton className="hidden sm:inline-flex" />
         <NotificationBell />
 

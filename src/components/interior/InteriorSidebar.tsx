@@ -192,7 +192,7 @@ export function InteriorSidebar({
         {/* Header Logo — Perfectly centered in 60px collapsed width */}
         <div
           className={cn(
-            'flex items-center h-16 border-b border-[hsl(var(--border))] overflow-hidden shrink-0',
+            'flex items-center h-[4.5rem] border-b border-[hsl(var(--border))] overflow-hidden shrink-0',
             collapsed ? 'justify-center px-0' : 'px-4'
           )}
         >

@@ -1,4 +1,5 @@
 'use client';
+import { InteriorPageHeader } from '@/components/interior/InteriorPageHeader';
 import { tr } from '@/i18n';
 
 // =============================================================================
@@ -254,23 +255,12 @@ export default function InteriorVendorsManagementView() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      {/* ── 1. Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900">
-              {tr("Organization Vendors & Subcontractors")}
-            </h2>
-            <span className="text-[0.625rem] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              {dbVendors.length} {dbVendors.length === 1 ? tr("Partner") : tr("Partners")}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {tr("Manage organization-wide trade partners, material suppliers, and contact details.")}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
+      {/* Page title + actions live in the top header bar */}
+      <InteriorPageHeader
+        title={tr("Organization Vendors & Subcontractors")}
+        badge={<span className="inline-flex items-center text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">{dbVendors.length} {dbVendors.length === 1 ? tr("Partner") : tr("Partners")}</span>}
+        actions={
+          <>
           <button
             onClick={fetchVendors}
             disabled={loading}
@@ -291,8 +281,9 @@ export default function InteriorVendorsManagementView() {
               {tr("+ Add Vendor")}
             </button>
           )}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* ── 2. Filter & Search Control Bar (Matching Project Tab Style) ── */}
       <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-slate-200/90 space-y-3 shadow-2xs">

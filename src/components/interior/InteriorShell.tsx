@@ -19,6 +19,11 @@ interface InteriorShellProps {
 }
 
 let isVerifiedInSession = false;
+// Kept across page navigations (each page mounts its own shell) so the sidebar org name and
+// header user don't flash "Workspace" / blank on every tab change. Only set on the client, and
+// only used once the session is verified, so the server render (spinner) is unaffected.
+let cachedOrgName: string | undefined;
+let cachedUser: ReturnType<typeof getInteriorUser> = null;
 
 // English / Arabic for the whole interior app (language switch + right-to-left)
 export function InteriorShell({ children }: InteriorShellProps) {
@@ -37,8 +42,8 @@ function InteriorShellInner({ children }: InteriorShellProps) {
   // Read initial collapsed state from in-memory cache to prevent open-then-shrink animation glitch on tab switch
   const [collapsed, setCollapsed] = useState<boolean>(getCachedSidebarCollapsed);
 
-  const [user, setUser] = useState<ReturnType<typeof getInteriorUser>>(null);
-  const [organizationName, setOrganizationName] = useState<string | undefined>(undefined);
+  const [user, setUser] = useState<ReturnType<typeof getInteriorUser>>(() => (isVerifiedInSession ? cachedUser : null));
+  const [organizationName, setOrganizationName] = useState<string | undefined>(() => (isVerifiedInSession ? cachedOrgName : undefined));
   // Safe SSR initialization: during initial hydration, matches server output perfectly.
   const [isAuthorized, setIsAuthorized] = useState(() => isVerifiedInSession);
   const queryClient = useQueryClient();
@@ -59,6 +64,8 @@ function InteriorShellInner({ children }: InteriorShellProps) {
 
     if (!hasInterior) {
       isVerifiedInSession = false;
+      cachedOrgName = undefined;
+      cachedUser = null;
       if (token) {
         router.replace('/dashboard');
       } else {
@@ -69,18 +76,21 @@ function InteriorShellInner({ children }: InteriorShellProps) {
 
     isVerifiedInSession = true;
     setIsAuthorized(true);
-    setUser(getInteriorUser());
+    cachedUser = getInteriorUser();
+    setUser(cachedUser);
 
     let alive = true;
     ensureFreshInteriorUser().then(() => {
       if (!alive) return;
-      setUser(getInteriorUser());
+      cachedUser = getInteriorUser();
+      setUser(cachedUser);
     });
 
     const org = localStorage.getItem('interiorOrganization');
     if (org) {
       try {
-        setOrganizationName(JSON.parse(org)?.name);
+        cachedOrgName = JSON.parse(org)?.name;
+        setOrganizationName(cachedOrgName);
       } catch {
         // ignore malformed cache
       }

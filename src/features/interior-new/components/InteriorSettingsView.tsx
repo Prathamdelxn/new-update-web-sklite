@@ -1,4 +1,5 @@
 'use client';
+import { InteriorPageHeader } from '@/components/interior/InteriorPageHeader';
 import { tr } from '@/i18n';
 
 // =============================================================================
@@ -406,29 +407,11 @@ export default function InteriorSettingsView() {
   return (
     <div className="interior-os-theme min-h-full p-4 sm:p-6 lg:p-8 space-y-6 max-w-[100rem] mx-auto overflow-x-hidden font-sans">
       
-      {/* ── 1. Page Header & Live Status ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              {tr("Settings & Preferences")}
-            </h1>
-            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-              {orgForm.name || tr("Workspace")}
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            {tr("Manage organization details, currency localization, security credentials, and workspace preferences.")}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            {tr("Live Sync Active")}
-          </span>
-        </div>
-      </div>
+      {/* Page title + actions live in the top header bar */}
+      <InteriorPageHeader
+        title={tr("Settings & Preferences")}
+        badge={<span className="inline-flex items-center text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-[hsl(var(--accent))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">{orgForm.name || tr("Workspace")}</span>}
+      />
 
       {/* ── 2. Top Metric / Status Cards (Matching Projects, Vendors, Users & Roles) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

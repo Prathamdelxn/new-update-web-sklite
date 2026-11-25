@@ -8,6 +8,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { useAuth } from '@/providers/AuthContext';
 import { NotificationCenter } from '@/components/shared/NotificationCenter';
 import { cn } from '@/lib/utils';
+import { HEADER_TITLE_SLOT, HEADER_ACTIONS_SLOT } from '@/components/interior/InteriorPageHeader';
 
 interface TopnavProps {
   onMenuClick: () => void;
@@ -77,10 +78,14 @@ export const Topnav: React.FC<TopnavProps> = ({ onMenuClick, isSidebarCollapsed,
               {tr(headerContent)}
             </div>
           )}
+          {/* Page title slot: filled by <InteriorPageHeader> (used on the project details page) */}
+          <div id={HEADER_TITLE_SLOT} className="min-w-0 flex-1 flex items-center" />
         </div>
 
         {/* Right Section: Notifications & User Profile */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Page actions slot (e.g. "Edit Details"), md and up */}
+          <div id={HEADER_ACTIONS_SLOT} className="flex items-center me-1" />
           <LanguageToggleButton className="hidden sm:inline-flex" />
           <NotificationCenter />
 
