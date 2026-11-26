@@ -324,7 +324,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                       <Flag className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-gray-900 leading-tight">{milestone.name}</h2>
+                      <h2 className="text-lg font-bold text-gray-900 leading-tight">{milestone.name}</h2>
                       {milestone.description && (
                         <p className="text-sm text-slate-500 mt-1 leading-relaxed">{milestone.description}</p>
                       )}
@@ -462,25 +462,25 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                               <div className="grid grid-cols-2 gap-4">
                                 {task.description && (
                                   <div className="col-span-2">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Description</p>
+                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Description</p>
                                     <p className="text-sm text-gray-700 leading-relaxed">{task.description}</p>
                                   </div>
                                 )}
                                 {task.startDate && (
                                   <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Start Date</p>
+                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Start Date</p>
                                     <p className="text-sm text-gray-700">{new Date(task.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                                   </div>
                                 )}
                                 {task.endDate && (
                                   <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">End Date</p>
+                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">End Date</p>
                                     <p className="text-sm text-gray-700">{new Date(task.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                                   </div>
                                 )}
                                 {assignee && (
                                   <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Assigned To</p>
+                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Assigned To</p>
                                     <div className="flex items-center gap-2">
                                       <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700">{assignee.charAt(0)}</div>
                                       <p className="text-sm text-gray-700">{assignee}</p>
@@ -489,13 +489,13 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                                 )}
                                 {task.isCompleted && task.completedAt && (
                                   <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Completed At</p>
+                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Completed At</p>
                                     <p className="text-sm text-emerald-700 font-medium">{new Date(task.completedAt).toLocaleString()}</p>
                                   </div>
                                 )}
                                 {task.completionNote && (
                                   <div className="col-span-2">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Completion Note</p>
+                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Completion Note</p>
                                     <p className="text-sm text-gray-700 italic flex items-start gap-2">
                                       <MessageSquare className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400" />{task.completionNote}
                                     </p>
@@ -507,7 +507,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                                   if (!taskMats || taskMats.length === 0) return null;
                                   return (
                                     <div className="col-span-2">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                         <Package className="w-3.5 h-3.5 text-blue-500" /> Materials Used
                                       </p>
                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -533,7 +533,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                                 })()}
                                 {task.proofImage?.url && (
                                   <div className="col-span-2">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Proof Photo</p>
+                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Proof Photo</p>
                                     <a href={task.proofImage.url} target="_blank" rel="noopener noreferrer">
                                       <img loading="lazy" decoding="async" src={task.proofImage.url} alt="Proof" className="w-32 h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
                                     </a>
@@ -551,11 +551,11 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                         {!task.isCompleted && form.open && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                             <div className="px-4 pb-4 border-t border-blue-100 bg-blue-50/30 space-y-4 pt-4">
-                              <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Submit Task Completion</p>
+                              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Submit Task Completion</p>
 
                               {/* Completion Note */}
                               <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                   Completion Note <span className="font-normal text-slate-400">(optional)</span>
                                 </label>
                                 <textarea
@@ -570,7 +570,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
 
                               {/* Proof Photo */}
                               <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                   <Camera className="w-3.5 h-3.5" />
                                   Proof Photo <span className="font-normal text-slate-400">(optional)</span>
                                 </label>
@@ -606,7 +606,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                               {/* Material Usage */}
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                     <Package className="w-3.5 h-3.5" />
                                     Materials Used <span className="font-normal text-slate-400">(optional)</span>
                                   </label>

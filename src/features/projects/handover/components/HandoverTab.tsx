@@ -583,26 +583,26 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-bold text-slate-900">{tr("Project Handover Completed")}</h3>
+          <h3 className="text-base sm:text-base font-bold text-slate-900">{tr("Project Handover Completed")}</h3>
           <p className="text-emerald-700 font-medium text-xs sm:text-sm mt-1 max-w-md mx-auto">
             {tr("This project has successfully completed the structured handover process and is now verified and archived.")}
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-100 text-start">
             <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Status")}</span>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{tr("Status")}</span>
               <span className="text-emerald-700 font-bold text-xs sm:text-sm mt-0.5 block">{tr("COMPLETED")}</span>
             </div>
             <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Handover Date")}</span>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{tr("Handover Date")}</span>
               <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block">{tr(savedHandoverDate)}</span>
             </div>
             <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Client Rep")}</span>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{tr("Client Rep")}</span>
               <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block truncate">{tr(savedClientRep)}</span>
             </div>
             <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Certificate")}</span>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{tr("Certificate")}</span>
               <span className="text-slate-800 font-bold text-xs sm:text-sm mt-0.5 block">{savedCertUrls.length > 0 ? tr("ARCHIVED ({{savedCertUrlsCount}})", { savedCertUrlsCount: savedCertUrls.length }) : tr("NONE")}</span>
             </div>
           </div>
@@ -646,7 +646,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   <User className="w-4 h-4 text-slate-500" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Client Representative")}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{tr("Client Representative")}</span>
                   <span className="text-xs sm:text-sm font-semibold text-slate-800">{tr(savedClientRep)}</span>
                 </div>
               </div>
@@ -655,7 +655,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   <Calendar className="w-4 h-4 text-slate-500" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Handover Date")}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{tr("Handover Date")}</span>
                   <span className="text-xs sm:text-sm font-semibold text-slate-800">{tr(savedHandoverDate)}</span>
                 </div>
               </div>
@@ -664,7 +664,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   <MessageSquare className="w-4 h-4 text-slate-500" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{tr("Feedback / Comments")}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{tr("Feedback / Comments")}</span>
                   <span className="text-xs sm:text-sm text-slate-600 italic leading-relaxed">"{tr(savedNotes)}"</span>
                 </div>
               </div>
@@ -827,7 +827,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                         <img loading="lazy" decoding="async" src={snag.images[0]} alt={tr("Snag")} className="w-10 h-10 object-cover rounded-lg border shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">{tr(snag.title)}</p>
+                        <p className="text-xs font-semibold text-slate-900 truncate">{tr(snag.title)}</p>
                         <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
                           {tr("Priority: ")}{tr(snag.priority)}{tr(" | Status: ")}{tr(snag.status)}
                         </p>
@@ -871,7 +871,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                     <AlertTriangle className="w-4 h-4" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="font-bold text-sm text-amber-900">{tr("Project Not Ready for Handover")}</p>
+                    <p className="font-medium text-sm text-amber-900">{tr("Project Not Ready for Handover")}</p>
                     <p className="text-amber-700 leading-relaxed font-normal">
                       {tr("Resolve all open issues, complete remaining milestones/tasks, and approve drawings, BOQ items, and active risks to initiate the handover sign-off process.")}
                     </p>
@@ -880,7 +880,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
               )}
 
               <div className="flex items-center justify-between pt-1">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider ms-0.5">{tr("Handover Validation Checks")}</h4>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider ms-0.5">{tr("Handover Validation Checks")}</h4>
                 <span className="text-xs text-slate-400 font-medium">{tr(checksPassedCount)}{tr(" of 5 passed")}</span>
               </div>
 
@@ -898,7 +898,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       <div key={i._id} className="flex items-center space-x-2 text-xs bg-white border border-slate-100 rounded-xl p-2.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                         <span className="font-bold text-slate-700 flex-1 truncate">{tr(i.title)}</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">P: {tr(i.priority)} | S: {tr(i.status)}</span>
+                        <span className="text-[9px] font-semibold text-slate-400 uppercase">P: {tr(i.priority)} | S: {tr(i.status)}</span>
                       </div>
                     ))}
                   </div>
@@ -921,7 +921,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                         <div key={m._id} className="bg-white border border-slate-100 rounded-xl p-3 text-xs space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-800">{tr(m.name)}</span>
-                            <span className="text-[9px] font-bold uppercase text-slate-400 bg-slate-50 px-2 py-0.5 rounded border">{tr(m.status)}</span>
+                            <span className="text-[9px] font-semibold uppercase text-slate-400 bg-slate-50 px-2 py-0.5 rounded border">{tr(m.status)}</span>
                           </div>
                           <div className="ps-1 space-y-1.5">
                             <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold">
@@ -1008,7 +1008,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                       <div key={r._id} className="flex items-center space-x-2 text-xs bg-white border border-slate-100 rounded-xl p-2.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                         <span className="font-bold text-slate-700 flex-1 truncate">{tr(r.title)}</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{tr("Impact: ")}{tr(r.impact)}{tr(" | Progress: ")}{tr(r.mitigationProgress)}%</span>
+                        <span className="text-[9px] font-semibold text-slate-400 uppercase">{tr("Impact: ")}{tr(r.impact)}{tr(" | Progress: ")}{tr(r.mitigationProgress)}%</span>
                       </div>
                     ))}
                   </div>
@@ -1218,7 +1218,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                 </div>
                 <div className="p-5 space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {tr("Rejection Reason *")}
                     </label>
                     <textarea
@@ -1282,7 +1282,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                 </div>
                 <div className="p-5 space-y-4 overflow-y-auto">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {tr("Client Representative *")}
                     </label>
                     <input
@@ -1296,7 +1296,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {tr("Handover Date *")}
                     </label>
                     <input
@@ -1309,7 +1309,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {tr("Feedback / Comments")}
                     </label>
                     <textarea
@@ -1322,7 +1322,7 @@ export const HandoverTab: React.FC<HandoverTabProps> = ({ projectId, project, on
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {tr("Completion Certificates (optional)")}
                     </label>
 

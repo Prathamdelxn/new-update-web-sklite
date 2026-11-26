@@ -705,7 +705,7 @@ export default function MilestoneDetailPage() {
                       <div className="px-5 pb-5 border-t border-dashed border-gray-200 pt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
                         {task.completionNote && (
                           <div className="col-span-2 md:col-span-3">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{tr("Completion Note")}</p>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{tr("Completion Note")}</p>
                             <p className="text-sm text-gray-700 italic flex items-start gap-2">
                               <MessageSquare className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400" />{tr(task.completionNote)}
                             </p>
@@ -717,7 +717,7 @@ export default function MilestoneDetailPage() {
                           if (!taskMats || taskMats.length === 0) return null;
                           return (
                             <div className="col-span-2 md:col-span-3">
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <Package className="w-3.5 h-3.5 text-blue-500" />{tr(" Materials Used")}
                               </p>
                               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -743,7 +743,7 @@ export default function MilestoneDetailPage() {
                         })()}
                         {task.proofImage?.url && (
                           <div className="col-span-2 md:col-span-3">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{tr("Proof Photo")}</p>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">{tr("Proof Photo")}</p>
                             <a href={task.proofImage.url} target="_blank" rel="noopener noreferrer">
                               <img loading="lazy" decoding="async" src={task.proofImage.url} alt={tr("Proof")} className="h-40 w-auto object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
                             </a>
@@ -762,13 +762,13 @@ export default function MilestoneDetailPage() {
                   {!task.isCompleted && form.open && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                       <div className="px-5 pb-5 pt-4 border-t border-blue-100 bg-blue-50/30 space-y-5">
-                        <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">{tr("Submit Task Completion")}</p>
+                        <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">{tr("Submit Task Completion")}</p>
 
                         <div className="grid md:grid-cols-2 gap-5">
                           {/* Left col — note + photo */}
                           <div className="space-y-4">
                             <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                 {tr("Completion Note ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span>
                               </label>
                               <textarea
@@ -782,7 +782,7 @@ export default function MilestoneDetailPage() {
                             </div>
 
                             <div className="space-y-2">
-                              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                 <Camera className="w-3.5 h-3.5" />
                                 {tr("Proof Photo ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span>
                               </label>
@@ -817,7 +817,7 @@ export default function MilestoneDetailPage() {
                           {/* Right col — materials */}
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                 <Package className="w-3.5 h-3.5" />
                                 {tr("Materials Used ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span>
                               </label>
@@ -924,7 +924,7 @@ export default function MilestoneDetailPage() {
                     <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
                       <Pencil className="w-4 h-4 text-blue-600" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900">{tr("Edit Task")}</p>
+                    <p className="text-sm font-semibold text-gray-900">{tr("Edit Task")}</p>
                   </div>
                   <button onClick={() => setEditingTask(null)} className="p-1.5 text-slate-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                     <X className="w-4 h-4" />
@@ -932,20 +932,20 @@ export default function MilestoneDetailPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Title *")}</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Title *")}</label>
                   <input autoFocus type="text" value={editingTask.form.title}
                     onChange={e => setEditingTask(p => p ? { ...p, form: { ...p.form, title: e.target.value } } : null)}
                     className={inputCls} placeholder={tr("Task title")} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Description")}</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Description")}</label>
                   <input type="text" value={editingTask.form.description}
                     onChange={e => setEditingTask(p => p ? { ...p, form: { ...p.form, description: e.target.value } } : null)}
                     className={inputCls} placeholder={tr("Optional details...")} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Start")}</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Start")}</label>
                     <input type="date" value={editingTask.form.startDate}
                       onChange={e => {
                         const s = e.target.value;
@@ -961,7 +961,7 @@ export default function MilestoneDetailPage() {
                       className={inputCls} />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("End")}</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("End")}</label>
                     <input type="date" value={editingTask.form.endDate}
                       min={editingTask.form.startDate || undefined}
                       onChange={e => setEditingTask(p => p ? { ...p, form: { ...p.form, endDate: e.target.value } } : null)}
@@ -969,7 +969,7 @@ export default function MilestoneDetailPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Assign To")}</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Assign To")}</label>
                   <select value={editingTask.form.assignedTo}
                     onChange={e => setEditingTask(p => p ? { ...p, form: { ...p.form, assignedTo: e.target.value } } : null)}
                     className={inputCls}>

@@ -365,7 +365,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                       </div>
                       <div className="sm:col-span-4">
                         <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-blue-50/70 border border-blue-200/80">
-                          <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">{tr("Total")}</span>
+                          <span className="text-[11px] font-semibold text-blue-900 uppercase tracking-wider">{tr("Total")}</span>
                           <span className="text-xs font-bold text-slate-900">
                             {formatCurrency(editTotal, projectCurrency(project))}
                           </span>
@@ -404,7 +404,7 @@ export const BOQModal: React.FC<BOQModalProps> = ({
                     {/* Items Section */}
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                           {tr("Line Items (")}{rows.length})
                         </span>
                       </div>

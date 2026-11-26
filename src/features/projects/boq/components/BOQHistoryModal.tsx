@@ -82,8 +82,8 @@ export const BOQHistoryModal: React.FC<BOQHistoryModalProps> = ({ isOpen, onClos
                 {/* Current item header */}
                 <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Status</p>
-                    <p className="text-sm font-bold text-gray-900">{item.itemNumber || '-'} — {item.groupName}</p>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Current Status</p>
+                    <p className="text-sm font-semibold text-gray-900">{item.itemNumber || '-'} — {item.groupName}</p>
                   </div>
                   {(() => { const s = getStatusStyle(item.status); return (
                     <span className={cn('px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border', s.bg, s.color)}>

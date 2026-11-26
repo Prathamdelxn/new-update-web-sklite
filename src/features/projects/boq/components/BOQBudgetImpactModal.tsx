@@ -42,7 +42,7 @@ export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
         <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-indigo-700">
             <Info className="w-5 h-5" />
-            <h3 className="text-lg font-bold">{tr("Budget Impact Warning")}</h3>
+            <h3 className="text-base font-bold">{tr("Budget Impact Warning")}</h3>
           </div>
           <button 
             onClick={onClose}
@@ -60,12 +60,12 @@ export const BOQBudgetImpactModal: React.FC<BOQBudgetImpactModalProps> = ({
 
           <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{tr("Previous Cost")}</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{tr("Previous Cost")}</p>
               <p className="text-lg font-bold text-slate-500">{currency} {impactData.oldAmount.toLocaleString('en-IN')}</p>
             </div>
             <div className="w-8 border-t-2 border-dashed border-gray-200" />
             <div className="space-y-1 text-end">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{tr("New Cost")}</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{tr("New Cost")}</p>
               <p className="text-lg font-bold text-gray-900">{currency} {impactData.newAmount.toLocaleString('en-IN')}</p>
             </div>
           </div>

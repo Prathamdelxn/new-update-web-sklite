@@ -293,7 +293,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <X className="w-4 h-4" />
                   </button>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">{tr(document?.name)}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{tr(document?.name)}</p>
                     {document?.approvalStatus && (
                       <span className={cn(
                         'text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border',
@@ -486,7 +486,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                               <MapPin className="w-2.5 h-2.5 text-white" />
                             </div>
-                            <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">{tr("New Pin")}</p>
+                            <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider">{tr("New Pin")}</p>
                             <button
                               onClick={() => setPendingPos(null)}
                               className="ms-auto p-0.5 rounded text-blue-400 hover:text-blue-700 transition-colors"
@@ -555,7 +555,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                         <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
                           <MapPin className="w-5 h-5 text-gray-300" />
                         </div>
-                        <p className="text-sm font-bold text-slate-400">{tr("No annotations yet")}</p>
+                        <p className="text-sm font-medium text-slate-400">{tr("No annotations yet")}</p>
                         {canAnnotate && (
                           <p className="text-xs text-slate-400 mt-1 leading-relaxed">{tr("Use \"Add Pin\" above to mark important points on this plan")}</p>
                         )}

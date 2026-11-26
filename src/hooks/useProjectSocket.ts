@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useSocket } from '@/providers/SocketContext';
+import { clearApiCache } from '@/services/api.client';
 
 export const useProjectSocket = (projectId: string, onEvent?: (event: string, data: any) => void) => {
   const { socket } = useSocket();
@@ -40,6 +41,7 @@ export const useProjectSocket = (projectId: string, onEvent?: (event: string, da
     const handlers: Record<string, (data: any) => void> = {};
     events.forEach(event => {
       const handler = (data: any) => {
+        clearApiCache(); // someone changed this project: next fetch must hit the server
         if (onEventRef.current) onEventRef.current(event, data);
       };
       handlers[event] = handler;

@@ -97,7 +97,7 @@ export const AssignSnagModal: React.FC<AssignSnagModalProps> = ({
                           {member.name?.[0]?.toUpperCase() || 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                          <p className="text-sm font-semibold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
                             {tr(member.name)}
                           </p>
                           <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">

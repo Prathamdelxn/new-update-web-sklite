@@ -128,7 +128,7 @@ export const PlanRoom: React.FC<PlanRoomProps> = ({ folder, projectId, onBack, o
             <ArrowLeft className="w-3 h-3" />
             <span>{tr("All Folders")}</span>
           </button>
-          <h3 className="text-lg font-semibold text-slate-900 truncate">{tr(folder.name)}</h3>
+          <h3 className="text-base font-semibold text-slate-900 truncate">{tr(folder.name)}</h3>
           <p className="text-xs text-slate-500 mt-0.5">
             {folder.documents?.length || 0}{tr(" plan")}{folder.documents?.length !== 1 ? 's' : ''}
             {Object.keys(annotationCounts).length > 0 && (

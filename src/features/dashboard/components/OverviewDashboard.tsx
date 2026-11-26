@@ -1,7 +1,9 @@
 'use client';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { CONSTRUCTION_PROJECTS_KEY, fetchConstructionProjects } from '@/features/projects/contexts/ProjectContext';
 import { tr } from '@/i18n';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Briefcase,
@@ -112,56 +114,44 @@ function ConstructionDashboardSkeleton() {
   );
 }
 
+const NO_PROJECTS: any[] = [];
+
 export const OverviewDashboard = () => {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const [data, setData] = useState<any>(null);
-  const [allProjects, setAllProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTimeRange, setActiveTimeRange] = useState<'All' | 'Month' | 'Week'>('All');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
+  const queryClient = useQueryClient();
+  const enabled = !authLoading && isAuthenticated;
 
-  const fetchDashboard = useCallback(
-    async (projId?: string) => {
-      try {
-        setRefreshing(true);
-        const targetProjId = projId !== undefined ? projId : selectedProjectId;
-        const queryParam = targetProjId && targetProjId !== 'all' ? `?projectId=${targetProjId}` : '';
-
-        const [dashRes, projRes] = await Promise.allSettled([
-          api.get(`/dashboard${queryParam}`),
-          api.get('/projects'),
-        ]);
-
-        if (dashRes.status === 'fulfilled' && dashRes.value.data) {
-          setData(dashRes.value.data);
-        }
-
-        if (projRes.status === 'fulfilled' && projRes.value.data) {
-          const pList = Array.isArray(projRes.value.data)
-            ? projRes.value.data
-            : projRes.value.data?.projects ?? projRes.value.data?.data ?? [];
-          setAllProjects(pList);
-        }
-      } catch (e) {
-        console.error('Dashboard data fetch error', e);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
+  // Cached: returning to the dashboard shows the last numbers instantly and refreshes in the
+  // background; switching the project filter keeps the old numbers until the new ones arrive.
+  const dashQuery = useQuery({
+    queryKey: ['construction-dashboard', selectedProjectId],
+    queryFn: async () => {
+      const queryParam = selectedProjectId && selectedProjectId !== 'all' ? `?projectId=${selectedProjectId}` : '';
+      return (await api.get(`/dashboard${queryParam}`)).data ?? null;
     },
-    [selectedProjectId]
-  );
+    enabled,
+    staleTime: 30 * 1000,
+    placeholderData: keepPreviousData,
+  });
+  // Same cache entry as the Projects page, so opening Projects from here is instant
+  const projQuery = useQuery({
+    queryKey: CONSTRUCTION_PROJECTS_KEY,
+    queryFn: () => fetchConstructionProjects(queryClient),
+    enabled,
+    staleTime: 30 * 1000,
+  });
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (isAuthenticated) {
-      fetchDashboard(selectedProjectId);
-    } else {
-      setLoading(false);
-    }
-  }, [isAuthenticated, authLoading, selectedProjectId, fetchDashboard]);
+  const data: any = dashQuery.data ?? null;
+  const allProjects: any[] = projQuery.data ?? NO_PROJECTS;
+  const loading = authLoading || (isAuthenticated && dashQuery.isPending);
+  const refreshing = dashQuery.isFetching && !dashQuery.isPending;
+
+  const fetchDashboard = useCallback(async () => {
+    await Promise.all([dashQuery.refetch(), projQuery.refetch()]);
+  }, [dashQuery, projQuery]);
 
   // Derived Backend Stats
   const ps = useMemo(
@@ -287,12 +277,23 @@ export const OverviewDashboard = () => {
 
   const canCreate = canCreateProjects(user);
 
+  // Real context under each KPI (these were fixed labels: "Live", "Delivered", …)
+  const completedPct = healthTotal > 0 ? Math.round(((statusGroups['Completed'] || 0) / healthTotal) * 100) : 0;
+  const openRisks = Math.max(0, (rs.total || 0) - (rs.statusCounts?.Resolved || 0));
+
+  // Real progress (work done) per project from the dashboard API; the list is the fallback
+  const topProjects: { _id: string; name: string; progress: number }[] = (
+    Array.isArray(data?.projectProgress) && data.projectProgress.length > 0
+      ? data.projectProgress
+      : allProjects.map((p: any) => ({ _id: p._id, name: p.name, progress: Number(p.progress) || 0 }))
+  ).slice(0, 4);
+
   // 4 KPI cards (Styled matching the KPI Stat Strip)
   const kpiCards = [
     {
       title: 'Active Projects',
       value: statusGroups['In Progress'] || 0,
-      badge: 'Live',
+      badge: tr("{{n}} total", { n: healthTotal }),
       badgeColor: 'text-blue-700 bg-blue-50 border-blue-100',
       valueColor: 'text-blue-600',
       iconBoxColor: 'bg-blue-50 text-blue-600 border border-blue-100',
@@ -303,7 +304,7 @@ export const OverviewDashboard = () => {
     {
       title: 'Completed Projects',
       value: statusGroups['Completed'] || 0,
-      badge: 'Delivered',
+      badge: healthTotal > 0 ? tr("{{n}}% of portfolio", { n: completedPct }) : tr("None yet"),
       badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-100',
       valueColor: 'text-emerald-600',
       iconBoxColor: 'bg-emerald-50 text-emerald-600 border border-emerald-100',
@@ -314,7 +315,7 @@ export const OverviewDashboard = () => {
     {
       title: 'Open Snags',
       value: snags.open || 0,
-      badge: 'Punch list',
+      badge: tr("{{n}} resolved", { n: snags.resolved || 0 }),
       badgeColor: 'text-rose-700 bg-rose-50 border-rose-100',
       valueColor: 'text-rose-600',
       iconBoxColor: 'bg-rose-50 text-rose-600 border border-rose-100',
@@ -324,8 +325,8 @@ export const OverviewDashboard = () => {
     },
     {
       title: 'Critical Risks',
-      value: rs.statusCounts?.Critical || rs.criticalRisks?.length || 0,
-      badge: 'Attention',
+      value: rs.statusCounts?.Critical || 0, // only risks actually marked Critical
+      badge: tr("{{n}} open risks", { n: openRisks }),
       badgeColor: 'text-amber-700 bg-amber-50 border-amber-100',
       valueColor: 'text-amber-600',
       iconBoxColor: 'bg-amber-50 text-amber-600 border border-amber-100',
@@ -370,7 +371,7 @@ export const OverviewDashboard = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchDashboard(selectedProjectId)}
+            onClick={() => fetchDashboard()}
             disabled={refreshing}
             className="border-slate-200/80 hover:bg-slate-50 text-slate-700 shadow-xs"
           >
@@ -451,7 +452,7 @@ export const OverviewDashboard = () => {
                             : 'text-slate-500 hover:text-slate-900'
                         )}
                       >
-                        {t === 'All' ? tr("All time") : t}
+                        {t === 'All' ? tr("6 months") : t === 'Month' ? tr("This month") : tr("This week")}
                       </button>
                     ))}
                   </div>
@@ -624,21 +625,15 @@ export const OverviewDashboard = () => {
                 </Link>
               </CardHeader>
               <CardContent className="pt-2">
-                {allProjects.length === 0 ? (
+                {topProjects.length === 0 ? (
                   <div className="py-8 text-center space-y-2">
                     <FolderKanban className="w-8 h-8 mx-auto text-slate-300" />
                     <p className="text-xs text-slate-500">{tr("No active projects yet")}</p>
                   </div>
                 ) : (
                   <div className="space-y-3.5">
-                    {allProjects.slice(0, 4).map((project: any) => {
-                      const progress =
-                        project.progress ??
-                        (project.status === 'Completed'
-                          ? 100
-                          : project.status === 'In Progress'
-                          ? 58
-                          : 20);
+                    {topProjects.map((project) => {
+                      const progress = project.progress;
                       return (
                         <div key={project._id} className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
@@ -818,7 +813,7 @@ export const OverviewDashboard = () => {
                     {snags.open || 0}{tr(" Snags")}
                   </span>
                   <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
-                    {rs.criticalRisks?.length || 0}{tr(" Critical")}
+                    {rs.criticalRisks?.length || 0}{tr(" High impact")}
                   </span>
                 </div>
               </CardHeader>

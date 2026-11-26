@@ -14,21 +14,21 @@ import {
   MapPin, Calendar, Users, Building2, ChevronRight, X, Layers, ShieldAlert,
   ChevronDown, Check
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/services/api.client';
 import { Project } from '@/types';
-import { useQueryClient } from '@tanstack/react-query';
-import { constructionProjectPreviewKey, type ProjectPreview } from '@/features/projects/contexts/ProjectContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { CONSTRUCTION_PROJECTS_KEY, fetchConstructionProjects } from '@/features/projects/contexts/ProjectContext';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
 import { hasProjectPermission, canCreateProjects, canViewAnyProject } from '@/lib/permissions';
 
+type ProjectRow = Project & { hasPendingPlans?: boolean };
+const NO_PROJECTS: ProjectRow[] = [];
+
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<(Project & { hasPendingPlans?: boolean })[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [manualRefresh, setManualRefresh] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
@@ -44,7 +44,6 @@ export default function ProjectsPage() {
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
   const queryClient = useQueryClient();
-  const pathname = usePathname();
   const { user } = useAuth();
   const canCreateProject = canCreateProjects(user);
   // No Project Management > View on any role: the list is empty for that
@@ -66,44 +65,35 @@ export default function ProjectsPage() {
     };
   }, [isFilterOpen]);
 
-  const fetchProjects = async (showRefresh = false) => {
-    try {
-      if (showRefresh) setIsRefreshing(true);
-      else setLoading(true);
-
-      const response = await api.get('/projects');
-      const data = Array.isArray(response.data)
-        ? response.data
-        : response.data?.projects ?? response.data?.data ?? [];
-      setProjects(data);
-      // Let the project page show name/status the moment a card is opened
-      data.forEach((p: Project) => {
-        if (p?._id) queryClient.setQueryData<ProjectPreview>(constructionProjectPreviewKey(p._id), {
-          _id: p._id, name: p.name, status: p.status, projectType: p.projectType,
-        });
-      });
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-      toast.error(tr("Failed to load projects"));
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  };
+  // Cached list: coming back to Projects shows the cards instantly and refreshes in the
+  // background (was a full skeleton + wait on every visit, and two refetches on tab focus).
+  const projectsQuery = useQuery({
+    queryKey: CONSTRUCTION_PROJECTS_KEY,
+    queryFn: () => fetchConstructionProjects(queryClient) as Promise<ProjectRow[]>,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
+  });
+  const projects = projectsQuery.data ?? NO_PROJECTS;
+  const loading = projectsQuery.isPending;
+  const isRefreshing = manualRefresh && projectsQuery.isFetching;
 
   useEffect(() => {
-    fetchProjects();
-    const handleFocus = () => fetchProjects(true);
-    const handleVisibility = () => document.visibilityState === 'visible' && fetchProjects(true);
+    if (!projectsQuery.error) return;
+    console.error('Error fetching projects:', projectsQuery.error);
+    toast.error(tr("Failed to load projects"));
+    // toast once per failed fetch
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectsQuery.errorUpdatedAt]);
 
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [pathname]);
+  /** Refresh the list (spinner on the Refresh button only when asked for). */
+  const fetchProjects = async (showRefresh?: unknown) => {
+    if (showRefresh === true) setManualRefresh(true);
+    try {
+      await projectsQuery.refetch();
+    } finally {
+      setManualRefresh(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!deletingProject) return;

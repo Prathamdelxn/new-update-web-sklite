@@ -106,7 +106,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                   </div>
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: statusColor }}>
+                      <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: statusColor }}>
                         {tr(risk.category)}
                       </span>
                       <span className="w-1 h-1 rounded-full bg-gray-300" />
@@ -130,7 +130,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                 {/* Status & Impact Row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-1">
                       {tr("Status")}
                     </span>
                     <span className={cn('text-sm font-semibold', getStatusTextClass(risk.status))}>
@@ -138,7 +138,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                     </span>
                   </div>
                   <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-1">
                       {tr("Impact")}
                     </span>
                     <span className={cn('text-sm font-semibold')} style={{ color: getImpactColor(risk.impact) }}>
@@ -149,7 +149,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">
                     {tr("Description")}
                   </span>
                   <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm text-slate-700 leading-relaxed">
@@ -160,7 +160,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                 {/* Mitigation progress */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
                       {tr("Mitigation Progress")}
                     </span>
                     <span className="text-sm font-bold text-gray-900">{tr(risk.mitigationProgress)}%</span>
@@ -184,7 +184,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                 {/* History log */}
                 {risk.history && risk.history.length > 0 && (
                   <div className="space-y-3 pt-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">
                       {tr("History log")}
                     </span>
                     <div className="space-y-2 max-h-48 overflow-y-auto pe-1">

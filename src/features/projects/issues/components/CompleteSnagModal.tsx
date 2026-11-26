@@ -101,7 +101,7 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
               {/* Form Body */}
               <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ms-1">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block ms-1">
                     {tr("Proof of Rectification")}
                   </label>
                   <p className="text-xs text-slate-400 ms-1">
@@ -147,7 +147,7 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block ms-1">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block ms-1">
                     {tr("Resolution Details")}
                   </label>
                   <textarea

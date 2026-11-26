@@ -113,7 +113,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                       <History className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">{tr("Log Material Usage")}</h2>
+                      <h2 className="text-lg font-bold text-gray-900">{tr("Log Material Usage")}</h2>
                       <p className="text-xs text-slate-500 mt-0.5">{tr("Record material consumption on site.")}</p>
                     </div>
                   </div>
@@ -171,7 +171,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                       {formData.items.map((item, index) => (
                         <div key={index} className="grid grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded-xl border border-gray-200">
                           <div className="col-span-6 space-y-1">
-                            <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
+                            <label className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
                             <select
                               required
                               value={item.materialId}
@@ -185,7 +185,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                             </select>
                           </div>
                           <div className="col-span-4 space-y-1">
-                            <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Quantity")}</label>
+                            <label className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Quantity")}</label>
                             <div className="flex items-center bg-white border border-gray-200 rounded-lg pe-2">
                               <input
                                 type="number"
@@ -197,7 +197,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                                 onChange={(e) => updateItem(index, 'quantity', e.target.value === '' ? 0 : Number(e.target.value))}
                                 className="w-full bg-transparent py-1.5 px-3 text-xs text-gray-900 focus:outline-none"
                               />
-                              <span className="text-[9px] font-bold text-slate-400 uppercase">{item.unit || '-'}</span>
+                              <span className="text-[9px] font-semibold text-slate-400 uppercase">{item.unit || '-'}</span>
                             </div>
                           </div>
                           <div className="col-span-2 flex justify-center pb-1">

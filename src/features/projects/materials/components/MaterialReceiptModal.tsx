@@ -118,7 +118,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                     <FileCheck className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">{tr("Record Material Receipt")}</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{tr("Record Material Receipt")}</h2>
                     <p className="text-xs text-slate-500 mt-0.5">{tr("Log incoming supplies and challan details.")}</p>
                   </div>
                 </div>
@@ -131,7 +131,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                 {/* Vendor & Document Details */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Vendor Name")}</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Vendor Name")}</label>
                     <div className="relative group">
                       <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                       <select
@@ -148,7 +148,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Delivery Slip / Ref #")}</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Delivery Slip / Ref #")}</label>
                     <div className="relative group">
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                       <input
@@ -162,7 +162,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Invoice #")}</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Invoice #")}</label>
                     <div className="relative group">
                       <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                       <input
@@ -181,7 +181,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                   {items.map((item, index) => (
                     <div key={index} className="flex gap-4 items-end p-4 rounded-2xl bg-gray-50 border border-gray-200 relative group">
                       <div className="flex-1 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
                         <select
                           value={item.materialId}
                           onChange={(e) => handleItemChange(index, 'materialId', e.target.value)}
@@ -194,7 +194,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                         </select>
                       </div>
                       <div className="w-24 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Qty")}</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Qty")}</label>
                         <input
                           type="number"
                           min="1"
@@ -206,7 +206,7 @@ export const MaterialReceiptModal: React.FC<MaterialReceiptModalProps> = ({
                         />
                       </div>
                       <div className="w-20 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Unit")}</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Unit")}</label>
                         <input
                           type="text"
                           readOnly

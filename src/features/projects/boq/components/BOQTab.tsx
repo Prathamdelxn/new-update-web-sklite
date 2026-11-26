@@ -67,7 +67,7 @@ const StatCard = ({
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">{tr(label)}</p>
+      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{tr(label)}</p>
       <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
         <p className="min-w-0 flex-1 text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{tr(value)}</p>
         {tr(action)}
@@ -295,7 +295,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view the BOQ Management module.")}</p>
+        <p className="text-sm font-medium text-slate-500">{tr("You don't have permission to view the BOQ Management module.")}</p>
       </div>
     );
   }
@@ -434,15 +434,15 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                 <table className="w-full min-w-[980px] table-fixed text-sm text-start">
                   <thead>
                     <tr className="bg-slate-50/70 border-b border-slate-200">
-                      <th className="w-[4%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">#</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{tr("Item No.")}</th>
-                      <th className="w-[29%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{tr("Item Description")}</th>
-                      <th className="w-[7%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">{tr("Unit")}</th>
-                      <th className="w-[8%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Qty")}</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Rate")}</th>
-                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Total")}</th>
-                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">{tr("Status")}</th>
-                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Actions")}</th>
+                      <th className="w-[4%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Item No.")}</th>
+                      <th className="w-[29%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Item Description")}</th>
+                      <th className="w-[7%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">{tr("Unit")}</th>
+                      <th className="w-[8%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-end">{tr("Qty")}</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-end">{tr("Rate")}</th>
+                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-end">{tr("Total")}</th>
+                      <th className="w-[11%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">{tr("Status")}</th>
+                      <th className="w-[10%] px-2 sm:px-3 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-end">{tr("Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -461,7 +461,7 @@ export const BOQTab: React.FC<BOQTabProps> = ({ projectId }) => {
                             <td colSpan={6} className="px-2 sm:px-3 py-3">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
-                                <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">{tr(groupName)}</span>
+                                <span className="font-semibold text-slate-900 text-xs uppercase tracking-wider">{tr(groupName)}</span>
                               </div>
                             </td>
                             <td className="px-1 sm:px-2 py-3 text-end font-bold text-slate-900 whitespace-nowrap text-xs sm:text-sm">

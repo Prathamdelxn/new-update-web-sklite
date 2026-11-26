@@ -115,7 +115,7 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {/* Risk Title */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                     {tr("Risk Title *")}
                   </label>
                   <div className="relative">
@@ -133,7 +133,7 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
 
                 {/* Category Chips */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                     {tr("Category")}
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -165,7 +165,7 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
                   {/* Impact Column */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                         {tr("Impact Level")}
                       </label>
                       <span className={cn('text-[11px] font-bold',
@@ -205,7 +205,7 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
                   {/* Probability Column */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                         {tr("Probability")}
                       </label>
                       <span className={cn('text-[11px] font-bold',
@@ -240,7 +240,7 @@ export const RiskModal: React.FC<RiskModalProps> = ({ isOpen, onClose, onSuccess
 
                 {/* Description */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                     {tr("Description")}
                   </label>
                   <textarea

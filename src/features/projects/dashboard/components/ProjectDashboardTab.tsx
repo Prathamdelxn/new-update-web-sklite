@@ -95,7 +95,8 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
   if (!project) return null;
 
   const currentBudget = project.budgetHistory?.[project.budgetHistory.length - 1]?.amount || 0;
-  const progress = STATUS_PROGRESS[project.status as string] ?? 10;
+  // Real progress from the API (work done); the stage table is only a fallback for old data
+  const progress = (project as any).progress ?? STATUS_PROGRESS[project.status as string] ?? 10;
   const startDate = project.startDate ? new Date(project.startDate) : null;
   const endDate = project.endDate ? new Date(project.endDate) : null;
   const now = new Date();
@@ -126,7 +127,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-xl font-bold text-gray-900">{tr(project.name)}</h2>
+                <h2 className="text-lg font-bold text-gray-900">{tr(project.name)}</h2>
                 <span className={cn(
                   'px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border',
                   statusBadgeColor[project.status] || 'bg-blue-100 text-blue-700 border-blue-200'
@@ -134,7 +135,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                   {tr(project.status)}
                 </span>
                 {project.projectType && (
-                  <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border bg-gray-100 text-slate-600 border-gray-200">
+                  <span className="px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-widest border bg-gray-100 text-slate-600 border-gray-200">
                     {tr(project.projectType)}
                   </span>
                 )}
@@ -151,7 +152,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
 
         {/* Overall Progress */}
         <div className="mt-6 space-y-2">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
             <span>{tr("Overall Progress")}</span>
             <span className="text-gray-900">{tr(progress)}%</span>
           </div>
@@ -282,7 +283,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               )}
               {totalDays && (
                 <div className="mt-2 space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="flex justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                     <span>{tr("Time Elapsed")}</span>
                     <span>{tr(timeProgress)}%</span>
                   </div>
@@ -374,7 +375,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                   )}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">{tr(label)}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider">{tr(label)}</span>
                 </button>
               ))}
             </div>

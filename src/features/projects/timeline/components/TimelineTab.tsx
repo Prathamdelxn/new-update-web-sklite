@@ -175,19 +175,19 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
         {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900">{tr("Project Timeline")}</h3>
+          <h3 className="text-base font-bold text-gray-900">{tr("Project Timeline")}</h3>
           <p className="text-sm text-slate-500 mt-1">{tr("Click a milestone row to expand its tasks.")}</p>
         </div>
         <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
           {Object.entries(STATUS_COLORS).map(([s, c]) => (
             <div key={s} className="flex items-center gap-1.5">
               <div className={cn('w-2.5 h-2.5 rounded-full', c.bar)} />
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr(s)}</span>
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr(s)}</span>
             </div>
           ))}
           <div className="flex items-center gap-1.5">
             <div className="w-0.5 h-3 bg-red-500 rounded-full" />
-            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{tr("Today")}</span>
+            <span className="text-[10px] font-semibold text-red-500 uppercase tracking-wider">{tr("Today")}</span>
           </div>
         </div>
       </div>
@@ -229,7 +229,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
               style={{ height: MONTH_ROW + DAY_ROW }}
               className="border-b border-gray-200 flex items-end px-4 pb-1.5 bg-gray-50"
             >
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tr("Milestone / Task")}</span>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Milestone / Task")}</span>
             </div>
 
             {normalized.map((m, i) => {
@@ -259,7 +259,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                     )} />
                     <div className={cn('w-2.5 h-2.5 rounded-full shrink-0', dotColor)} />
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-900 truncate leading-tight">{tr(m.label)}</p>
+                      <p className="text-xs font-semibold text-gray-900 truncate leading-tight">{tr(m.label)}</p>
                       <p className="text-[9px] text-slate-400 mt-0.5">
                         {fmtShort(m.barStart)} → {fmtShort(m.barEnd)}
                       </p>
@@ -317,7 +317,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                     className="border-e border-gray-200 flex items-center px-2 shrink-0"
                     style={{ width: mo.span * DAY_W }}
                   >
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{tr(mo.label)}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{tr(mo.label)}</span>
                   </div>
                 ))}
               </div>
@@ -469,7 +469,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
 
       {/* Status summary */}
       <div className="mt-8">
-        <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">{tr("Milestone Summary")}</h4>
+        <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">{tr("Milestone Summary")}</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Total', count: milestones.length, text: 'text-blue-500' },
@@ -479,7 +479,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
               <p className={cn('text-2xl font-bold', s.text)}>{s.count}</p>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">{tr(s.label)}</p>
+              <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest mt-1">{tr(s.label)}</p>
             </div>
           ))}
         </div>

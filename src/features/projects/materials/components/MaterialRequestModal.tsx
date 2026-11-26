@@ -106,7 +106,7 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                     <ClipboardList className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">{tr("Request Materials")}</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{tr("Request Materials")}</h2>
                     <p className="text-xs text-slate-500 mt-0.5">{tr("Create a request for project supplies.")}</p>
                   </div>
                 </div>
@@ -120,7 +120,7 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                   {items.map((item, index) => (
                     <div key={index} className="flex gap-4 items-end p-4 rounded-2xl bg-gray-50 border border-gray-200 relative group">
                       <div className="flex-1 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
                         <select
                           value={item.materialId}
                           onChange={(e) => handleItemChange(index, 'materialId', e.target.value)}
@@ -133,7 +133,7 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                         </select>
                       </div>
                       <div className="w-24 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Qty")}</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Qty")}</label>
                         <input
                           type="number"
                           min="1"
@@ -145,7 +145,7 @@ export const MaterialRequestModal: React.FC<MaterialRequestModalProps> = ({
                         />
                       </div>
                       <div className="w-20 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Unit")}</label>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest ms-1">{tr("Unit")}</label>
                         <input
                           type="text"
                           readOnly

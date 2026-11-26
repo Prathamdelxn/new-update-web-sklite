@@ -552,7 +552,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">{tr("On-Site Log (Today)")}</h4>
+                <h4 className="text-xs font-semibold uppercase text-slate-400 tracking-wider">{tr("On-Site Log (Today)")}</h4>
               </div>
               {isAdmin && !isLocked && (
                 <button
@@ -651,7 +651,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             {/* Monthly History filtering */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <div>
-                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">{tr("Monthly Records History")}</h4>
+                <h4 className="text-xs font-semibold uppercase text-slate-400 tracking-wider">{tr("Monthly Records History")}</h4>
               </div>
 
               <div className="flex items-center gap-3">
@@ -800,7 +800,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-gray-900 text-base">{tr("Check-In Verification")}</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Location & Photo Verification Required")}</p>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{tr("Location & Photo Verification Required")}</p>
                 </div>
                 <button
                   onClick={() => { setIsCheckInOpen(false); stopCamera(); }}
@@ -977,7 +977,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               </div>
 
               <div className="space-y-1">
-                <h3 className="font-bold text-gray-900 text-lg">{tr("Check Out of Site")}</h3>
+                <h3 className="font-bold text-gray-900 text-base">{tr("Check Out of Site")}</h3>
                 <p className="text-xs text-slate-500">
                   {tr("Are you ready to submit your work hours and checkout of the project site?")}
                 </p>
@@ -1042,7 +1042,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
                 <div>
                   <h3 className="font-bold text-gray-900 text-base">{tr("Export Attendance Report")}</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Excel / XLSX Format")}</p>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{tr("Excel / XLSX Format")}</p>
                 </div>
                 <button
                   onClick={() => setIsExportOpen(false)}
@@ -1055,7 +1055,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               <form onSubmit={handleExport} className="p-6 space-y-4 overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Start Date")}</label>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Start Date")}</label>
                     <input
                       type="date"
                       value={exportStartDate}
@@ -1065,7 +1065,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("End Date")}</label>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("End Date")}</label>
                     <input
                       type="date"
                       value={exportEndDate}
@@ -1078,7 +1078,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
 
                 {isManagerOrAdmin && (
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Employee Filter")}</label>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Employee Filter")}</label>
                     <select
                       value={exportUser}
                       onChange={e => setExportUser(e.target.value)}
@@ -1140,7 +1140,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
                 <div>
                   <h3 className="font-bold text-gray-900 text-base">{tr("Mark Attendance Manually")}</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Admin Override")}</p>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{tr("Admin Override")}</p>
                 </div>
                 <button
                   onClick={() => setIsManualOpen(false)}
@@ -1152,7 +1152,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
 
               <form onSubmit={handleManualMark} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Member")}</label>
+                  <label className="block text-[10px] font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Member")}</label>
                   <select
                     value={manualUserId}
                     onChange={e => setManualUserId(e.target.value)}
@@ -1167,7 +1167,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Date")}</label>
+                  <label className="block text-[10px] font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">{tr("Date")}</label>
                   <input
                     type="date"
                     value={manualDate}

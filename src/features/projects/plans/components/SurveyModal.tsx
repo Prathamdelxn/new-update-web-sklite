@@ -318,7 +318,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 {/* Section: Conditions & Utilities */}
                 <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {isInterior ? tr("Space & Condition Assessment") : tr("Conditions & Utilities")}
                     </span>
                   </div>
@@ -368,7 +368,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 {!isInterior && (
                   <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                         {tr("Terrain & Soil")}
                       </span>
                     </div>
@@ -392,7 +392,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     {/* Room Details */}
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                           {tr("Room Details")}
                         </span>
                       </div>
@@ -466,7 +466,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     {/* Wall & Moisture Diagnostics */}
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                           {tr("Wall & Moisture Diagnostics")}
                         </span>
                       </div>
@@ -518,7 +518,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     {/* MEP & Utility Readiness */}
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                           {tr("MEP & Services Readiness")}
                         </span>
                       </div>
@@ -564,7 +564,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     {/* Freight & Elevator Access */}
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                           {tr("Material Access & Freight Logistics")}
                         </span>
                       </div>
@@ -607,7 +607,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                     {/* Structural & Design */}
                     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                           {tr("Structural & Design")}
                         </span>
                       </div>
@@ -652,7 +652,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 {/* Photo Upload Sections */}
                 <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {tr("Site Observation Media")}
                     </span>
                   </div>
@@ -745,7 +745,7 @@ export const SurveyModal: React.FC<SurveyModalProps> = ({
                 {/* Surveyor Comments (common) */}
                 <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       {tr("Surveyor Comments")}
                     </span>
                   </div>

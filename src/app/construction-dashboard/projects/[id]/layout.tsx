@@ -167,7 +167,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     <>
       {!project && !loading ? (
         <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl p-8 shadow-card">
-          <h2 className="text-2xl font-bold text-slate-900">{accessDenied ? tr("Access denied") : tr("Project not found")}</h2>
+          <h2 className="text-lg font-bold text-slate-900">{accessDenied ? tr("Access denied") : tr("Project not found")}</h2>
           <p className="text-slate-500 text-sm mt-1">
             {accessDenied
               ? tr("You don't have permission to view this project.")
@@ -295,7 +295,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                 <Lock className="w-8 h-8 text-slate-400" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">{tr("Section Locked")}</h2>
+              <h2 className="text-lg font-bold text-slate-900 mb-2">{tr("Section Locked")}</h2>
               <p className="text-slate-500 text-sm max-w-sm text-center mb-6">
                 {tr("Please complete and approve the Site Survey to unlock this section.")}
               </p>

@@ -232,7 +232,7 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
               </div>
               <div className="text-end">
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider">{tr("Current")}</p>
-                <p className="text-sm font-bold text-emerald-600">{fmt(currentBudget)}</p>
+                <p className="text-sm font-medium text-emerald-600">{fmt(currentBudget)}</p>
               </div>
             </div>
             <div className="w-full">
@@ -265,7 +265,7 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
           <div className="p-2 rounded-lg bg-blue-100 border border-blue-200">
             <History className="w-5 h-5 text-blue-600" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900">{tr("Budget History & Audit Log")}</h3>
+          <h3 className="text-base font-bold text-gray-900">{tr("Budget History & Audit Log")}</h3>
         </div>
 
         <div className="space-y-8 relative">
@@ -339,22 +339,22 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
 
                 {isExpanded && (
                   <div className="mt-4 p-4 rounded-xl bg-blue-50 border border-blue-100 space-y-3">
-                    <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-2">{tr("Audit Trail")}</p>
+                    <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-widest mb-2">{tr("Audit Trail")}</p>
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">{tr("Revision Amount")}</p>
+                        <p className="text-slate-400 font-semibold uppercase tracking-widest text-[9px]">{tr("Revision Amount")}</p>
                         <p className="font-bold text-gray-900 mt-0.5">{formatCurrency(entry.amount, projectCurrency(project))}</p>
                       </div>
                       <div>
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">{tr("Status")}</p>
+                        <p className="text-slate-400 font-semibold uppercase tracking-widest text-[9px]">{tr("Status")}</p>
                         <p className={cn("font-bold mt-0.5", entry.approvalStatus === 'Approved' ? 'text-emerald-600' : entry.approvalStatus === 'Rejected' ? 'text-rose-600' : 'text-amber-600')}>{tr(entry.approvalStatus)}</p>
                       </div>
                       <div>
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">{tr("Requested By")}</p>
+                        <p className="text-slate-400 font-semibold uppercase tracking-widest text-[9px]">{tr("Requested By")}</p>
                         <p className="font-bold text-blue-600 mt-0.5">{tr(entry.updatedByName)}</p>
                       </div>
                       <div>
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">{tr("Timestamp")}</p>
+                        <p className="text-slate-400 font-semibold uppercase tracking-widest text-[9px]">{tr("Timestamp")}</p>
                         <p className="font-semibold text-gray-700 mt-0.5">{new Date(entry.timestamp).toLocaleString()}</p>
                       </div>
                     </div>

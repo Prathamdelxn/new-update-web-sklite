@@ -336,7 +336,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
             <X className="w-5 h-5 text-slate-500 hover:text-slate-800" />
           </button>
           <div>
-            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{tr("Plan Annotator")}</p>
+            <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">{tr("Plan Annotator")}</p>
             <h2 className="text-base font-bold text-slate-900 truncate max-w-sm">{document?.name || tr("Document")}</h2>
           </div>
         </div>
@@ -490,7 +490,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
               <div className="flex-1 overflow-y-auto p-5 space-y-6">
                 {/* Note */}
                 <div>
-                  <label className="flex items-center gap-2 text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wider">
                     <MessageSquare className="w-3.5 h-3.5" />{tr(" Text Note")}
                   </label>
                   <textarea
@@ -505,7 +505,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
 
                 {/* Voice Memo */}
                 <div>
-                  <label className="flex items-center gap-2 text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wider">
                     <Mic className="w-3.5 h-3.5" />{tr(" Voice Memo")}
                   </label>
                   
@@ -548,7 +548,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
 
                 {/* Photo Attach */}
                 <div>
-                  <label className="flex items-center justify-between text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                  <label className="flex items-center justify-between text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wider">
                     <div className="flex items-center gap-2"><ImageIcon className="w-3.5 h-3.5" />{tr(" Photo")}</div>
                     {canAnnotate && !imageUri && (
                       <label className="text-[10px] text-blue-600 cursor-pointer hover:underline">

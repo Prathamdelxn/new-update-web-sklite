@@ -114,7 +114,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                 {/* Mitigation Progress Slider */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       {tr("Mitigation Progress")}
                     </label>
                     <span className="text-sm font-bold text-gray-900">{tr(progress)}%</span>
@@ -136,7 +136,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
 
                 {/* Status selector */}
                 <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     {tr("Set Status")}
                   </label>
                   <div className="grid grid-cols-4 gap-2">
@@ -163,7 +163,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
 
                 {/* Update Note */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     {tr("Update Note")}
                   </label>
                   <input

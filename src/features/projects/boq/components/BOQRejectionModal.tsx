@@ -36,7 +36,7 @@ export const BOQRejectionModal: React.FC<BOQRejectionModalProps> = ({
         <div className="bg-red-50 border-b border-red-100 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-red-700">
             <AlertCircle className="w-5 h-5" />
-            <h3 className="text-lg font-bold">{tr("Reject BOQ Item")}</h3>
+            <h3 className="text-base font-bold">{tr("Reject BOQ Item")}</h3>
           </div>
           <button 
             onClick={onClose}
@@ -53,7 +53,7 @@ export const BOQRejectionModal: React.FC<BOQRejectionModalProps> = ({
           </p>
           
           <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               {tr("Rejection Reason ")}<span className="text-red-500">*</span>
             </label>
             <textarea

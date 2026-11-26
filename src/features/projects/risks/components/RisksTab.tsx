@@ -98,7 +98,7 @@ const StatCard = ({
       <Icon className={cn('w-5 h-5', accent)} />
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">{tr(label)}</p>
+      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{tr(label)}</p>
       <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
         <p className="min-w-0 flex-1 text-xl sm:text-2xl font-bold text-slate-900 leading-tight">{tr(value)}</p>
       </div>
@@ -179,7 +179,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
           <Lock className="w-8 h-8 text-slate-400" />
         </div>
-        <h3 className="text-lg font-bold text-slate-900 mb-1">{tr("Access Restricted")}</h3>
+        <h3 className="text-base font-bold text-slate-900 mb-1">{tr("Access Restricted")}</h3>
         <p className="text-xs text-slate-500 max-w-sm">
           {tr("You don't have permission to view the Risk Management module.")}
         </p>
@@ -229,7 +229,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
         {/* Filters and Header Action Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">{tr("Risk Registry")}</h3>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">{tr("Risk Registry")}</h3>
             <p className="text-xs text-slate-500 mt-0.5">{filteredRisks.length}{tr(" incidents tracked across active phases")}</p>
           </div>
 
@@ -302,7 +302,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                     <div className="flex items-center justify-between gap-4 mb-3">
                       <div className="flex items-center space-x-1.5" style={{ color: statusColor }}>
                         <CategoryIcon className="w-4 h-4" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider">
                           {tr(risk.category)}
                         </span>
                       </div>

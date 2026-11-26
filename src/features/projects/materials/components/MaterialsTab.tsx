@@ -380,7 +380,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view the Materials & Inventory module.")}</p>
+        <p className="text-sm font-medium text-slate-500">{tr("You don't have permission to view the Materials & Inventory module.")}</p>
       </div>
     );
   }
@@ -411,11 +411,11 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           {/* Inventory Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Materials")}</p>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{tr("Total Materials")}</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">{materials.length}</p>
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Low Stock Items")}</p>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{tr("Low Stock Items")}</p>
               <p className="text-2xl font-bold text-red-600 mt-1">
                 {materials.filter(m => {
                   const stock = m.currentStock ?? ((m.totalReceived || 0) - (m.totalConsumed || 0));
@@ -425,13 +425,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </p>
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Received")}</p>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{tr("Total Received")}</p>
               <p className="text-2xl font-bold text-emerald-600 mt-1 break-all">
                 {formatCompact(materials.reduce((sum, m) => sum + (m.totalReceived || 0), 0))}
               </p>
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Consumed")}</p>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{tr("Total Consumed")}</p>
               <p className="text-2xl font-bold text-blue-600 mt-1 break-all">
                 {formatCompact(materials.reduce((sum, m) => sum + (m.totalConsumed || 0), 0))}
               </p>
@@ -492,7 +492,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             <Package className="w-5 h-5 text-blue-600" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-gray-900 leading-tight truncate" title={material.name}>{tr(material.name)}</p>
+                            <p className="text-sm font-semibold text-gray-900 leading-tight truncate" title={material.name}>{tr(material.name)}</p>
                             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-1">
                               {tr("Unit: ")}<span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] font-bold text-slate-500 ms-1">{tr(material.unit)}</span>
                             </p>
@@ -501,7 +501,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
                         <div className="flex flex-col items-end shrink-0 min-w-0 max-w-[45%]">
                           {overConsumed ? (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
                           ) : (
                             <>
                               <span className={cn('text-sm font-bold break-all text-end', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}{tr(" In Stock")}</span>
@@ -516,18 +516,18 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-gray-100 bg-gray-50/50 -mx-4 px-4 py-2">
                         <div className="flex items-center space-x-1.5 min-w-0">
                           <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">{tr("Received:")}</span>
+                          <span className="text-[10px] text-slate-400 font-semibold uppercase shrink-0">{tr("Received:")}</span>
                           <span className="text-xs font-bold text-emerald-600 break-all">{formatCompact(received)}</span>
                         </div>
                         <div className="flex items-center space-x-1.5 justify-end min-w-0">
                           <ArrowUpRight className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                          <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">{tr("Consumed:")}</span>
+                          <span className="text-[10px] text-slate-400 font-semibold uppercase shrink-0">{tr("Consumed:")}</span>
                           <span className="text-xs font-bold text-red-600 break-all">{formatCompact(consumed)}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-3 mt-2">
-                        <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold">
                           {tr("Updated: ")}{new Date(material.updatedAt).toLocaleDateString()}
                         </span>
                         <div className="flex items-center space-x-2">
@@ -599,12 +599,12 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <table className="w-full text-start border-collapse min-w-[800px]">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Material Name")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">{tr("Unit")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Received")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("Consumed")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-end">{tr("In Stock")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider"></th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Material Name")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider text-center">{tr("Unit")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider text-end">{tr("Received")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider text-end">{tr("Consumed")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider text-end">{tr("In Stock")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -616,7 +616,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               <Package className="w-5 h-5 text-blue-600" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-gray-900 truncate max-w-[220px]" title={material.name}>{tr(material.name)}</p>
+                              <p className="text-sm font-semibold text-gray-900 truncate max-w-[220px]" title={material.name}>{tr(material.name)}</p>
                               <p className="text-[10px] text-slate-500 uppercase tracking-wider">{tr("Last updated: ")}{new Date(material.updatedAt).toLocaleDateString()}</p>
                             </div>
                           </div>
@@ -651,7 +651,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               return (
                                 <>
                                   {overConsumed ? (
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
                                   ) : (
                                     <>
                                       <span className={cn('text-lg font-bold break-all text-end', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}</span>
@@ -743,7 +743,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
-                <h3 className="text-lg font-bold text-gray-900">{tr("Material Requests")}</h3>
+                <h3 className="text-base font-bold text-gray-900">{tr("Material Requests")}</h3>
                 <p className="text-xs text-slate-500">{tr("Track and manage project material requisitions.")}</p>
               </div>
               <div className="flex items-center space-x-3">
@@ -807,7 +807,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         <ClipboardList className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{tr("REQ-")}{request._id.slice(-6).toUpperCase()}</p>
+                        <p className="text-sm font-semibold text-gray-900">{tr("REQ-")}{request._id.slice(-6).toUpperCase()}</p>
                         <p className="text-[10px] text-slate-500 uppercase tracking-wider">{new Date(request.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
@@ -833,7 +833,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
                   {request.commonNote && (
                     <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 mb-6">
-                      <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">{tr("Note")}</p>
+                      <p className="text-[10px] text-slate-500 uppercase font-semibold mb-1">{tr("Note")}</p>
                       <p className="text-xs text-slate-600 italic">"{tr(request.commonNote)}"</p>
                     </div>
                   )}
@@ -899,7 +899,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <ClipboardList className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{tr("No requests found")}</h3>
+              <h3 className="text-base font-bold text-gray-900 mb-2">{tr("No requests found")}</h3>
               <p className="text-slate-500 max-w-xs">{tr("There are no material requests for this project yet.")}</p>
             </div>
           )}
@@ -911,7 +911,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
-                <h3 className="text-lg font-bold text-gray-900">{tr("Material Received")}</h3>
+                <h3 className="text-base font-bold text-gray-900">{tr("Material Received")}</h3>
                 <p className="text-xs text-slate-500">{tr("Log and verify incoming material deliveries.")}</p>
               </div>
               <div className="flex items-center space-x-3">
@@ -938,8 +938,8 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   <GlassCard key={receipt._id} className="p-4 border-gray-200 shadow-none" gradient>
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{tr("GRN-")}{receipt._id.slice(-6).toUpperCase()}</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                        <p className="text-sm font-semibold text-gray-900">{tr("GRN-")}{receipt._id.slice(-6).toUpperCase()}</p>
+                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
                           {new Date(receipt.createdAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -958,14 +958,14 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         <Truck className="w-4 h-4 text-slate-400 shrink-0" />
                         <span className="text-sm font-bold text-slate-700 truncate">{tr(receipt.vendorName)}</span>
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-500 font-bold uppercase ps-6">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-500 font-semibold uppercase ps-6">
                         <span>{tr("Challan: ")}{tr(receipt.challanNumber)}</span>
                         {receipt.invoiceNumber && <span>{tr("Invoice: ")}{tr(receipt.invoiceNumber)}</span>}
                       </div>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-gray-100">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{tr("Items Received")}</p>
+                      <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5">{tr("Items Received")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {receipt.items.map((item: any, i: number) => (
                           <span key={i} className="px-2 py-1 rounded bg-gray-50 border border-gray-200 text-[10px] font-bold text-slate-600">
@@ -977,7 +977,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
                     {receipt.commonNote && (
                       <div className="mt-3 p-2.5 rounded-xl bg-gray-50 border border-gray-200">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 font-bold">{tr("Notes")}</p>
+                        <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5 font-semibold">{tr("Notes")}</p>
                         <p className="text-xs text-slate-500 italic">"{tr(receipt.commonNote)}"</p>
                       </div>
                     )}
@@ -1018,18 +1018,18 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <table className="w-full text-start border-collapse min-w-[1000px]">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Receipt Info")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Vendor & Docs")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Items Received")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">{tr("Status")}</th>
-                      <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider"></th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Receipt Info")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Vendor & Docs")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Items Received")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider text-center">{tr("Status")}</th>
+                      <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {receipts.map((receipt) => (
                       <tr key={receipt._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                         <td className="px-6 py-4">
-                          <p className="text-sm font-bold text-gray-900">{tr("GRN-")}{receipt._id.slice(-6).toUpperCase()}</p>
+                          <p className="text-sm font-semibold text-gray-900">{tr("GRN-")}{receipt._id.slice(-6).toUpperCase()}</p>
                           <p className="text-[10px] text-slate-500 uppercase tracking-wider">{new Date(receipt.createdAt).toLocaleDateString()}</p>
                         </td>
                         <td className="px-6 py-4">
@@ -1038,7 +1038,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               <Truck className="w-3 h-3 text-slate-400" />
                               <span className="text-sm font-medium text-slate-600">{tr(receipt.vendorName)}</span>
                             </div>
-                            <div className="flex items-center space-x-4 text-[10px] text-slate-500 font-bold uppercase">
+                            <div className="flex items-center space-x-4 text-[10px] text-slate-500 font-semibold uppercase">
                               <span>{tr("Challan: ")}{tr(receipt.challanNumber)}</span>
                               {receipt.invoiceNumber && <span>{tr("Invoice: ")}{tr(receipt.invoiceNumber)}</span>}
                             </div>
@@ -1097,7 +1097,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <FileCheck className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{tr("No receipts found")}</h3>
+              <h3 className="text-base font-bold text-gray-900 mb-2">{tr("No receipts found")}</h3>
               <p className="text-slate-500 max-w-xs">{tr("Record incoming material deliveries using the GRN form.")}</p>
             </div>
           )}
@@ -1109,7 +1109,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
-                <h3 className="text-lg font-bold text-gray-900">{tr("Purchase Orders")}</h3>
+                <h3 className="text-base font-bold text-gray-900">{tr("Purchase Orders")}</h3>
                 <p className="text-xs text-slate-500">{tr("Formal procurement requests to vendors.")}</p>
               </div>
               {canCreate && (
@@ -1132,7 +1132,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 <GlassCard key={po._id} className="p-6 border-gray-200 shadow-none" gradient>
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <p className="text-sm font-bold text-gray-900">{tr(po.poNumber)}</p>
+                      <p className="text-sm font-semibold text-gray-900">{tr(po.poNumber)}</p>
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider">{tr(po.vendorName)}</p>
                     </div>
                     <span className={cn(
@@ -1152,7 +1152,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div className="flex flex-col">
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{tr("Total Amount")}</span>
+                      <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest">{tr("Total Amount")}</span>
                        <span className="text-sm font-bold text-emerald-600">{(po.grandTotal ?? po.totalAmount) != null ? formatCurrency(po.grandTotal ?? po.totalAmount, projectCurrency(project as any)) : '—'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -1195,7 +1195,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex flex-col md:flex-row gap-4 justify-between">
               <div className="flex-1 max-w-md">
-                <h3 className="text-lg font-bold text-gray-900">{tr("Usage Log")}</h3>
+                <h3 className="text-base font-bold text-gray-900">{tr("Usage Log")}</h3>
                 <p className="text-xs text-slate-500">{tr("Track on-site material consumption.")}</p>
               </div>
               {canCreate && (
@@ -1217,17 +1217,17 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               <table className="w-full text-start border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Date & User")}</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Location / Work")}</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Materials Consumed")}</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider"></th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Date & User")}</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Location / Work")}</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Materials Consumed")}</th>
+                    <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {usageLogs.map((log) => (
                     <tr key={log._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
-                        <p className="text-sm font-bold text-gray-900">{new Date(log.createdAt).toLocaleDateString()}</p>
+                        <p className="text-sm font-semibold text-gray-900">{new Date(log.createdAt).toLocaleDateString()}</p>
                         <p className="text-[10px] text-slate-500 uppercase tracking-wider">{tr(log.usedByName)}</p>
                       </td>
                       <td className="px-6 py-4">
@@ -1248,7 +1248,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         {log.source === 'task' ? (
                           <span
                             title={tr("Logged from a milestone task — cannot be deleted here")}
-                            className="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
+                            className="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider"
                           >
                             {tr("From task")}
                           </span>
@@ -1281,7 +1281,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
         <div className="space-y-6">
           <GlassCard className="p-4 border-gray-200 shadow-none" gradient>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-gray-900">{tr("Activity Log")}</h3>
+              <h3 className="text-base font-bold text-gray-900">{tr("Activity Log")}</h3>
               <p className="text-xs text-slate-500">{tr("All material activity — requests, purchases, receipts, and consumption — in chronological order.")}</p>
             </div>
           </GlassCard>
@@ -1320,10 +1320,10 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr(typeConfig.label)}</span>
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr(typeConfig.label)}</span>
                         {tr(statusBadge)}
                       </div>
-                      <p className="text-sm font-bold text-gray-900 mt-0.5 truncate">{tr(typeConfig.idLabel)}</p>
+                      <p className="text-sm font-semibold text-gray-900 mt-0.5 truncate">{tr(typeConfig.idLabel)}</p>
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {summaryItems.slice(0, 4).map((s, i) => (
                           <span key={i} className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 text-[10px] font-bold text-slate-500">{tr(s)}</span>
@@ -1342,7 +1342,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       )}
                     </div>
                     <div className="text-end shrink-0">
-                      <p className="text-[10px] font-bold text-slate-400">{new Date(entry.createdAt).toLocaleDateString()}</p>
+                      <p className="text-[10px] font-medium text-slate-400">{new Date(entry.createdAt).toLocaleDateString()}</p>
                       <p className="text-[10px] text-slate-400">{new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                   </div>
@@ -1352,7 +1352,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-gray-200 rounded-2xl">
               <ScrollText className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{tr("No activity yet")}</h3>
+              <h3 className="text-base font-bold text-gray-900 mb-2">{tr("No activity yet")}</h3>
               <p className="text-slate-500">{tr("Material activity will appear here once requests, purchases, receipts, or usage logs are created.")}</p>
             </div>
           )}
@@ -1374,7 +1374,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     <ClipboardList className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{tr("REQ-")}{selectedRequest._id.slice(-6).toUpperCase()}</h3>
+                    <h3 className="text-base font-bold text-gray-900">{tr("REQ-")}{selectedRequest._id.slice(-6).toUpperCase()}</h3>
                     <p className="text-xs text-slate-500 mt-0.5">{new Date(selectedRequest.createdAt).toLocaleDateString()}{tr(" · by ")}{tr(selectedRequest.requestedByName)}</p>
                   </div>
                 </div>
@@ -1393,7 +1393,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{tr("Requested Items")}</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">{tr("Requested Items")}</p>
                   <div className="space-y-2">
                     {selectedRequest.items?.map((item: any, i: number) => (
                       <div key={i} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl">
@@ -1405,7 +1405,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 </div>
                 {selectedRequest.commonNote && (
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{tr("Note")}</p>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">{tr("Note")}</p>
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
                       <p className="text-sm text-slate-600 italic">"{tr(selectedRequest.commonNote)}"</p>
                     </div>
@@ -1461,12 +1461,12 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     <ShoppingCart className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{tr(selectedPO.poNumber)}</h3>
+                    <h3 className="text-base font-bold text-gray-900">{tr(selectedPO.poNumber)}</h3>
                     <p className="text-xs text-slate-500 mt-0.5">{tr(selectedPO.vendorName)}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-blue-100 text-blue-700 border border-blue-200">
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-widest bg-blue-100 text-blue-700 border border-blue-200">
                     {selectedPO.status || tr("Active")}
                   </span>
                   <button onClick={() => setSelectedPO(null)} className="p-2 rounded-xl hover:bg-gray-100 text-slate-400 hover:text-gray-900 transition-colors">
@@ -1476,15 +1476,15 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{tr("Order Items")}</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">{tr("Order Items")}</p>
                   <div className="overflow-hidden rounded-xl border border-gray-200">
                     <table className="w-full text-start">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Material")}</th>
-                          <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-end">{tr("Qty")}</th>
-                          <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-end">{tr("Unit Cost")}</th>
-                          <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-end">{tr("Subtotal")}</th>
+                          <th className="px-4 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{tr("Material")}</th>
+                          <th className="px-4 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-end">{tr("Qty")}</th>
+                          <th className="px-4 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-end">{tr("Unit Cost")}</th>
+                          <th className="px-4 py-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-end">{tr("Subtotal")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1503,15 +1503,15 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                  <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">{tr("Total Amount")}</span>
+                  <span className="text-sm font-semibold text-slate-600 uppercase tracking-wider">{tr("Total Amount")}</span>
                    <span className="text-xl font-bold text-emerald-600">{(selectedPO.grandTotal ?? selectedPO.totalAmount) != null ? formatCurrency(selectedPO.grandTotal ?? selectedPO.totalAmount, projectCurrency(project as any)) : '—'}</span>
                 </div>
                 {selectedPO.expectedDelivery && (
                   <div className="flex items-center space-x-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
                     <Truck className="w-4 h-4 text-slate-400" />
                     <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Expected Delivery")}</p>
-                      <p className="text-sm font-bold text-gray-900">{new Date(selectedPO.expectedDelivery).toLocaleDateString()}</p>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{tr("Expected Delivery")}</p>
+                      <p className="text-sm font-semibold text-gray-900">{new Date(selectedPO.expectedDelivery).toLocaleDateString()}</p>
                     </div>
                   </div>
                 )}
@@ -1555,7 +1555,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     <History className="w-4 h-4 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{tr(historyMaterial.name)}</h3>
+                    <h3 className="text-base font-bold text-gray-900">{tr(historyMaterial.name)}</h3>
                     <p className="text-xs text-slate-500 mt-0.5">{tr("Usage history")}</p>
                   </div>
                 </div>
@@ -1580,7 +1580,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       return (
                         <div key={log._id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl">
                           <div>
-                            <p className="text-sm font-bold text-gray-900">{log.locationOrTask || '—'}</p>
+                            <p className="text-sm font-semibold text-gray-900">{log.locationOrTask || '—'}</p>
                             <p className="text-[10px] text-slate-500 uppercase tracking-wider">
                               {new Date(log.createdAt).toLocaleDateString()} · {tr(log.usedByName)}
                             </p>

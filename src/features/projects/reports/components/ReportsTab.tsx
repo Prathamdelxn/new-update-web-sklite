@@ -558,7 +558,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
           <XOctagon className="w-8 h-8 text-slate-400" />
         </div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">{tr("Access Denied")}</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-2">{tr("Access Denied")}</h2>
         <p className="text-slate-500 text-sm max-w-sm text-center mb-6">
           {tr("You do not have the required \"Reports Management\" permission to view this tab.")}
         </p>
@@ -829,7 +829,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center mx-auto mb-2 text-slate-400">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
-              <p className="text-xs font-bold text-slate-700">{tr("No Tasks Completed in this Timeframe")}</p>
+              <p className="text-xs font-semibold text-slate-700">{tr("No Tasks Completed in this Timeframe")}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 {tr("Tasks marked complete during this period will appear grouped here.")}
               </p>
@@ -857,7 +857,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                         <div className="flex items-center space-x-2.5 min-w-0">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                            <p className="text-xs font-semibold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
                               {tr(task.title)}
                             </p>
                             <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 font-medium">
@@ -905,7 +905,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                   <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
                     <AlertCircle className="w-4 h-4" />
                   </div>
-                  <p className="text-xs font-bold text-slate-700">{tr("No Issues Reported")}</p>
+                  <p className="text-xs font-semibold text-slate-700">{tr("No Issues Reported")}</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">{tr("All clear for this time range.")}</p>
                 </div>
               ) : (
@@ -981,7 +981,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
                   <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
                     <Wrench className="w-4 h-4" />
                   </div>
-                  <p className="text-xs font-bold text-slate-700">{tr("No Snags Reported")}</p>
+                  <p className="text-xs font-semibold text-slate-700">{tr("No Snags Reported")}</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">{tr("No punch items recorded for this range.")}</p>
                 </div>
               ) : (
@@ -1057,7 +1057,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
               <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
                 <Activity className="w-5 h-5" />
               </div>
-              <p className="text-xs font-bold text-slate-700">{tr("No Activity Logs Found")}</p>
+              <p className="text-xs font-semibold text-slate-700">{tr("No Activity Logs Found")}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">{tr("No logged actions recorded within this date range.")}</p>
             </div>
           ) : (
@@ -1176,7 +1176,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ projectId }) => {
 
                   {selectedTask.completionNote && (
                     <div className="bg-blue-50/50 border border-blue-100/60 rounded-xl p-4">
-                      <p className="text-xs font-bold text-blue-600 flex items-center gap-1">
+                      <p className="text-xs font-medium text-blue-600 flex items-center gap-1">
                         <MessageSquare className="w-3.5 h-3.5" />{tr(" Completion Note")}
                       </p>
                       <p className="text-xs text-slate-700 font-medium mt-2 leading-relaxed whitespace-pre-wrap">

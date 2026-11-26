@@ -359,7 +359,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view the Transaction Management module.")}</p>
+        <p className="text-sm font-medium text-slate-500">{tr("You don't have permission to view the Transaction Management module.")}</p>
       </div>
     );
   }
@@ -374,7 +374,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <div className="w-6 h-6 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
               <Wallet className="w-3.5 h-3.5" />
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Net Balance")}</span>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{tr("Net Balance")}</span>
           </div>
           <p className={`text-3xl font-bold mt-1 text-center break-all ${netBalance >= 0 ? 'text-slate-900' : 'text-red-600'}`}>
             {formatExactCurrency(netBalance, projectCurrency(project as any))}
@@ -386,7 +386,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <TrendingUp className="w-6 h-6 text-emerald-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Inflow")}</p>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{tr("Inflow")}</p>
             <p className="text-2xl font-bold text-emerald-600 mt-1 break-all">{formatExactCurrency(totals.incoming, projectCurrency(project as any))}</p>
           </div>
         </div>
@@ -396,7 +396,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <TrendingDown className="w-6 h-6 text-red-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Outflow")}</p>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{tr("Outflow")}</p>
             <p className="text-2xl font-bold text-red-600 mt-1 break-all">{formatExactCurrency(totals.outgoing, projectCurrency(project as any))}</p>
           </div>
         </div>
@@ -446,7 +446,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
       {/* Ledger */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{tr("Financial Ledger")}</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{tr("Financial Ledger")}</p>
         </div>
 
         {filtered.length === 0 ? (
@@ -454,7 +454,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
               <CreditCard className="w-8 h-8 text-slate-300" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">{tr("No records found")}</h3>
+            <h3 className="text-base font-bold text-gray-900 mb-1">{tr("No records found")}</h3>
             <p className="text-slate-500 text-sm">
               {search ? tr("No records match your search.") : tr("Add a transaction to get started.")}
             </p>
@@ -470,7 +470,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">{tr(item.partyName)}</p>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{tr(item.partyName)}</p>
                     <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">
                       {tr(item.type)}
                       {item.paymentMethod && !item.isPurchase && ` · ${item.paymentMethod}`}
@@ -533,7 +533,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowTypeSheet(false)} />
           <div className="relative bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">{tr("Record Transaction")}</h3>
+              <h3 className="text-base font-bold text-gray-900">{tr("Record Transaction")}</h3>
               <button onClick={() => setShowTypeSheet(false)} className="p-2 rounded-xl text-slate-400 hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -549,7 +549,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
                     <t.icon className={`w-6 h-6 ${t.color}`} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700">{tr(t.label)}</p>
+                    <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-700">{tr(t.label)}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{tr(t.description)}</p>
                   </div>
                 </button>
@@ -565,7 +565,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowFormModal(false)} />
           <div className="relative bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white rounded-t-3xl sm:rounded-t-2xl border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">{editingTxId ? tr("Edit") : tr("New")} {tr(txType)}</h3>
+              <h3 className="text-base font-bold text-gray-900">{editingTxId ? tr("Edit") : tr("New")} {tr(txType)}</h3>
               <button onClick={() => setShowFormModal(false)} className="p-2 rounded-xl text-slate-400 hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -573,7 +573,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
 
             <div className="p-6 space-y-5">
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">{tr("Amount ({{currency}}) *", { currency: projectCurrency(project as any) })}</label>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">{tr("Amount ({{currency}}) *", { currency: projectCurrency(project as any) })}</label>
                 <input
                   type="number"
                   min={0}
@@ -586,7 +586,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
                   {txType === 'Incoming' ? tr("Received From") : txType === 'Outgoing' ? tr("Paid To") : tr("Issued To")} *
                 </label>
                 <input
@@ -599,7 +599,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">{tr("Description / Remarks (Optional)")}</label>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">{tr("Description / Remarks (Optional)")}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -631,7 +631,7 @@ export const TransactionsTab: React.FC<TransactionsTabProps> = ({ projectId }) =
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-7 h-7 text-red-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">{tr("Delete ")}{deleteIsPurchase ? tr("Purchase") : tr("Transaction")}</h3>
+            <h3 className="text-base font-bold text-gray-900 text-center mb-2">{tr("Delete ")}{deleteIsPurchase ? tr("Purchase") : tr("Transaction")}</h3>
             <p className="text-slate-500 text-sm text-center mb-6">{tr("This will permanently remove this ")}{deleteIsPurchase ? tr("purchase order") : tr("financial record")}{tr(". This action cannot be undone.")}</p>
             <div className="flex space-x-3">
               <button

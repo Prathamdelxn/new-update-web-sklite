@@ -5,13 +5,13 @@ import React from 'react';
 import Link from 'next/link';
 import {
   MessageCircle, Pencil, Trash2, AlertCircle,
-  Send, ClipboardCheck, Calendar, MapPin, Layers,
-  CheckCircle2, Clock, Target, Building2, 
-  Briefcase, FolderOpen, ArrowUpRight
+  Send, ClipboardCheck, Calendar, MapPin, ArrowUpRight,
 } from 'lucide-react';
 import { Project } from '@/types';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthContext';
+import { useRouter } from 'next/navigation';
+import { projectCurrency } from '@/lib/projectCurrency';
 
 interface ProjectCardProps {
   project: Project & {
@@ -30,19 +30,12 @@ interface ProjectCardProps {
   allUsers?: any[];
 }
 
-const statusConfig: Record<string, { color: string; bg: string; border: string; icon: any }> = {
-  'Initialized': { color: '#64748b', bg: '#f1f5f9', border: '#e2e8f0', icon: Clock },
-  'Planning': { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: Target },
-  'Site Survey': { color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd', icon: MapPin },
-  'Ongoing': { color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: Briefcase },
-  'Under Snagging': { color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: AlertCircle },
-  'Snagging Completed': { color: '#ea580c', bg: '#fff7ed', border: '#fed7aa', icon: CheckCircle2 },
-  'Completed': { color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: CheckCircle2 },
-  'Pending Handover': { color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', icon: FolderOpen },
-  'Handover Rejected': { color: '#e11d48', bg: '#fff1f2', border: '#fecdd3', icon: AlertCircle },
-  'Handover Completed': { color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4', icon: CheckCircle2 },
-  'On Hold': { color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: Clock },
-  'Cancelled': { color: '#e11d48', bg: '#fff1f2', border: '#fecdd3', icon: AlertCircle },
+// Interior project-card colours (on track / attention / problem / done)
+const TONES = {
+  good: { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', dot: 'bg-emerald-500', bar: 'bg-emerald-500' },
+  warn: { badge: 'bg-amber-50 text-amber-700 border-amber-200/80', dot: 'bg-amber-500', bar: 'bg-amber-500' },
+  bad: { badge: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500', bar: 'bg-rose-500' },
+  done: { badge: 'bg-blue-50 text-blue-700 border-blue-200/80', dot: 'bg-blue-600', bar: 'bg-blue-600' },
 };
 
 const STATUS_PROGRESS: Record<string, number> = {
@@ -55,8 +48,10 @@ const STATUS_PROGRESS: Record<string, number> = {
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project, basePath = '/construction-dashboard/projects', onEdit, onDelete, onSendForSurvey, onCompleteSurvey, allUsers = [],
 }) => {
-  const progress = STATUS_PROGRESS[project.status] ?? (project as any).progress ?? 10;
+  // Real progress from the API (work done); the stage table is only a fallback for old data
+  const progress = (project as any).progress ?? STATUS_PROGRESS[project.status] ?? 10;
   const { user } = useAuth();
+  const router = useRouter();
   const isAdmin = user?.role?.name === 'admin' || (user as any)?.role === 'admin' || (user as any)?.isAdmin;
 
   // Resolve category name gracefully
@@ -76,13 +71,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     : project.siteSurveyor;
   const isAssignedSurveyor = !!(surveyorId && (user?.id === surveyorId || user?._id === surveyorId));
 
-  const statusStyle = statusConfig[project.status] || {
-    color: '#2563eb',
-    bg: '#eff6ff',
-    border: '#bfdbfe',
-    icon: Target
-  };
-  const StatusIcon = statusStyle.icon;
 
   const isFinished = project.status === 'Completed' || project.status === 'Handover Completed';
 
@@ -95,210 +83,180 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     (project.description && project.description.trim() ? project.description : null) ||
     'Location not specified';
 
+  // Same look as the Interior project card: status pill in the four interior colours
+  const tone =
+    isFinished ? TONES.done
+    : ['Handover Rejected', 'Cancelled'].includes(project.status) ? TONES.bad
+    : ['Under Snagging', 'Snagging Completed', 'On Hold', 'Pending Handover'].includes(project.status) ? TONES.warn
+    : TONES.good;
+
+  const budgetNumber =
+    Number((project as any).budgetHistory?.[(project as any).budgetHistory.length - 1]?.amount ?? (project as any).budget ?? 0) || 0;
+  const formattedBudget = (() => {
+    try {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: projectCurrency(project as any), maximumFractionDigits: 0 }).format(budgetNumber);
+    } catch {
+      return `${projectCurrency(project as any)} ${budgetNumber.toLocaleString()}`;
+    }
+  })();
+
+  const fmtDate = (v?: string | Date) => {
+    if (!v) return '';
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  const endDate = fmtDate((project as any).endDate);
+  const startDate = fmtDate(project.startDate);
+  const createdDate = fmtDate(project.createdAt as any);
+  const dateText = endDate ? tr("Due {{date}}", { date: endDate })
+    : startDate ? tr("Started {{date}}", { date: startDate })
+    : createdDate ? tr("Created {{date}}", { date: createdDate })
+    : tr("No target date");
+
+  const subtitle = [project.clientName, locationText !== 'Location not specified' ? locationText : null].filter(Boolean).join(' · ');
+  const href = `${basePath}/${project._id}`;
+  const code = (project as any).projectCode || (project as any).code;
+  const progressVal = Math.min(100, Math.max(0, Math.round(progress)));
+  const showSurveyAlert = isAssignedSurveyor && (project.status === 'Site Survey' || project.status === 'Planning') && (project as any).surveyStatus !== 'Approved';
+
+  const stop = (e: React.SyntheticEvent) => { e.preventDefault(); e.stopPropagation(); };
+
   return (
-    <div className="group relative bg-white rounded-xl border border-slate-200/90 hover:border-indigo-400/80 hover:shadow-md transition-all duration-200 flex flex-col h-full overflow-hidden">
-      
-      {/* Top Accent Stripe on hover */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-      <Link href={`${basePath}/${project._id}`} className="flex flex-col flex-1 p-4 pb-3 outline-none">
-        
-        {/* ── Top Row: icon + category · status ── */}
-        <div className="flex items-center justify-between gap-2.5 mb-2.5">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            {/* Building Icon Avatar */}
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-50 via-slate-50 to-blue-50 border border-blue-100/90 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-blue-300 group-hover:bg-blue-50 transition-all shadow-2xs">
-              <Building2 className="w-4 h-4 text-blue-600 group-hover:text-blue-700 transition-colors" />
-            </div>
-            <div className="flex items-center gap-1 min-w-0">
-              <Layers className="w-3 h-3 text-indigo-500 shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-500 truncate">
-                {tr(categoryName)}
-              </span>
-            </div>
-          </div>
-
-          {/* Status Badge */}
-          <div 
-            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10.5px] font-bold shrink-0 shadow-2xs"
-            style={{
-              backgroundColor: statusStyle.bg,
-              color: statusStyle.color,
-              border: `1px solid ${statusStyle.border}`
-            }}
-          >
-            <StatusIcon className="w-3 h-3 shrink-0" />
-            <span className="whitespace-nowrap">{tr(project.status)}</span>
-          </div>
+    <div
+      role="link"
+      tabIndex={0}
+      aria-label={tr("Project: {{name}}, Status: {{status}}, Progress: {{progress}}%", { name: project.name, status: project.status, progress: progressVal })}
+      onClick={() => router.push(href)}
+      onMouseEnter={() => router.prefetch(href)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(href); } }}
+      className={cn(
+        'group relative flex flex-col justify-between h-full',
+        'bg-white text-slate-800',
+        'border border-slate-200/90 hover:border-blue-400',
+        'rounded-2xl p-5 sm:p-6',
+        'shadow-2xs hover:shadow-md hover:shadow-blue-500/5 hover:-translate-y-0.5',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2',
+        'cursor-pointer transition-all duration-200 select-none space-y-5'
+      )}
+    >
+      {/* Top row: code + type · status pill */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="font-mono text-[0.6875rem] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 shrink-0">
+            {code ? tr(code) : tr("PRJ")}
+          </span>
+          <span className="text-xs font-medium text-slate-400 truncate max-w-[9rem]" title={categoryName}>
+            {tr(categoryName)}
+          </span>
         </div>
+        <span className={cn('px-2 py-0.5 text-[0.6875rem] font-semibold rounded-full border inline-flex items-center gap-1.5 shrink-0', tone.badge)}>
+          <span className={cn('w-1.5 h-1.5 rounded-full', tone.dot)} />
+          {tr(project.status)}
+        </span>
+      </div>
 
-        {/* ── Title: full card width, up to two lines (cards stay aligned) ── */}
-        <h3
-          className="text-[14px] leading-snug font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors line-clamp-2 min-h-[2.4em] mb-2.5 break-words"
-          title={tr(project.name)}
-        >
+      {/* Name + client · location */}
+      <div className="space-y-1">
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug" title={project.name}>
           {tr(project.name)}
         </h3>
-
-        {/* ── Location Row ── */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50/80 rounded-lg px-2.5 py-1.5 border border-slate-100 mb-2.5 font-medium">
-          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="truncate text-[11.5px]" title={locationText}>{tr(locationText)}</span>
-        </div>
-
-        {/* ── Meta Badges Row ── */}
-        <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
-          {(project as any).projectCode && (
-            <span className="inline-flex items-center gap-1 bg-slate-100/90 text-slate-600 px-2 py-0.5 rounded text-[9.5px] font-bold tracking-wide border border-slate-200/70">
-              <FolderOpen className="w-2.5 h-2.5 text-slate-400" />
-              {tr((project as any).projectCode)}
-            </span>
-          )}
-
-          {project.clientName && (
-            <span className="inline-flex items-center bg-slate-100/80 text-slate-600 px-2 py-0.5 rounded text-[9.5px] font-bold tracking-wide border border-slate-200/60 truncate max-w-full" title={project.clientName}>
-              {tr("Client: ")}{tr(project.clientName)}
-            </span>
-          )}
-
-          {!isAdmin && project.hasPendingPlans && (
-            <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-600 px-2 py-0.5 rounded text-[9.5px] font-extrabold tracking-wide border border-rose-200/80 animate-pulse">
-              <AlertCircle className="w-2.5 h-2.5" />
-              {tr("ACTION REQ")}
-            </span>
-          )}
-
-          {(project as any).projectType === 'Interior' && (
-            <span className="bg-purple-50 border border-purple-200/80 text-purple-600 px-2 py-0.5 rounded text-[9.5px] font-extrabold tracking-wide">
-              {tr("INTERIOR")}
-            </span>
-          )}
-
-          {isFinished && (
-            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[9.5px] font-bold border border-emerald-200/80">
-              <CheckCircle2 className="w-2.5 h-2.5" />
-              {tr("Done")}
-            </span>
-          )}
-        </div>
-
-        {/* ── Progress Section ── */}
-        <div className="mt-auto pt-2.5 border-t border-slate-100 space-y-1.5">
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{tr("Progress")}</span>
-            <span className={cn(
-              "font-extrabold tabular-nums text-xs",
-              isFinished ? "text-emerald-600" : "text-blue-600"
-            )}>
-              {Math.round(progress)}%
-            </span>
-          </div>
-          
-          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/40">
-            <div
-              className={cn(
-                'h-full rounded-full transition-all duration-500',
-                isFinished
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                  : 'bg-gradient-to-r from-blue-500 via-blue-600 to-blue-600'
-              )}
-              style={{ width: `${Math.max(4, progress)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Surveyor Alert */}
-        {isAssignedSurveyor && (project.status === 'Site Survey' || project.status === 'Planning') && (project as any).surveyStatus !== 'Approved' && (
-          <div className="mt-2.5">
-            {(project as any).surveyStatus === 'Needs Attention' && (
-              <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200/80 p-1.5 rounded-lg text-[10.5px] font-bold text-rose-700">
-                <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                <span className="truncate">{tr("Survey Rejected — Attention needed")}</span>
-              </div>
+        {subtitle && (
+          <p className="flex items-center gap-1.5 text-xs sm:text-[0.8125rem] text-slate-500 truncate pt-0.5" title={subtitle}>
+            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">{tr(subtitle)}</span>
+          </p>
+        )}
+        {/* Only when something needs attention */}
+        {((!isAdmin && project.hasPendingPlans) || (project as any).projectType === 'Interior' || showSurveyAlert) && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+            {!isAdmin && project.hasPendingPlans && (
+              <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full text-[0.625rem] font-semibold border border-rose-200/80">
+                <AlertCircle className="w-3 h-3" />{tr("Action required")}
+              </span>
             )}
-            {(project as any).surveyStatus === 'Submitted' && (project as any).surveyRejectionReason && (
-              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 p-1.5 rounded-lg text-[10.5px] font-bold text-emerald-700">
-                <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="truncate">{tr("Survey Resolved — Under review")}</span>
-              </div>
+            {(project as any).projectType === 'Interior' && (
+              <span className="bg-purple-50 border border-purple-200/80 text-purple-700 px-2 py-0.5 rounded-full text-[0.625rem] font-semibold">
+                {tr("Interior")}
+              </span>
+            )}
+            {showSurveyAlert && (project as any).surveyStatus === 'Needs Attention' && (
+              <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full text-[0.625rem] font-semibold border border-rose-200/80">
+                <AlertCircle className="w-3 h-3" />{tr("Survey rejected — attention needed")}
+              </span>
+            )}
+            {showSurveyAlert && (project as any).surveyStatus === 'Submitted' && (project as any).surveyRejectionReason && (
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-[0.625rem] font-semibold border border-emerald-200/80">
+                <ClipboardCheck className="w-3 h-3" />{tr("Survey resolved — under review")}
+              </span>
             )}
           </div>
         )}
-      </Link>
+      </div>
 
-      {/* ── Footer Action Bar ── */}
-      <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 bg-slate-50/60">
-        
-        {/* Date */}
-        <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
-          <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-          <span className="truncate text-[10.5px]">
-            {project.startDate
-              ? new Date(project.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-              : (project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—')}
-          </span>
+      {/* Budget & progress */}
+      <div className="space-y-2.5">
+        <div className="flex items-baseline justify-between">
+          <div>
+            <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">{tr("Budget")}</span>
+            <span className="text-base sm:text-lg font-bold text-slate-900">{tr(formattedBudget)}</span>
+          </div>
+          <div className="text-end">
+            <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">{tr("Progress")}</span>
+            <span className="text-sm sm:text-base font-bold text-slate-900">{tr(progressVal)}%</span>
+          </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-1.5">
-          {project.needSiteSurvey && !project.siteSurveyor && onSendForSurvey && (
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSendForSurvey(project); }}
-              className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 border border-sky-200/80 transition-all active:scale-95 cursor-pointer shadow-2xs"
-              title={tr("Send for Survey")}
-            >
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          )}
-
-          {isAssignedSurveyor && (project.status === 'Site Survey' || project.status === 'Planning') && (project as any).surveyStatus !== 'Approved' && onCompleteSurvey && (
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCompleteSurvey(project); }}
-              className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 border border-teal-200/80 transition-all active:scale-95 cursor-pointer shadow-2xs"
-              title={(project as any).surveyStatus ? tr("Edit Survey") : tr("Start Survey")}
-            >
-              <ClipboardCheck className="w-3.5 h-3.5" />
-            </button>
-          )}
-
-          <Link
-            href={`${basePath}/${project._id}/chat`}
-            onClick={(e) => e.stopPropagation()}
-            className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200/90 hover:border-emerald-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
-            title={tr("Team Chat")}
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-          </Link>
-
-          {onEdit && (
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(project); }}
-              className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/90 hover:border-indigo-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
-              title={tr("Edit Project")}
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-          )}
-
-          {onDelete && (
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(project); }}
-              className="w-7.5 h-7.5 flex items-center justify-center rounded-lg bg-white text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200/90 hover:border-rose-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
-              title={tr("Delete Project")}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-
-        
+        <div role="progressbar" aria-valuenow={progressVal} aria-valuemin={0} aria-valuemax={100} className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div className={cn('h-full rounded-full transition-all duration-500', tone.bar)} style={{ width: `${Math.max(progressVal, 2)}%` }} />
         </div>
       </div>
 
-      {/* Floating Action Beacon if pending plans */}
-      {project.hasPendingPlans && (
-        <div className="absolute top-2.5 right-2.5 w-3 h-3 bg-rose-500 rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-pulse pointer-events-none z-10">
-          <AlertCircle className="w-2 h-2 text-white" />
+      {/* Footer: date · actions · View */}
+      <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-1.5 text-slate-500 text-xs min-w-0 truncate">
+          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="truncate">{dateText}</span>
         </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {project.needSiteSurvey && !project.siteSurveyor && onSendForSurvey && (
+            <button type="button" title={tr("Send for Survey")} onClick={(e) => { stop(e); onSendForSurvey(project); }}
+              className="p-1.5 rounded-md text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors cursor-pointer">
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {showSurveyAlert && onCompleteSurvey && (
+            <button type="button" title={(project as any).surveyStatus ? tr("Edit Survey") : tr("Start Survey")} onClick={(e) => { stop(e); onCompleteSurvey(project); }}
+              className="p-1.5 rounded-md text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-colors cursor-pointer">
+              <ClipboardCheck className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <Link href={`${href}/chat`} title={tr("Team Chat")} onClick={(e) => e.stopPropagation()}
+            className="p-1.5 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer">
+            <MessageCircle className="w-3.5 h-3.5" />
+          </Link>
+          {onEdit && (
+            <button type="button" title={tr("Edit Project")} onClick={(e) => { stop(e); onEdit(project); }}
+              className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer">
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {onDelete && (
+            <button type="button" title={tr("Delete Project")} onClick={(e) => { stop(e); onDelete(project); }}
+              className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <div className="w-px h-3 bg-slate-200 mx-0.5" />
+          <span className="text-blue-600 font-semibold inline-flex items-center gap-0.5 text-xs group-hover:text-blue-700">
+            <span>{tr("View")}</span>
+            <ArrowUpRight className="w-3 h-3 rtl:-scale-x-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </span>
+        </div>
+      </div>
+
+      {/* Pending plans dot */}
+      {project.hasPendingPlans && (
+        <span className="absolute top-2.5 end-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white animate-pulse pointer-events-none" />
       )}
     </div>
   );

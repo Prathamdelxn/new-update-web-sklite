@@ -156,7 +156,7 @@ export const IssueModal: React.FC<IssueModalProps> = ({
                     <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-none">{isEdit ? `Edit ${type}` : tr("Report New {{type}}", { type: type })}</h2>
+                    <h2 className="text-lg sm:text-lg font-bold text-gray-900 leading-none">{isEdit ? `Edit ${type}` : tr("Report New {{type}}", { type: type })}</h2>
                     <p className="text-[10px] sm:text-xs text-slate-500 mt-1">{tr("Project Tracking & Accountability")}</p>
                   </div>
                 </div>

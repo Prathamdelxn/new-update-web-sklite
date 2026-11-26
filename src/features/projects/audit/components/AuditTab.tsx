@@ -338,7 +338,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
           <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-3 text-slate-400">
             <History className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-800">{tr("No activity logs found")}</p>
+          <p className="text-sm font-semibold text-slate-800">{tr("No activity logs found")}</p>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
             {searchQuery
               ? tr("No logs match \"{{searchQuery}}\". Try clearing your search.", { searchQuery: searchQuery })
@@ -363,7 +363,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ project }) => {
                 <div key={dateKey} className="space-y-4">
                   {/* Date separator header */}
                   <div className="flex items-center gap-3 my-4 -ms-6 sm:-ms-8 relative z-10">
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold uppercase tracking-wider shadow-none">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-semibold uppercase tracking-wider shadow-none">
                       <Calendar className="w-3 h-3 text-slate-500" />
                       <span>{tr(dateKey)}</span>
                     </div>

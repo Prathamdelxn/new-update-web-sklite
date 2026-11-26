@@ -121,7 +121,7 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                       <TrendingUp className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">{tr("Post Progress Update")}</h2>
+                      <h2 className="text-lg font-bold text-gray-900">{tr("Post Progress Update")}</h2>
                       <p className="text-xs text-slate-500 mt-0.5">{tr("Daily site report & milestone log.")}</p>
                     </div>
                   </div>

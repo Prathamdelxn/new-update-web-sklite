@@ -239,7 +239,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                       <div className="space-y-4 pb-20">
                         <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">{tr("Selected Role")}</span>
+                            <span className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider block">{tr("Selected Role")}</span>
                             <span className="text-sm font-bold text-blue-900 block mt-0.5">
                               {availableRoles.find(r => r._id === selectedRoleId)?.name || tr("Role")}
                             </span>

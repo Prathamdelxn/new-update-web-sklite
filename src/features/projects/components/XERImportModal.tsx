@@ -99,7 +99,7 @@ export const XERImportModal: React.FC<XERImportModalProps> = ({
                     <FileText className="w-4 h-4 text-violet-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-violet-600 uppercase tracking-widest">{tr("Primavera P6")}</p>
+                    <p className="text-[10px] font-semibold text-violet-600 uppercase tracking-widest">{tr("Primavera P6")}</p>
                     <h2 className="text-base font-bold text-gray-900">{tr("Import XER File")}</h2>
                   </div>
                 </div>
@@ -115,7 +115,7 @@ export const XERImportModal: React.FC<XERImportModalProps> = ({
                   <div className="space-y-4">
                     {/* Info banner */}
                     <div className="p-4 bg-violet-50 border border-violet-100 rounded-2xl">
-                      <p className="text-sm font-bold text-violet-800">{tr("What happens when you import?")}</p>
+                      <p className="text-sm font-medium text-violet-800">{tr("What happens when you import?")}</p>
                       <ul className="mt-1.5 space-y-1 text-xs text-violet-700">
                         <li>{tr("· WBS top-level nodes become ")}<strong>{tr("Milestones")}</strong></li>
                         <li>{tr("· Activity tasks become ")}<strong>{tr("Milestone sub-tasks")}</strong></li>
@@ -152,7 +152,7 @@ export const XERImportModal: React.FC<XERImportModalProps> = ({
                       <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
                         <Upload className="w-7 h-7 text-slate-400" />
                       </div>
-                      <p className="text-sm font-bold text-gray-900 mb-1">
+                      <p className="text-sm font-semibold text-gray-900 mb-1">
                         {dragOver ? tr("Drop it here") : tr("Click or drag & drop")}
                       </p>
                       <p className="text-xs text-slate-400">{tr(".xer — Primavera P6 export")}</p>
@@ -165,7 +165,7 @@ export const XERImportModal: React.FC<XERImportModalProps> = ({
                   <div className="flex flex-col items-center justify-center py-12 gap-4">
                     <Loader2 className="w-10 h-10 text-violet-500 animate-spin" />
                     <div className="text-center">
-                      <p className="text-sm font-bold text-gray-700">{tr("Parsing & importing milestones…")}</p>
+                      <p className="text-sm font-semibold text-gray-700">{tr("Parsing & importing milestones…")}</p>
                       <p className="text-xs text-slate-400 mt-1">{tr(file?.name)}</p>
                     </div>
                   </div>

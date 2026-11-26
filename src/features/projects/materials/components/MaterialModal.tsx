@@ -138,7 +138,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                     {getIcon()}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{getTitle()}</h2>
                     <p className="text-xs text-slate-500 mt-0.5">{tr("Project Inventory Management")}</p>
                   </div>
                 </div>
@@ -203,11 +203,11 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                   <div className="space-y-6">
                     <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{tr("Material")}</span>
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{tr("Material")}</span>
                         <span className="text-sm font-bold text-gray-900">{tr(initialData.name)}</span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{tr("Current Balance")}</span>
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{tr("Current Balance")}</span>
                         <span className="text-sm font-bold text-blue-600 break-all text-end">{formatCompact((initialData.totalReceived || 0) - (initialData.totalConsumed || 0))} {tr(initialData.unit)}</span>
                       </div>
                     </div>

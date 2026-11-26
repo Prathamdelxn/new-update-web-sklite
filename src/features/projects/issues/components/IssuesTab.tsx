@@ -353,7 +353,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-sm font-bold text-slate-500">{tr("You don't have permission to view the Snag Management module.")}</p>
+        <p className="text-sm font-medium text-slate-500">{tr("You don't have permission to view the Snag Management module.")}</p>
       </div>
     );
   }
@@ -363,7 +363,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-slate-900">{activeType === 'Snag' ? tr("Snag Tracker") : tr("Issue Tracker")}</h3>
+          <h3 className="text-base font-bold text-slate-900">{activeType === 'Snag' ? tr("Snag Tracker") : tr("Issue Tracker")}</h3>
           <p className="text-xs text-slate-500 mt-0.5">{activeType === 'Snag' ? tr("Track defects and snagging items on site.") : tr("Report and track site issues and field problems.")}</p>
         </div>
 
@@ -435,7 +435,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               <span className="font-bold text-blue-600">{project?.status || tr("Planning")}</span>
             </div>
 
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">{tr("Snagging Phase Not Started")}</h3>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">{tr("Snagging Phase Not Started")}</h3>
             <p className="text-xs text-slate-500 mt-1.5 max-w-lg leading-relaxed">
               {tr("Defect logging and snag list management activate once the project transitions into the inspection and snagging stage.")}
             </p>
@@ -493,7 +493,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
               { label: 'Resolved', value: typeIssues.filter(i => i.status === 'Resolved').length, color: 'text-emerald-600' },
             ].map((stat, i) => (
               <div key={i} className="p-4 rounded-2xl bg-white border border-slate-200">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{tr(stat.label)}</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{tr(stat.label)}</p>
                 <p className={cn('text-2xl font-bold', stat.color)}>{tr(stat.value)}</p>
               </div>
             ))}
@@ -508,7 +508,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                     <GitBranch className="w-4 h-4 text-orange-600 animate-pulse" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{tr("Escalation Pathway")}</h4>
+                    <h4 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">{tr("Escalation Pathway")}</h4>
                     <p className="text-[10px] text-slate-500">{tr("Configured sequential progression for resolving critical issues.")}</p>
                   </div>
                 </div>
@@ -527,8 +527,8 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                             L{tr(lvl.level)}
                           </span>
                           <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-gray-900 leading-tight">{tr(userName)}</p>
-                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none">{tr(userRole)}</p>
+                            <p className="text-[11px] font-semibold text-gray-900 leading-tight">{tr(userName)}</p>
+                            <p className="text-[9px] text-slate-500 font-semibold uppercase tracking-wider leading-none">{tr(userRole)}</p>
                           </div>
                         </div>
                       </React.Fragment>
@@ -735,12 +735,12 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                             {tr(issue.priority)}
                           </span>
                           {issue.category && (
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
                               {tr(issue.category)}
                             </span>
                           )}
                           {issue.status === 'Escalated' && issue.escalationLevel > 0 && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border bg-purple-100 border-purple-200 text-purple-700">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-widest border bg-purple-100 border-purple-200 text-purple-700">
                               {tr("Level ")}{tr(issue.escalationLevel)}
                             </span>
                           )}

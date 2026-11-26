@@ -174,7 +174,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                         className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
                       >
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-xs font-bold uppercase tracking-widest text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                          <span className="text-xs font-semibold uppercase tracking-widest text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
                             {tr("Escalation Level ")}{tr(rule.level)}
                           </span>
                           {!isLocked && (
@@ -190,7 +190,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
 
                         <div className="grid grid-cols-1 gap-3">
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">{tr("Assign Person")}</label>
+                            <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">{tr("Assign Person")}</label>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                               <div className="relative flex-1">
                                 <select
@@ -207,7 +207,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                               </div>
                               {rule.role && (
                                 <div className="shrink-0">
-                                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-100">
+                                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-100">
                                     {tr(rule.role)}
                                   </span>
                                 </div>

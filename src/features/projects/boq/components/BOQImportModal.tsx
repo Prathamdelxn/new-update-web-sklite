@@ -145,7 +145,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                     <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                    <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">
                       {step === 'upload' ? tr("Step 1 of 2") : step === 'preview' ? tr("Step 2 of 2") : tr("Importing")}
                     </p>
                     <h2 className="text-base font-bold text-gray-900">
@@ -165,7 +165,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                     {/* Template download */}
                     <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-2xl">
                       <div>
-                        <p className="text-sm font-bold text-blue-800">{tr("Required columns")}</p>
+                        <p className="text-sm font-medium text-blue-800">{tr("Required columns")}</p>
                         <p className="text-xs text-blue-600 mt-0.5">{TEMPLATE_COLUMNS.join(' · ')}</p>
                       </div>
                       <button
@@ -202,7 +202,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                           <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
                             <Upload className="w-7 h-7 text-slate-400" />
                           </div>
-                          <p className="text-sm font-bold text-gray-900 mb-1">
+                          <p className="text-sm font-semibold text-gray-900 mb-1">
                             {dragOver ? tr("Drop it here") : tr("Click or drag & drop")}
                           </p>
                           <p className="text-xs text-slate-400">{tr(".xlsx · .xls · .csv — max 5 MB")}</p>
@@ -220,12 +220,12 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                       <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                         <div>
-                          <p className="text-sm font-bold text-emerald-800">{previewItems.length}{tr(" items ready to import")}</p>
+                          <p className="text-sm font-medium text-emerald-800">{previewItems.length}{tr(" items ready to import")}</p>
                           <p className="text-xs text-emerald-600">{tr("from ")}<span className="font-semibold">{tr(file?.name)}</span></p>
                         </div>
                       </div>
                       <div className="text-end">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{tr("Estimated Total")}</p>
+                        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{tr("Estimated Total")}</p>
                         <p className="text-lg font-bold text-emerald-700">${estimatedTotal.toLocaleString()}</p>
                       </div>
                     </div>
@@ -236,7 +236,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                         <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
                           <tr>
                             {['Group', 'Item #', 'Description', 'Unit', 'Qty', 'Unit Cost', 'Total'].map(h => (
-                              <th key={h} className="px-3 py-2.5 font-bold text-slate-500 uppercase tracking-wider text-[10px]">{tr(h)}</th>
+                              <th key={h} className="px-3 py-2.5 font-semibold text-slate-500 uppercase tracking-wider text-[10px]">{tr(h)}</th>
                             ))}
                           </tr>
                         </thead>
@@ -269,7 +269,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                 {step === 'importing' && (
                   <div className="flex flex-col items-center justify-center py-12 gap-4">
                     <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-                    <p className="text-sm font-bold text-gray-700">{tr("Importing ")}{previewItems.length}{tr(" items…")}</p>
+                    <p className="text-sm font-semibold text-gray-700">{tr("Importing ")}{previewItems.length}{tr(" items…")}</p>
                   </div>
                 )}
               </div>

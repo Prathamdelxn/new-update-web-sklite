@@ -450,7 +450,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                     {React.createElement(CATEGORY_ICON[detailItem.category] || LayoutGrid, { className: "w-6 h-6 text-blue-600" })}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900 leading-tight">{tr(detailItem.name)}</h3>
+                    <h3 className="text-base font-semibold text-slate-900 leading-tight">{tr(detailItem.name)}</h3>
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-semibold uppercase tracking-wider rounded-md">
                         {tr(detailItem.category)}
@@ -474,11 +474,11 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                 <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tr("Installation Status")}</p>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Installation Status")}</p>
                       <p className="text-xs font-medium text-slate-500 mt-0.5">{tr("Changing status to \"Installed\" increases overall FFE progress.")}</p>
                     </div>
                     <div className="text-end shrink-0">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tr("Total Cost")}</p>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Total Cost")}</p>
                       <p className="text-lg font-bold text-slate-900">
                         {formatCost((detailItem.unitCost || 0) * (detailItem.quantity || 1), project?.currency)}
                       </p>
@@ -520,7 +520,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                       { label: 'Subtotal', value: formatCost((detailItem.unitCost || 0) * (detailItem.quantity || 1), project?.currency), highlighted: true }
                     ].map((c, i) => (
                       <div key={i} className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr(c.label)}</p>
+                        <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr(c.label)}</p>
                         <p className={cn("text-sm font-semibold mt-1 text-slate-800", c.highlighted && "text-blue-600")}>{tr(c.value)}</p>
                       </div>
                     ))}
@@ -534,32 +534,32 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                     <div className="grid grid-cols-2 gap-3">
                       {detailItem.brand && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Brand")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.brand)}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Brand")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{tr(detailItem.brand)}</p>
                         </div>
                       )}
                       {detailItem.modelNo && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Model No")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.modelNo)}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Model No")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{tr(detailItem.modelNo)}</p>
                         </div>
                       )}
                       {detailItem.supplier && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Supplier")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.supplier)}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Supplier")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{tr(detailItem.supplier)}</p>
                         </div>
                       )}
                       {detailItem.finish && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Finish")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.finish)}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Finish")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{tr(detailItem.finish)}</p>
                         </div>
                       )}
                       {detailItem.dimensions && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 col-span-2">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Dimensions")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.dimensions)}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Dimensions")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{tr(detailItem.dimensions)}</p>
                         </div>
                       )}
                     </div>
@@ -573,26 +573,26 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
                     <div className="grid grid-cols-2 gap-3">
                       {detailItem.poNumber && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("PO / Order Ref")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.poNumber)}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("PO / Order Ref")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{tr(detailItem.poNumber)}</p>
                         </div>
                       )}
                       {detailItem.leadTimeDays != null && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Lead Time")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.leadTimeDays)}{tr(" days")}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Lead Time")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{tr(detailItem.leadTimeDays)}{tr(" days")}</p>
                         </div>
                       )}
                       {detailItem.expectedDelivery && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Expected Delivery")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{new Date(detailItem.expectedDelivery).toLocaleDateString()}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Expected Delivery")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{new Date(detailItem.expectedDelivery).toLocaleDateString()}</p>
                         </div>
                       )}
                       {detailItem.warrantyMonths != null && (
                         <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Warranty")}</p>
-                          <p className="text-sm font-bold text-slate-800 mt-1">{tr(detailItem.warrantyMonths)}{tr(" months")}</p>
+                          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">{tr("Warranty")}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-1">{tr(detailItem.warrantyMonths)}{tr(" months")}</p>
                         </div>
                       )}
                     </div>
@@ -649,8 +649,8 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
           <div className="relative z-10 w-full max-w-xl bg-white rounded-xl shadow-xl border border-slate-200 max-h-[85vh] overflow-hidden flex flex-col">
             <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center shrink-0">
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">{editing ? tr("Edit FFE Item") : tr("Add FFE Item")}</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                <h3 className="text-base font-semibold text-slate-900">{editing ? tr("Edit FFE Item") : tr("Add FFE Item")}</h3>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-0.5">
                   {editing ? tr("Update Item Details") : tr("Track New Furniture, Fixture, or Equipment")}
                 </p>
               </div>
@@ -912,7 +912,7 @@ export const FFETab: React.FC<FFETabProps> = ({ projectId, project }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)} />
           <div className="relative z-10 w-full max-w-sm bg-white rounded-xl p-6 shadow-xl border border-slate-200 text-center">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">{tr("Delete FFE Item")}</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-2">{tr("Delete FFE Item")}</h3>
             <p className="text-sm text-slate-500 mb-6">{tr("Are you sure you want to delete \"")}{tr(confirmDeleteId.name)}{tr("\"? This action cannot be undone.")}</p>
             <div className="flex gap-3">
               <button

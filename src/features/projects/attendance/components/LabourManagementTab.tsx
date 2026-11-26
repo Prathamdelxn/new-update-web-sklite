@@ -421,7 +421,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Full Name")}</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Full Name")}</label>
                 <input
                   type="text" value={form.name}
                   onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
@@ -431,7 +431,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Type")}</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Type")}</label>
                 <div className="flex p-1 bg-gray-100 border border-gray-200 rounded-xl">
                   {(['Skilled', 'Unskilled'] as const).map(t => (
                     <button
@@ -447,7 +447,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Wage Amount")}</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Wage Amount")}</label>
                 <input
                   type="number" value={form.wageAmount}
                   onChange={e => setForm(p => ({ ...p, wageAmount: e.target.value }))}
@@ -498,7 +498,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{tr("Start Date")}</label>
+                  <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">{tr("Start Date")}</label>
                   <input
                     type="date" value={exportStartDate}
                     onChange={e => setExportStartDate(e.target.value)}
@@ -506,7 +506,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{tr("End Date")}</label>
+                  <label className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">{tr("End Date")}</label>
                   <input
                     type="date" value={exportEndDate}
                     onChange={e => setExportEndDate(e.target.value)}

@@ -2,7 +2,7 @@
 import { tr } from '@/i18n';
 import React, { createContext, useContext, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import api from '@/services/api.client';
 import { Project } from '@/types';
 import { useToast } from '@/providers/ToastContext';
@@ -11,8 +11,25 @@ import { useSocket } from '@/providers/SocketContext';
 
 /** Cache keys shared with the projects list (which seeds the preview). */
 export const constructionProjectKey = (id: string) => ['construction-project', id] as const;
+/** The organisation's project list (Projects page). Invalidate after creating/editing/deleting. */
+export const CONSTRUCTION_PROJECTS_KEY = ['construction-projects'] as const;
 export const constructionProjectPreviewKey = (id: string) => ['construction-project-preview', id] as const;
 export type ProjectPreview = Pick<Project, '_id' | 'name' | 'status'> & { projectType?: string };
+
+/** Loads the project list for CONSTRUCTION_PROJECTS_KEY (Dashboard + Projects share it), and
+ *  primes each project's preview so its page shows name/status the moment it's opened. */
+export async function fetchConstructionProjects(queryClient: QueryClient): Promise<Project[]> {
+  const response = await api.get('/projects');
+  const data: Project[] = Array.isArray(response.data)
+    ? response.data
+    : response.data?.projects ?? response.data?.data ?? [];
+  data.forEach((p) => {
+    if (p?._id) queryClient.setQueryData<ProjectPreview>(constructionProjectPreviewKey(p._id), {
+      _id: p._id, name: p.name, status: p.status, projectType: p.projectType,
+    });
+  });
+  return data;
+}
 
 interface ProjectContextType {
   project: Project | null;

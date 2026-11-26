@@ -551,7 +551,7 @@ export function ProjectDetailsTab() {
               </div>
             </div>
             
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-3">
+            <h3 className="text-base sm:text-base font-bold text-slate-900 tracking-tight mt-3">
               {formatCurrency(project.budgetHistory?.[project.budgetHistory.length - 1]?.amount || 0, projectCurrency(project))}
             </h3>
             <div className="flex flex-col gap-1 mt-0.5">
@@ -601,7 +601,7 @@ export function ProjectDetailsTab() {
               </div>
             </div>
             
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-3">
+            <h3 className="text-base sm:text-base font-bold text-slate-900 tracking-tight mt-3">
               {daysRem !== 'N/A' ? `${daysRem} Days` : 'N/A'}
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5 font-normal">{tr("Time Remaining Until Target Handover")}</p>
@@ -621,7 +621,7 @@ export function ProjectDetailsTab() {
                   <Map className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-3">
+              <h3 className="text-base sm:text-base font-bold text-slate-900 tracking-tight mt-3">
                 {project.area ? `${Number(project.area).toLocaleString()} ${project.areaUnit ? project.areaUnit.toUpperCase() : 'SQFT'}` : 'N/A'}
               </h3>
               <p className="text-[11px] text-slate-500 mt-0.5 font-normal">{tr("Total Site Area")}</p>

@@ -461,7 +461,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
             <ShieldAlert className="w-8 h-8 text-slate-400" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">{tr("Access Denied")}</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-2">{tr("Access Denied")}</h2>
           <p className="text-slate-500 text-sm max-w-sm text-center mb-6">
             {tr("You do not have the required \"Task Management\" permission to view milestones.")}
           </p>
@@ -503,7 +503,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">{tr("Project Milestones")}</h3>
+                <h3 className="text-base font-bold text-slate-900 tracking-tight">{tr("Project Milestones")}</h3>
                 <p className="text-xs text-slate-500 mt-1">{tr("Key targets, task completion tracking, and critical path objectives.")}</p>
               </div>
               <div className="flex items-center space-x-2.5">
@@ -566,7 +566,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
           <GlassCard className="p-6 border-gray-200 overflow-hidden" gradient>
             <div className="overflow-x-auto"><div style={{ minWidth: 600 }}>
               <div className="flex mb-4 ps-[200px]">
-                {months.map((m, i) => <div key={i} className="flex-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-s border-gray-200 ps-1">{tr(m)}</div>)}
+                {months.map((m, i) => <div key={i} className="flex-1 text-[10px] font-semibold text-slate-400 uppercase tracking-widest border-s border-gray-200 ps-1">{tr(m)}</div>)}
               </div>
               <div className="space-y-3">
                 {milestones.map(m => {
@@ -639,7 +639,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                   </div>
 
                   <div className="mt-3 space-y-2">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase">
+                    <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 uppercase">
                       <span>{tr(completedTasks)}/{tr(totalTasks)}{tr(" Tasks")}</span>
                       <span>{tr(progress)}%</span>
                     </div>
@@ -721,12 +721,12 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="w-8"></th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Milestone Name")}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Due Date")}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Tasks")}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{tr("Progress")}</th>
-                  {/* <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</th> */}
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider"></th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Milestone Name")}</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Due Date")}</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Tasks")}</th>
+                  <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{tr("Progress")}</th>
+                  {/* <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider text-center">Status</th> */}
+                  <th className="px-6 py-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wider"></th>
                 </tr>
               </thead>
               <tbody>
@@ -752,7 +752,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                               <Flag className="w-4 h-4 text-blue-600" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-gray-900 truncate">{tr(milestone.name)}</p>
+                              <p className="text-sm font-semibold text-gray-900 truncate">{tr(milestone.name)}</p>
                               <p className="text-[10px] text-slate-500 truncate max-w-[240px] mt-0.5">{tr(milestone.description)}</p>
                             </div>
                           </div>
@@ -1074,14 +1074,14 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-900">{tr("Mark task complete")}</p>
+                      <p className="text-sm font-semibold text-gray-900">{tr("Mark task complete")}</p>
                       <p className="text-xs text-slate-500 truncate max-w-[220px]">{tr(task?.title)}</p>
                     </div>
                   </div>
 
                   {/* Completion note */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Completion Note ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span></label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Completion Note ")}<span className="font-normal text-slate-400">{tr("(optional)")}</span></label>
                     <textarea
                       rows={2}
                       value={completionPrompt.note}
@@ -1094,7 +1094,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
                   {/* Proof of work image */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Proof of Work ")}<span className="font-normal text-slate-400">{tr("(optional photo)")}</span></label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Proof of Work ")}<span className="font-normal text-slate-400">{tr("(optional photo)")}</span></label>
                     <input
                       ref={proofInputRef}
                       type="file"
@@ -1158,7 +1158,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
                       <Pencil className="w-4 h-4 text-blue-600" />
                     </div>
-                    <p className="text-sm font-bold text-gray-900">{tr("Edit Task")}</p>
+                    <p className="text-sm font-semibold text-gray-900">{tr("Edit Task")}</p>
                   </div>
                   <button onClick={() => setEditingTask(null)} className="p-1.5 text-slate-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                     <X className="w-4 h-4" />
@@ -1166,7 +1166,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Title *")}</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Title *")}</label>
                   <input
                     type="text"
                     autoFocus
@@ -1178,7 +1178,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Description")}</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Description")}</label>
                   <input
                     type="text"
                     value={editingTask.form.description}
@@ -1190,7 +1190,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Start Date")}</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Start Date")}</label>
                     <input
                       type="date"
                       value={editingTask.form.startDate}
@@ -1209,7 +1209,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("End Date")}</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("End Date")}</label>
                     <input
                       type="date"
                       value={editingTask.form.endDate}
@@ -1221,7 +1221,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Assign To")}</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Assign To")}</label>
                   <select value={editingTask.form.assignedTo} onChange={e => setEditingTask(prev => prev ? { ...prev, form: { ...prev.form, assignedTo: e.target.value } } : null)} className={inputCls}>
                     <option value="">{tr("— Unassigned —")}</option>
                     {members.map(m => <option key={m._id} value={m._id}>{tr(m.name)}</option>)}
@@ -1290,7 +1290,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ projectId }) => {
                       <Flag className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">{editingMilestone ? tr("Edit Milestone") : tr("New Milestone")}</h2>
+                      <h2 className="text-lg font-bold text-gray-900">{editingMilestone ? tr("Edit Milestone") : tr("New Milestone")}</h2>
                       <p className="text-xs text-slate-500 mt-0.5">{editingMilestone ? tr("Update details and tasks.") : tr("Set a target with optional task checklist.")}</p>
                     </div>
                   </div>
