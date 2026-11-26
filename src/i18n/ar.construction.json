@@ -2206,5 +2206,16 @@
  "Budget": "الميزانية",
  "Interior": "تصميم داخلي",
  "Progress": "التقدم",
- "Project: {{name}}, Status: {{status}}, Progress: {{progress}}%": "المشروع: {{name}}، الحالة: {{status}}، التقدم: {{progress}}%"
+ "Project: {{name}}, Status: {{status}}, Progress: {{progress}}%": "المشروع: {{name}}، الحالة: {{status}}، التقدم: {{progress}}%",
+ "Terms & Conditions: Goods are received subject to inspection. Quantities and condition are checked against the purchase order and delivery challan; any shortage or damage must be reported to the supplier.": "الشروط والأحكام: تُستلم البضائع رهناً بالفحص. تتم مطابقة الكميات والحالة مع أمر الشراء وإذن التسليم؛ ويجب إبلاغ المورد بأي نقص أو تلف.",
+ "GRN No.": "رقم الإشعار",
+ "Delivery": "التسليم",
+ "Items received": "البنود المستلمة",
+ "Received by": "استلمه",
+ "Verified by": "تحقق منه",
+ "Site team": "فريق الموقع",
+ "Store / QA": "المخزن / الجودة",
+ "Download GRN PDF": "تنزيل إشعار الاستلام PDF",
+ "GRN PDF": "إشعار الاستلام PDF",
+ "Failed to create the GRN PDF": "تعذر إنشاء ملف إشعار الاستلام"
 }

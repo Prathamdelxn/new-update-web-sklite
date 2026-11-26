@@ -1,5 +1,5 @@
 'use client';
-import { tr, getLang } from '@/i18n';
+import { tr } from '@/i18n';
 import { projectCurrency } from '@/lib/projectCurrency';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -36,6 +36,7 @@ import { motion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn, formatCurrency, formatCompact, MAX_INPUT_VALUE } from '@/lib/utils';
 import api from '@/services/api.client';
+import { esc, escMultiline, exportPdf, getPdfOrg, ltr, pdfDocumentHtml, pdfHeaderHtml, pdfSlug, PDF_TERMS } from '@/lib/pdf/pdfExport';
 import { useProjectContext } from '@/features/projects/contexts/ProjectContext';
 import { useToast } from '@/providers/ToastContext';
 import { useAuth } from '@/providers/AuthContext';
@@ -332,25 +333,85 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
     finally { setUpdatingPOId(null); }
   };
 
-  const printReceipt = (receipt: any) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    const rtl = getLang() === 'ar';
-    const rows = receipt.items.map((item: any) =>
-      `<tr><td style="border:1px solid #ccc;padding:8px">${item.materialId?.name || tr('Item')}</td><td style="border:1px solid #ccc;padding:8px">${item.quantity} ${tr(item.unit)}</td></tr>`
-    ).join('');
-    win.document.write(`<!DOCTYPE html><html lang="${rtl ? 'ar' : 'en'}" dir="${rtl ? 'rtl' : 'ltr'}"><head><title>GRN-${receipt._id.slice(-6).toUpperCase()}</title>
-<style>body{font-family:${rtl ? "'Segoe UI',Tahoma,'Noto Sans Arabic',Arial,sans-serif" : 'sans-serif'};padding:24px;color:#111}h2{margin:0 0 4px}p{margin:4px 0}table{border-collapse:collapse;width:100%;margin-top:12px}th{background:#f3f4f6;border:1px solid #ccc;padding:8px;text-align:start}</style>
-</head><body>
-<h2>${tr('Goods Receipt Note')} — GRN-${receipt._id.slice(-6).toUpperCase()}</h2>
-<p>${tr('Date:')} ${new Date(receipt.createdAt).toLocaleDateString()}</p>
-<p>${tr('Vendor:')} ${receipt.vendorName}</p>
-<p>${tr('Challan:')} ${receipt.challanNumber}${receipt.invoiceNumber ? ` &nbsp;|&nbsp; ${tr('Invoice:')} ${receipt.invoiceNumber}` : ''}</p>
-<p>${tr('Status:')} ${tr(receipt.status)}</p>
-<table><thead><tr><th style="border:1px solid #ccc;padding:8px">${tr('Material')}</th><th style="border:1px solid #ccc;padding:8px">${tr('Quantity')}</th></tr></thead><tbody>${rows}</tbody></table>
-</body></html>`);
-    win.document.close();
-    win.print();
+  // Goods Receipt Note in the standard PDF format (logo letterhead, terms on every page).
+  // Was a plain browser print window with no logo or terms.
+  const [printingGrnId, setPrintingGrnId] = useState<string | null>(null);
+  const printReceipt = async (receipt: any) => {
+    const grnNo = `GRN-${String(receipt._id).slice(-6).toUpperCase()}`;
+    setPrintingGrnId(receipt._id);
+    try {
+      const items: any[] = Array.isArray(receipt.items) ? receipt.items : [];
+      const rows = items.map((item: any, i: number) => `
+        <tr>
+          <td class="ctr">${i + 1}</td>
+          <td>${esc(item.materialId?.name || tr('Item'))}</td>
+          <td class="num">${ltr(item.quantity)}</td>
+          <td>${esc(tr(item.unit || item.materialId?.unit || ''))}</td>
+        </tr>`).join('');
+
+      const body = `
+        ${pdfHeaderHtml({
+          docType: tr('Goods Receipt Note'),
+          subtitle: project?.name || undefined,
+          org: getPdfOrg('construction'),
+          meta: [
+            [tr('GRN No.'), grnNo],
+            [tr('Date'), receipt.createdAt ? new Date(receipt.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''],
+            [tr('Status'), tr(receipt.status || '')],
+          ],
+        })}
+
+        <div class="sd-cols pdf-avoid">
+          <div>
+            <div class="sd-title">${esc(tr('Supplier'))}</div>
+            <div class="sd-box">
+              <div class="sd-strong">${esc(receipt.vendorName || '—')}</div>
+            </div>
+          </div>
+          <div>
+            <div class="sd-title">${esc(tr('Delivery'))}</div>
+            <div class="sd-box">
+              <div class="sd-muted">${esc(tr('Challan:'))} ${ltr(receipt.challanNumber || '—')}</div>
+              ${receipt.invoiceNumber ? `<div class="sd-muted">${esc(tr('Invoice:'))} ${ltr(receipt.invoiceNumber)}</div>` : ''}
+              ${receipt.receivedByName ? `<div class="sd-muted">${esc(tr('Received by'))}: ${esc(receipt.receivedByName)}</div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="sd-title">${esc(tr('Items received'))}</div>
+        <table class="sd-table">
+          <thead><tr>
+            <th class="ctr" style="width:36px">#</th>
+            <th>${esc(tr('Material'))}</th>
+            <th class="num" style="width:110px">${esc(tr('Quantity'))}</th>
+            <th style="width:110px">${esc(tr('Unit'))}</th>
+          </tr></thead>
+          <tbody>${rows || `<tr><td colspan="4" class="ctr">${esc(tr('No items'))}</td></tr>`}</tbody>
+        </table>
+
+        ${receipt.commonNote ? `
+          <div class="pdf-avoid">
+            <div class="sd-title">${esc(tr('Note'))}</div>
+            <div class="sd-box sd-muted">${escMultiline(receipt.commonNote)}</div>
+          </div>` : ''}
+
+        <div class="sd-sign pdf-avoid">
+          <div><div class="line"></div><div class="who">${esc(tr('Received by'))}</div><div class="role">${esc(receipt.receivedByName || tr('Site team'))}</div></div>
+          <div><div class="line"></div><div class="who">${esc(tr('Verified by'))}</div><div class="role">${esc(tr('Store / QA'))}</div></div>
+          <div><div class="line"></div><div class="who">${esc(tr('Supplier'))}</div><div class="role">${esc(receipt.vendorName || '')}</div></div>
+        </div>`;
+
+      await exportPdf({
+        html: pdfDocumentHtml({ title: grnNo, body }),
+        filename: `${grnNo}_${pdfSlug(project?.name, 'Project')}.pdf`,
+        terms: PDF_TERMS.grn,
+      });
+    } catch (err) {
+      console.error('GRN PDF failed', err);
+      toast.error(tr("Failed to create the GRN PDF"));
+    } finally {
+      setPrintingGrnId(null);
+    }
   };
 
   useEffect(() => {
@@ -1002,11 +1063,12 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       
                       <button
                         onClick={() => printReceipt(receipt)}
-                        title={tr("Print Receipt")}
-                        className="flex items-center space-x-1 text-xs font-bold text-slate-600 hover:text-gray-900 transition-all border border-gray-200 bg-white px-2.5 py-1.5 rounded-lg"
+                        disabled={printingGrnId === receipt._id}
+                        title={tr("Download GRN PDF")}
+                        className="flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-gray-900 transition-all border border-gray-200 bg-white px-2.5 py-1.5 rounded-lg disabled:opacity-60"
                       >
-                        <Printer className="w-3.5 h-3.5" />
-                        <span>{tr("Print GRN")}</span>
+                        {printingGrnId === receipt._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+                        <span>{tr("GRN PDF")}</span>
                       </button>
                     </div>
                   </GlassCard>
@@ -1081,10 +1143,11 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                             )}
                             <button
                               onClick={() => printReceipt(receipt)}
-                              title={tr("Print Receipt")}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-gray-900 hover:bg-gray-100 transition-all"
+                              disabled={printingGrnId === receipt._id}
+                              title={tr("Download GRN PDF")}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-gray-900 hover:bg-gray-100 transition-all disabled:opacity-60"
                             >
-                              <Printer className="w-4 h-4" />
+                              {printingGrnId === receipt._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
                             </button>
                           </div>
                         </td>

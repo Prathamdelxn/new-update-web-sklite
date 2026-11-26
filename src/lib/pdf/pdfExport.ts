@@ -242,6 +242,8 @@ export const PDF_TERMS = {
     'Terms & Conditions: This report records site progress as reported on the stated date. Quantities and progress figures are indicative and subject to joint measurement and verification.',
   certificate:
     'Terms & Conditions: Practical completion is subject to the agreed snag list and defects-liability period. This certificate does not waive any obligations under the contract.',
+  grn:
+    'Terms & Conditions: Goods are received subject to inspection. Quantities and condition are checked against the purchase order and delivery challan; any shortage or damage must be reported to the supplier.',
   voucher:
     'Terms & Conditions: This document records a project transaction for accounting purposes and is subject to verification against supporting invoices and bank records.',
 } as const;
