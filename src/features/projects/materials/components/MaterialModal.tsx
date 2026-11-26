@@ -204,11 +204,11 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                     <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200">
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{tr("Material")}</span>
-                        <span className="text-sm font-black text-gray-900">{tr(initialData.name)}</span>
+                        <span className="text-sm font-bold text-gray-900">{tr(initialData.name)}</span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{tr("Current Balance")}</span>
-                        <span className="text-sm font-black text-blue-600 break-all text-end">{formatCompact((initialData.totalReceived || 0) - (initialData.totalConsumed || 0))} {tr(initialData.unit)}</span>
+                        <span className="text-sm font-bold text-blue-600 break-all text-end">{formatCompact((initialData.totalReceived || 0) - (initialData.totalConsumed || 0))} {tr(initialData.unit)}</span>
                       </div>
                     </div>
 

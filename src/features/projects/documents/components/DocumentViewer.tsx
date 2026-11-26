@@ -296,7 +296,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <p className="text-sm font-bold text-gray-900 truncate">{tr(document?.name)}</p>
                     {document?.approvalStatus && (
                       <span className={cn(
-                        'text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border',
+                        'text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border',
                         document.approvalStatus === 'Approved' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' :
                         document.approvalStatus === 'Rejected' ? 'text-red-700 bg-red-50 border-red-200' :
                         document.approvalStatus === 'Pending'  ? 'text-amber-700 bg-amber-50 border-amber-200' :
@@ -348,7 +348,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     {panelOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
                     <span className="hidden sm:inline">{tr("Notes")}</span>
                     {annotations.length > 0 && (
-                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">
+                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
                         {annotations.length}
                       </span>
                     )}
@@ -439,7 +439,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                           style={{ fill: activePin === ann._id ? 'rgba(59,130,246,0.85)' : 'rgba(239,68,68,0.85)' }}
                           strokeWidth={0.5}
                         />
-                        <span className="absolute top-1 left-1/2 -translate-x-1/2 text-white text-[9px] font-black leading-none">{idx + 1}</span>
+                        <span className="absolute top-1 left-1/2 -translate-x-1/2 text-white text-[9px] font-bold leading-none">{idx + 1}</span>
                       </div>
                     </div>
                   ))}
@@ -464,7 +464,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <MessageSquare className="w-4 h-4 text-blue-600 shrink-0" />
                     <span className="text-sm font-bold text-gray-900 flex-1">{tr("Annotations")}</span>
                     {annotations.length > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[10px] font-black">
+                      <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[10px] font-bold">
                         {annotations.length}
                       </span>
                     )}
@@ -486,7 +486,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                               <MapPin className="w-2.5 h-2.5 text-white" />
                             </div>
-                            <p className="text-[10px] font-black text-blue-700 uppercase tracking-wider">{tr("New Pin")}</p>
+                            <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">{tr("New Pin")}</p>
                             <button
                               onClick={() => setPendingPos(null)}
                               className="ms-auto p-0.5 rounded text-blue-400 hover:text-blue-700 transition-colors"
@@ -577,7 +577,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             >
                               <div className="flex items-start gap-2.5">
                                 <span className={cn(
-                                  'w-5 h-5 rounded-full text-[9px] font-black flex items-center justify-center shrink-0 mt-0.5 transition-colors',
+                                  'w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5 transition-colors',
                                   isActive ? 'bg-blue-600 text-white' : 'bg-red-500 text-white'
                                 )}>
                                   {idx + 1}

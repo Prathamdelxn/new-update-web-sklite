@@ -83,7 +83,7 @@ export const CompleteSnagModal: React.FC<CompleteSnagModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-md relative z-10"
           >
-            <div className="bg-white rounded-3xl border border-gray-150 shadow-2xl overflow-hidden flex flex-col">
+            <div className="bg-white rounded-2xl border border-gray-150 shadow-2xl overflow-hidden flex flex-col">
               {/* Header */}
               <div className="p-6 border-b border-gray-100 flex items-start justify-between">
                 <div>

@@ -306,11 +306,11 @@ export default function SettingsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                {tr("Settings & ")}<span className="text-blue-600">{tr("Preferences")}</span>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                {tr("Settings & ")}{tr("Preferences")}
               </h1>
             </div>
-            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+            <p className="text-sm text-slate-500 mt-0.5">
               {tr("Configure your personal account, organization workspace, security, and project preferences.")}
             </p>
           </div>
@@ -353,7 +353,7 @@ export default function SettingsPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="relative shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white flex items-center justify-center text-lg font-extrabold">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white flex items-center justify-center text-lg font-bold">
                       {orgInitial || userInitial}
                     </div>
                     <div
@@ -366,7 +366,7 @@ export default function SettingsPage() {
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-base font-extrabold text-slate-900 tracking-tight truncate">
+                      <h2 className="text-base font-bold text-slate-900 tracking-tight truncate">
                         {tr(currentOrgName)}
                       </h2>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px] uppercase tracking-wider border border-blue-200">
@@ -833,7 +833,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-extrabold tracking-tight">
+                <h3 className="text-xl font-bold tracking-tight">
                   {loadingPlan
                     ? tr("Loading Plan...")
                     : `${subscription?.plan || 'Enterprise'} Plan`}
@@ -860,7 +860,7 @@ export default function SettingsPage() {
                 <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
                   {tr("Active Team Members")}
                 </p>
-                <p className="text-xl font-extrabold text-slate-900 mt-1">
+                <p className="text-xl font-bold text-slate-900 mt-1">
                   {usageStats.users || 1}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
@@ -872,7 +872,7 @@ export default function SettingsPage() {
                 <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
                   {tr("Active Projects")}
                 </p>
-                <p className="text-xl font-extrabold text-slate-900 mt-1">
+                <p className="text-xl font-bold text-slate-900 mt-1">
                   {usageStats.projects || 0}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
@@ -884,7 +884,7 @@ export default function SettingsPage() {
                 <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
                   {tr("Storage & Cloud Sync")}
                 </p>
-                <p className="text-xl font-extrabold text-emerald-600 mt-1">
+                <p className="text-xl font-bold text-emerald-600 mt-1">
                   {tr("Active")}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">

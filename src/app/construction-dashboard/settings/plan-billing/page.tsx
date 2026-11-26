@@ -90,24 +90,24 @@ export default function PlanBillingPage() {
 
             <button
               onClick={() => router.back()}
-              className="w-11 h-11 rounded-xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition"
+              className="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center transition-colors cursor-pointer shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
             </button>
 
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                 {tr("Plan & Billing")}
               </h1>
 
-              <p className="text-slate-500">
+              <p className="text-sm text-slate-500 mt-0.5">
                 {tr("Manage your subscription and billing.")}
               </p>
             </div>
 
           </div>
 
-          <button className="w-11 h-11 rounded-xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition">
+          <button className="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center transition-colors cursor-pointer shrink-0">
             <Bell className="w-5 h-5" />
           </button>
 

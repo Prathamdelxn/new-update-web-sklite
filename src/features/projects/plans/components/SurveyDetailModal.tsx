@@ -78,7 +78,7 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
               <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
                 {/* Site / Interior Assessment */}
                 <div>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Site Assessment</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Site Assessment</h3>
                   <div className="bg-gray-50 rounded-2xl p-4 space-y-0">
                     <InfoRow label="Accessibility" value={survey.accessibility} />
                     {survey.roomCount != null && <InfoRow label="Room Count" value={survey.roomCount} />}
@@ -104,7 +104,7 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
 
                 {/* Utilities */}
                 <div>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Utilities & Resources</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Utilities & Resources</h3>
                   <div className="grid grid-cols-2 gap-3">
                     {[
                       { label: 'Power Supply', value: survey.powerAvailable, icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
@@ -127,7 +127,7 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
 
                 {/* Surveyor */}
                 <div>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Conducted By</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Conducted By</h3>
                   <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
                     <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
                       {survey.surveyor?.name?.[0]?.toUpperCase() || 'S'}
@@ -142,7 +142,7 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
                 {/* Remarks & Surveyor Comments */}
                 {(survey.remarks || survey.surveyorComments) && (
                   <div>
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Remarks & Observations</h3>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Remarks & Observations</h3>
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl">
                       <p className="text-sm text-amber-800 leading-relaxed italic">"{survey.remarks || survey.surveyorComments}"</p>
                     </div>
@@ -152,7 +152,7 @@ export const SurveyDetailModal: React.FC<SurveyDetailModalProps> = ({ isOpen, on
                 {/* Photos */}
                 {((survey.photos && survey.photos.length > 0) || (survey.additionalPhotos && survey.additionalPhotos.length > 0) || survey.observationImage) && (
                   <div>
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Site & Room Photos</h3>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Site & Room Photos</h3>
                     <div className="grid grid-cols-3 gap-2">
                       {survey.observationImage && (
                         <a href={survey.observationImage} target="_blank" rel="noreferrer">

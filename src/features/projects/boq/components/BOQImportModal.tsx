@@ -145,7 +145,7 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                     <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
                       {step === 'upload' ? tr("Step 1 of 2") : step === 'preview' ? tr("Step 2 of 2") : tr("Importing")}
                     </p>
                     <h2 className="text-base font-bold text-gray-900">
@@ -225,8 +225,8 @@ export const BOQImportModal: React.FC<BOQImportModalProps> = ({
                         </div>
                       </div>
                       <div className="text-end">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{tr("Estimated Total")}</p>
-                        <p className="text-lg font-black text-emerald-700">${estimatedTotal.toLocaleString()}</p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{tr("Estimated Total")}</p>
+                        <p className="text-lg font-bold text-emerald-700">${estimatedTotal.toLocaleString()}</p>
                       </div>
                     </div>
 

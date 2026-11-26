@@ -190,7 +190,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                   </div>
                   <div>
                     <div className="flex items-center flex-wrap gap-2 mb-1.5">
-                      <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border', getPriorityColor(issue.priority))}>
+                      <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border', getPriorityColor(issue.priority))}>
                         {tr(issue.priority)}
                       </span>
                       {issue.category && (
@@ -218,7 +218,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
               <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">
                 {/* Status toggle */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{tr("Update Status")}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tr("Update Status")}</p>
                   <div className="flex flex-wrap gap-2">
                     {(type === 'Snag'
                       ? ['Draft', 'Open', 'In Progress', 'Resolved', 'Closed']
@@ -244,7 +244,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{tr("Description")}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tr("Description")}</p>
                   <p className="text-sm text-slate-700 leading-relaxed bg-gray-50 rounded-xl p-4 border border-gray-100 min-h-[72px]">
                     {issue.description || tr("No description provided.")}
                   </p>
@@ -255,14 +255,14 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                   <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                     <User className="w-4 h-4 text-slate-400 shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{tr("Assigned To")}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Assigned To")}</p>
                       <p className="text-xs font-semibold text-gray-900 truncate">{issue.assignedTo?.name || tr("Unassigned")}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                     <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                     <div>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{tr("Reported")}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Reported")}</p>
                       <p className="text-xs font-semibold text-gray-900">{new Date(issue.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </div>
                   </div>
@@ -270,7 +270,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                     <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <Clock className="w-4 h-4 text-amber-500 shrink-0" />
                       <div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{tr("Due Date")}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Due Date")}</p>
                         <p className="text-xs font-semibold text-gray-900">{new Date(issue.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                       </div>
                     </div>
@@ -279,7 +279,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                     <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <AlertTriangle className="w-4 h-4 text-slate-400 shrink-0" />
                       <div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{tr("Type")}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tr("Type")}</p>
                         <p className="text-xs font-semibold text-gray-900">{tr(issue.type)}</p>
                       </div>
                     </div>
@@ -288,7 +288,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                     <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-xl border border-purple-100">
                       <GitBranch className="w-4 h-4 text-purple-500 shrink-0" />
                       <div>
-                        <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">{tr("Escalation Stage")}</p>
+                        <p className="text-[9px] font-bold text-purple-600 uppercase tracking-widest">{tr("Escalation Stage")}</p>
                         <p className="text-xs font-semibold text-purple-900">{tr("Level ")}{tr(issue.escalationLevel)}</p>
                       </div>
                     </div>
@@ -298,7 +298,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                 {/* Photos */}
                 {issue.images?.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center space-x-1.5">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center space-x-1.5">
                       <ImageIcon className="w-3.5 h-3.5" />
                       <span>{tr("Site Photos (")}{issue.images.length})</span>
                     </p>
@@ -318,7 +318,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
 
                 {/* Resolution note */}
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center space-x-1.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center space-x-1.5">
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>{tr("Resolution Note")}</span>
                     {isResolved && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
@@ -349,7 +349,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                 <div className="flex items-center space-x-2">
                   {isUpdating
                     ? <><Loader2 className="w-4 h-4 animate-spin text-blue-500" /><span className="text-xs font-bold text-blue-600">{tr("Updating...")}</span></>
-                    : <span className={cn('px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border', getStatusColor(currentStatus))}>{tr(currentStatus)}</span>
+                    : <span className={cn('px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border', getStatusColor(currentStatus))}>{tr(currentStatus)}</span>
                   }
                 </div>
                 <button

@@ -37,7 +37,7 @@ export default function DashboardCharts() {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       {/* Chart 1: Revenue & Project Growth (Area Chart) */}
       <div className="lg:col-span-8">
-        <GlassCard className="p-5 bg-white border border-slate-200/80 rounded-3xl space-y-4 shadow-xs">
+        <GlassCard className="p-5 bg-white border border-slate-200/80 rounded-2xl space-y-4 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export default function DashboardCharts() {
 
       {/* Chart 2: Project Category Breakdown (Donut/Pie Chart) */}
       <div className="lg:col-span-4">
-        <GlassCard className="p-5 bg-white border border-slate-200/80 rounded-3xl space-y-4 shadow-xs h-full">
+        <GlassCard className="p-5 bg-white border border-slate-200/80 rounded-2xl space-y-4 shadow-xs h-full">
           <div className="border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <PieChartIcon className="w-4 h-4 text-indigo-600" />

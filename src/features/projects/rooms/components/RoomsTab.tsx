@@ -629,7 +629,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="relative z-10 w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden"
+              className="relative z-10 w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden"
             >
               {/* Drawer Header */}
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -657,12 +657,12 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                 {/* Status & Notes */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                    <span className="text-[10px] font-black uppercase text-slate-400">{tr("Current Status")}</span>
-                    <p className="text-sm font-extrabold text-slate-800 mt-0.5">{tr(inspectRoom.status)}</p>
+                    <span className="text-[10px] font-bold uppercase text-slate-400">{tr("Current Status")}</span>
+                    <p className="text-sm font-bold text-slate-800 mt-0.5">{tr(inspectRoom.status)}</p>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                    <span className="text-[10px] font-black uppercase text-slate-400">{tr("FFE Items Count")}</span>
-                    <p className="text-sm font-extrabold text-purple-700 mt-0.5">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">{tr("FFE Items Count")}</span>
+                    <p className="text-sm font-bold text-purple-700 mt-0.5">
                       {(roomStats[inspectRoom._id]?.total || 0)}{tr(" Items")}
                     </p>
                   </div>
@@ -670,7 +670,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
 
                 {inspectRoom.notes && (
                   <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
-                    <span className="text-[10px] font-black uppercase text-blue-800">{tr("Room Notes")}</span>
+                    <span className="text-[10px] font-bold uppercase text-blue-800">{tr("Room Notes")}</span>
                     <p className="text-xs text-slate-700 mt-1">{tr(inspectRoom.notes)}</p>
                   </div>
                 )}
@@ -678,7 +678,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                 {/* Allocated FFE Items Table */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
                       {tr("Allocated FFE Items (")}{roomStats[inspectRoom._id]?.items?.length || 0})
                     </h4>
                     <button
@@ -705,7 +705,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
                             )}>
                               {item.status || tr("Pending")}
                             </span>
-                            <span className="font-extrabold text-slate-800">
+                            <span className="font-bold text-slate-800">
                               {formatCurrency((item.unitCost || 0) * (item.quantity || 1), currency)}
                             </span>
                           </div>
@@ -756,7 +756,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
+              className="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden"
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <h3 className="text-lg font-bold text-slate-900">
@@ -905,7 +905,7 @@ export const RoomsTab: React.FC<RoomsTabProps> = ({ projectId, project: propProj
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative z-10 w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 text-center space-y-4"
+              className="relative z-10 w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 text-center space-y-4"
             >
               <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-2xs">
                 <Trash2 className="w-6 h-6" />

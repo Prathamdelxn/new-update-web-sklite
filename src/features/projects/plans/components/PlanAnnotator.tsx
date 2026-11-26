@@ -336,7 +336,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
             <X className="w-5 h-5 text-slate-500 hover:text-slate-800" />
           </button>
           <div>
-            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{tr("Plan Annotator")}</p>
+            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{tr("Plan Annotator")}</p>
             <h2 className="text-base font-bold text-slate-900 truncate max-w-sm">{document?.name || tr("Document")}</h2>
           </div>
         </div>
@@ -460,7 +460,7 @@ export const PlanAnnotator: React.FC<PlanAnnotatorProps> = ({
                       'w-8 h-8 transition-all',
                       isSelected ? 'text-blue-500 scale-125' : 'text-red-500 hover:scale-110 hover:text-red-400'
                     )} />
-                    <div className="absolute top-1 text-[10px] font-black text-white">{idx + 1}</div>
+                    <div className="absolute top-1 text-[10px] font-bold text-white">{idx + 1}</div>
                   </button>
                 );
               })}

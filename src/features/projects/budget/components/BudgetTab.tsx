@@ -90,7 +90,7 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">{tr("Current Budget")}</p>
-              <p className="text-3xl font-black text-gray-900 mt-1">{formatCurrency(currentBudget, projectCurrency(project))}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{formatCurrency(currentBudget, projectCurrency(project))}</p>
             </div>
             <div className="p-3 rounded-2xl bg-emerald-100 border border-emerald-200">
               <Banknote className="w-6 h-6 text-emerald-600" />
@@ -114,7 +114,7 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
 
         <GlassCard className="p-6 border-gray-200">
           <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">{tr("Total Variations")}</p>
-          <p className="text-3xl font-black text-gray-900 mt-1">{project.budgetHistory?.length || 0}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-1">{project.budgetHistory?.length || 0}</p>
           <p className="text-xs text-slate-400 mt-4 italic">{tr("Approved variations in project lifecycle.")}</p>
         </GlassCard>
 
@@ -232,7 +232,7 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
               </div>
               <div className="text-end">
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider">{tr("Current")}</p>
-                <p className="text-sm font-black text-emerald-600">{fmt(currentBudget)}</p>
+                <p className="text-sm font-bold text-emerald-600">{fmt(currentBudget)}</p>
               </div>
             </div>
             <div className="w-full">
@@ -293,9 +293,9 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-lg font-black text-gray-900">{formatCurrency(entry.amount, projectCurrency(project))}</span>
+                      <span className="text-lg font-bold text-gray-900">{formatCurrency(entry.amount, projectCurrency(project))}</span>
                       <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                        "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border",
                         entry.approvalStatus === 'Approved' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
                         entry.approvalStatus === 'Rejected' ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-amber-100 text-amber-700 border-amber-200'
                       )}>
@@ -339,15 +339,15 @@ export const BudgetTab: React.FC<BudgetTabProps> = ({ project, onUpdate }) => {
 
                 {isExpanded && (
                   <div className="mt-4 p-4 rounded-xl bg-blue-50 border border-blue-100 space-y-3">
-                    <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-2">{tr("Audit Trail")}</p>
+                    <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-2">{tr("Audit Trail")}</p>
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">{tr("Revision Amount")}</p>
-                        <p className="font-black text-gray-900 mt-0.5">{formatCurrency(entry.amount, projectCurrency(project))}</p>
+                        <p className="font-bold text-gray-900 mt-0.5">{formatCurrency(entry.amount, projectCurrency(project))}</p>
                       </div>
                       <div>
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">{tr("Status")}</p>
-                        <p className={cn("font-black mt-0.5", entry.approvalStatus === 'Approved' ? 'text-emerald-600' : entry.approvalStatus === 'Rejected' ? 'text-rose-600' : 'text-amber-600')}>{tr(entry.approvalStatus)}</p>
+                        <p className={cn("font-bold mt-0.5", entry.approvalStatus === 'Approved' ? 'text-emerald-600' : entry.approvalStatus === 'Rejected' ? 'text-rose-600' : 'text-amber-600')}>{tr(entry.approvalStatus)}</p>
                       </div>
                       <div>
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">{tr("Requested By")}</p>

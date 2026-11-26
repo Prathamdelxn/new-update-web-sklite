@@ -124,7 +124,7 @@ export const SendForSurveyModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
                     <Map className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{tr("Site Survey")}</p>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{tr("Site Survey")}</p>
                     <h2 className="text-base font-bold text-gray-900">{tr("Assign Surveyor")}</h2>
                   </div>
                 </div>

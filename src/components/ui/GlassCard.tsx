@@ -15,13 +15,14 @@ interface GlassCardProps {
   onClick?: () => void;
 }
 
-export const GlassCard: React.FC<GlassCardProps> = ({ children, className, gradient = false, onClick }) => {
+// One card style everywhere: plain white with a soft border. `gradient` is kept for old callers
+// but no longer changes the look (the grey gradient made cards look inconsistent).
+export const GlassCard: React.FC<GlassCardProps> = ({ children, className, onClick }) => {
   return (
     <div
       onClick={onClick}
       className={cn(
-        'bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden',
-        gradient && 'bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--muted))]',
+        'bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden',
         className
       )}
     >

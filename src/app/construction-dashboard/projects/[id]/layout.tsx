@@ -166,7 +166,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <>
       {!project && !loading ? (
-        <div className="text-center py-20 bg-white border border-slate-200 rounded-3xl p-8 shadow-card">
+        <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl p-8 shadow-card">
           <h2 className="text-2xl font-bold text-slate-900">{accessDenied ? tr("Access denied") : tr("Project not found")}</h2>
           <p className="text-slate-500 text-sm mt-1">
             {accessDenied

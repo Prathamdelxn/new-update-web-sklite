@@ -22,17 +22,17 @@ export default function UserManagementPage() {
 
           <button
             onClick={() => router.back()}
-            className="w-11 h-11 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition"
+            className="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
           </button>
 
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               {tr("User Management")}
             </h1>
 
-            <p className="text-gray-500 mt-1">
+            <p className="text-sm text-slate-500 mt-0.5">
               {tr("Manage organization members and roles.")}
             </p>
           </div>
@@ -43,7 +43,7 @@ export default function UserManagementPage() {
 
           {/* Role Management */}
 
-          <GlassCard className="rounded-3xl border border-gray-200 overflow-hidden">
+          <GlassCard className="rounded-2xl border border-gray-200 overflow-hidden">
 
             <button
               onClick={() => router.push('/construction-dashboard/settings/user-management/roles')}
@@ -80,7 +80,7 @@ export default function UserManagementPage() {
 
           {/* Member Management */}
 
-          <GlassCard className="rounded-3xl border border-gray-200 overflow-hidden">
+          <GlassCard className="rounded-2xl border border-gray-200 overflow-hidden">
 
             <button
               onClick={() => router.push('/construction-dashboard/settings/user-management/members')}

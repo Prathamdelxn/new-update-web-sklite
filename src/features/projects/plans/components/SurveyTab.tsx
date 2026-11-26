@@ -220,7 +220,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
       {/* ── Main Display ── */}
       {!survey ? (
-        <div className="py-20 text-center border-2 border-dashed border-slate-200 bg-white/70 backdrop-blur-sm rounded-3xl p-8">
+        <div className="py-20 text-center border-2 border-dashed border-slate-200 bg-white/70 backdrop-blur-sm rounded-2xl p-8">
           <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4">
             <ClipboardCheck className="w-8 h-8 text-blue-600" />
           </div>
@@ -233,7 +233,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
         <div className="space-y-6">
 
           {/* ── 1. Executive Summary Hero Card ── */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 relative overflow-hidden space-y-6">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 relative overflow-hidden space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-150 flex items-center justify-center text-blue-600 shrink-0">
@@ -241,7 +241,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-blue-600 tracking-widest uppercase">{tr("SITE ASSESSMENT")}</span>
+                    <span className="text-[10px] font-bold text-blue-600 tracking-widest uppercase">{tr("SITE ASSESSMENT")}</span>
                     {survey.projectType && (
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 uppercase">
                         {tr(survey.projectType)}
@@ -352,7 +352,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
           {/* ── 2. Bento Section: Room & Space Specifications ── */}
           {isInterior && (
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-600" />
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{tr("Space & Room Specifications")}</h3>
@@ -361,34 +361,34 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-150">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Room Count")}</p>
-                  <p className="text-sm font-black text-slate-900 mt-1">{survey.roomCount ?? 'N/A'}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-1">{survey.roomCount ?? 'N/A'}</p>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-150">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Ceiling Height")}</p>
-                  <p className="text-sm font-black text-slate-900 mt-1">
+                  <p className="text-sm font-bold text-slate-900 mt-1">
                     {survey.ceilingHeight ? `${survey.ceilingHeight} ${survey.ceilingHeightUnit || 'ft'}` : 'N/A'}
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-150">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Natural Light")}</p>
-                  <p className="text-sm font-black text-slate-900 mt-1">{survey.naturalLighting || tr("Good")}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-1">{survey.naturalLighting || tr("Good")}</p>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-150">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Ventilation")}</p>
-                  <p className="text-sm font-black text-slate-900 mt-1">{survey.ventilationAvailable ? tr("Available") : 'N/A'}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-1">{survey.ventilationAvailable ? tr("Available") : 'N/A'}</p>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-150">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Wall Construction")}</p>
-                  <p className="text-sm font-black text-slate-900 mt-1 truncate">{survey.wallCondition || tr("Solid Brick")}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-1 truncate">{survey.wallCondition || tr("Solid Brick")}</p>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-150">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Seepage Check")}</p>
-                  <p className={cn("text-xs font-black mt-1.5", survey.dampnessObserved ? "text-rose-600" : "text-emerald-600")}>
+                  <p className={cn("text-xs font-bold mt-1.5", survey.dampnessObserved ? "text-rose-600" : "text-emerald-600")}>
                     {survey.dampnessObserved ? tr("Seepage Found") : tr("No Seepage")}
                   </p>
                 </div>
@@ -410,7 +410,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* MEP Services Card */}
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <Zap className="w-4 h-4 text-amber-500" />
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{tr("MEP & Utility Readiness")}</h3>
@@ -437,7 +437,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
             </div>
 
             {/* Freight Logistics Card */}
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <Truck className="w-4 h-4 text-blue-600" />
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{tr("Material Logistics & Access")}</h3>
@@ -476,7 +476,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
           {/* ── 4. Notes & Observations Hub ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {survey.clientStylePreference && (
-              <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-2">
+              <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-2">
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                   <Sparkles className="w-4 h-4 text-purple-600" />
                   <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{tr("Client Design Preferences")}</h4>
@@ -485,7 +485,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
               </div>
             )}
 
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-2">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 space-y-2">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                 <FileText className="w-4 h-4 text-blue-600" />
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{tr("Surveyor Comments")}</h4>
@@ -498,7 +498,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
           {/* ── 5. Site & Room Photos Gallery ── */}
           {((survey.additionalPhotos && survey.additionalPhotos.length > 0) || survey.observationImage) && (
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-blue-600" />
@@ -536,15 +536,15 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
 
           {/* ── 6. Budget Change Request Box ── */}
           {survey.affectsBudget && (
-            <div className="p-6 bg-gradient-to-br from-rose-50 to-red-50 border border-rose-200 rounded-3xl space-y-4">
+            <div className="p-6 bg-gradient-to-br from-rose-50 to-red-50 border border-rose-200 rounded-2xl space-y-4">
               <div className="flex items-center gap-2.5 text-rose-700">
                 <AlertCircle className="w-5 h-5 shrink-0" />
-                <h4 className="text-xs font-black uppercase tracking-wider">{tr("Budget Modification Requested")}</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider">{tr("Budget Modification Requested")}</h4>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("New Recommended Estimate")}</p>
-                  <p className="text-2xl font-black text-rose-700 mt-1">{formatCurrency(survey.recommendedBudget, (project as any)?.currency)}</p>
+                  <p className="text-2xl font-bold text-rose-700 mt-1">{formatCurrency(survey.recommendedBudget, (project as any)?.currency)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Reason")}</p>
@@ -588,7 +588,7 @@ export const SurveyTab: React.FC<SurveyTabProps> = ({ projectId }) => {
       {isRejectOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-xs" onClick={() => setIsRejectOpen(false)} />
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full relative z-10 space-y-4 shadow-xl border border-slate-200">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full relative z-10 space-y-4 shadow-xl border border-slate-200">
             <h3 className="text-base font-bold text-slate-900">{tr("Reject Survey Report")}</h3>
             <textarea
               rows={3}

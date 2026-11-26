@@ -171,7 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Header Logo */}
         <div
           className={cn(
-            'flex items-center h-16 px-4 border-b border-slate-200/80 shrink-0',
+            'flex items-center h-[4.5rem] px-4 border-b border-slate-200/80 shrink-0',
             isCollapsed && 'justify-center px-2'
           )}
         >

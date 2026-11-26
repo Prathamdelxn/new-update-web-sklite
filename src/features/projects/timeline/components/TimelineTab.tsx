@@ -229,7 +229,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
               style={{ height: MONTH_ROW + DAY_ROW }}
               className="border-b border-gray-200 flex items-end px-4 pb-1.5 bg-gray-50"
             >
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{tr("Milestone / Task")}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tr("Milestone / Task")}</span>
             </div>
 
             {normalized.map((m, i) => {
@@ -317,7 +317,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                     className="border-e border-gray-200 flex items-center px-2 shrink-0"
                     style={{ width: mo.span * DAY_W }}
                   >
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{tr(mo.label)}</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{tr(mo.label)}</span>
                   </div>
                 ))}
               </div>
@@ -396,12 +396,12 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
                           style={{ width: `${pct}%`, opacity: 0.5 }}
                         />
                         {barW >= 56 && (
-                          <span className={cn('relative px-2.5 text-[9px] font-black uppercase tracking-wide truncate flex-1', c.text)}>
+                          <span className={cn('relative px-2.5 text-[9px] font-bold uppercase tracking-wide truncate flex-1', c.text)}>
                             {tr(m.label)}
                           </span>
                         )}
                         {pct > 0 && barW >= 80 && (
-                          <span className={cn('relative px-2 text-[9px] font-black shrink-0', c.text)}>{tr(pct)}%</span>
+                          <span className={cn('relative px-2 text-[9px] font-bold shrink-0', c.text)}>{tr(pct)}%</span>
                         )}
                       </div>
 
@@ -469,7 +469,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
 
       {/* Status summary */}
       <div className="mt-8">
-        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">{tr("Milestone Summary")}</h4>
+        <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">{tr("Milestone Summary")}</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Total', count: milestones.length, text: 'text-blue-500' },
@@ -478,8 +478,8 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ projectId }) => {
             { label: 'Pending', count: milestones.filter(m => m.status === 'Pending').length, text: 'text-slate-400' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-              <p className={cn('text-2xl font-black', s.text)}>{s.count}</p>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{tr(s.label)}</p>
+              <p className={cn('text-2xl font-bold', s.text)}>{s.count}</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">{tr(s.label)}</p>
             </div>
           ))}
         </div>

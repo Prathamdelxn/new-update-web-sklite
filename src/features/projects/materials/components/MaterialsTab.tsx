@@ -412,11 +412,11 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Materials")}</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1">{materials.length}</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{materials.length}</p>
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Low Stock Items")}</p>
-              <p className="text-2xl font-extrabold text-red-600 mt-1">
+              <p className="text-2xl font-bold text-red-600 mt-1">
                 {materials.filter(m => {
                   const stock = m.currentStock ?? ((m.totalReceived || 0) - (m.totalConsumed || 0));
                   const min = m.minimumStock ?? m.minStock ?? 0;
@@ -426,13 +426,13 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Received")}</p>
-              <p className="text-2xl font-extrabold text-emerald-600 mt-1 break-all">
+              <p className="text-2xl font-bold text-emerald-600 mt-1 break-all">
                 {formatCompact(materials.reduce((sum, m) => sum + (m.totalReceived || 0), 0))}
               </p>
             </div>
             <div className="p-4.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Total Consumed")}</p>
-              <p className="text-2xl font-extrabold text-blue-600 mt-1 break-all">
+              <p className="text-2xl font-bold text-blue-600 mt-1 break-all">
                 {formatCompact(materials.reduce((sum, m) => sum + (m.totalConsumed || 0), 0))}
               </p>
             </div>
@@ -494,17 +494,17 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-gray-900 leading-tight truncate" title={material.name}>{tr(material.name)}</p>
                             <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-1">
-                              {tr("Unit: ")}<span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] font-black text-slate-500 ms-1">{tr(material.unit)}</span>
+                              {tr("Unit: ")}<span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] font-bold text-slate-500 ms-1">{tr(material.unit)}</span>
                             </p>
                           </div>
                         </div>
 
                         <div className="flex flex-col items-end shrink-0 min-w-0 max-w-[45%]">
                           {overConsumed ? (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
                           ) : (
                             <>
-                              <span className={cn('text-sm font-black break-all text-end', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}{tr(" In Stock")}</span>
+                              <span className={cn('text-sm font-bold break-all text-end', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}{tr(" In Stock")}</span>
                               <div className="h-1.5 w-16 bg-gray-200 rounded-full overflow-hidden mt-1.5">
                                 <div className={cn('h-full rounded-full', isLow ? 'bg-red-400' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
                               </div>
@@ -517,12 +517,12 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         <div className="flex items-center space-x-1.5 min-w-0">
                           <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                           <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">{tr("Received:")}</span>
-                          <span className="text-xs font-black text-emerald-600 break-all">{formatCompact(received)}</span>
+                          <span className="text-xs font-bold text-emerald-600 break-all">{formatCompact(received)}</span>
                         </div>
                         <div className="flex items-center space-x-1.5 justify-end min-w-0">
                           <ArrowUpRight className="w-3.5 h-3.5 text-red-500 shrink-0" />
                           <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">{tr("Consumed:")}</span>
-                          <span className="text-xs font-black text-red-600 break-all">{formatCompact(consumed)}</span>
+                          <span className="text-xs font-bold text-red-600 break-all">{formatCompact(consumed)}</span>
                         </div>
                       </div>
 
@@ -651,10 +651,10 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               return (
                                 <>
                                   {overConsumed ? (
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 border border-red-200 text-red-600 uppercase tracking-wide">{tr("Over-consumed")}</span>
                                   ) : (
                                     <>
-                                      <span className={cn('text-lg font-black break-all text-end', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}</span>
+                                      <span className={cn('text-lg font-bold break-all text-end', isLow ? 'text-red-600' : 'text-gray-900')}>{formatCompact(stock)}</span>
                                       <div className="h-1 w-16 bg-gray-200 rounded-full overflow-hidden mt-1">
                                         <div className={cn('h-full rounded-full', isLow ? 'bg-red-400' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
                                       </div>
@@ -812,7 +812,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       </div>
                     </div>
                     <span className={cn(
-                      "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                      "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border",
                       request.status === 'Approved'   ? 'text-emerald-700 bg-emerald-100 border-emerald-200' :
                       request.status === 'Fulfilled'  ? 'text-blue-700 bg-blue-100 border-blue-200' :
                       request.status === 'Rejected'   ? 'text-red-700 bg-red-100 border-red-200' :
@@ -944,7 +944,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         </p>
                       </div>
                       <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                        "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border",
                         receipt.status === 'Verified' ? 'text-emerald-700 bg-emerald-100 border-emerald-200' :
                         receipt.status === 'Rejected' ? 'text-red-700 bg-red-100 border-red-200' :
                         'text-amber-700 bg-amber-100 border-amber-200'
@@ -965,7 +965,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-gray-100">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{tr("Items Received")}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{tr("Items Received")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {receipt.items.map((item: any, i: number) => (
                           <span key={i} className="px-2 py-1 rounded bg-gray-50 border border-gray-200 text-[10px] font-bold text-slate-600">
@@ -977,7 +977,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
 
                     {receipt.commonNote && (
                       <div className="mt-3 p-2.5 rounded-xl bg-gray-50 border border-gray-200">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 font-bold">{tr("Notes")}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 font-bold">{tr("Notes")}</p>
                         <p className="text-xs text-slate-500 italic">"{tr(receipt.commonNote)}"</p>
                       </div>
                     )}
@@ -1055,7 +1055,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className={cn(
-                            "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                            "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border",
                             receipt.status === 'Verified' ? 'text-emerald-700 bg-emerald-100 border-emerald-200' :
                             receipt.status === 'Rejected' ? 'text-red-700 bg-red-100 border-red-200' :
                             'text-amber-700 bg-amber-100 border-amber-200'
@@ -1136,7 +1136,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider">{tr(po.vendorName)}</p>
                     </div>
                     <span className={cn(
-                      "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                      "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border",
                       PO_STATUS_COLORS[po.status] || 'text-blue-700 bg-blue-100 border-blue-200'
                     )}>
                       {po.status || tr("Active")}
@@ -1152,7 +1152,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{tr("Total Amount")}</span>
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{tr("Total Amount")}</span>
                        <span className="text-sm font-bold text-emerald-600">{(po.grandTotal ?? po.totalAmount) != null ? formatCurrency(po.grandTotal ?? po.totalAmount, projectCurrency(project as any)) : '—'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -1301,7 +1301,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 const Icon = typeConfig.icon;
                 const statusBadge = entry.status ? (
                   <span className={cn(
-                    'px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide border',
+                    'px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide border',
                     entry.status === 'Approved' || entry.status === 'Verified' ? 'text-emerald-700 bg-emerald-100 border-emerald-200' :
                     entry.status === 'Rejected' ? 'text-red-700 bg-red-100 border-red-200' :
                     entry.status === 'Fulfilled' ? 'text-blue-700 bg-blue-100 border-blue-200' :
@@ -1320,7 +1320,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-black text-slate-500 uppercase tracking-wider">{tr(typeConfig.label)}</span>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tr(typeConfig.label)}</span>
                         {tr(statusBadge)}
                       </div>
                       <p className="text-sm font-bold text-gray-900 mt-0.5 truncate">{tr(typeConfig.idLabel)}</p>
@@ -1350,7 +1350,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-gray-200 rounded-3xl">
+            <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-gray-200 rounded-2xl">
               <ScrollText className="w-16 h-16 text-gray-300 mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">{tr("No activity yet")}</h3>
               <p className="text-slate-500">{tr("Material activity will appear here once requests, purchases, receipts, or usage logs are created.")}</p>
@@ -1380,7 +1380,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className={cn(
-                    "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                    "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border",
                     selectedRequest.status === 'Approved'  ? 'text-emerald-700 bg-emerald-100 border-emerald-200' :
                     selectedRequest.status === 'Fulfilled' ? 'text-blue-700 bg-blue-100 border-blue-200' :
                     selectedRequest.status === 'Rejected'  ? 'text-red-700 bg-red-100 border-red-200' :
@@ -1393,19 +1393,19 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">{tr("Requested Items")}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{tr("Requested Items")}</p>
                   <div className="space-y-2">
                     {selectedRequest.items?.map((item: any, i: number) => (
                       <div key={i} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl">
                         <span className="text-sm font-semibold text-gray-900">{item.materialId?.name || tr("Material")}</span>
-                        <span className="text-sm font-black text-blue-600">{item.quantity} {tr(item.unit)}</span>
+                        <span className="text-sm font-bold text-blue-600">{item.quantity} {tr(item.unit)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 {selectedRequest.commonNote && (
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{tr("Note")}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{tr("Note")}</p>
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
                       <p className="text-sm text-slate-600 italic">"{tr(selectedRequest.commonNote)}"</p>
                     </div>
@@ -1466,7 +1466,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 border border-blue-200">
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-blue-100 text-blue-700 border border-blue-200">
                     {selectedPO.status || tr("Active")}
                   </span>
                   <button onClick={() => setSelectedPO(null)} className="p-2 rounded-xl hover:bg-gray-100 text-slate-400 hover:text-gray-900 transition-colors">
@@ -1476,15 +1476,15 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">{tr("Order Items")}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{tr("Order Items")}</p>
                   <div className="overflow-hidden rounded-xl border border-gray-200">
                     <table className="w-full text-start">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">{tr("Material")}</th>
-                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-end">{tr("Qty")}</th>
-                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-end">{tr("Unit Cost")}</th>
-                          <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-end">{tr("Subtotal")}</th>
+                          <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Material")}</th>
+                          <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-end">{tr("Qty")}</th>
+                          <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-end">{tr("Unit Cost")}</th>
+                          <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-end">{tr("Subtotal")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1503,14 +1503,14 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                  <span className="text-sm font-black text-slate-600 uppercase tracking-wider">{tr("Total Amount")}</span>
-                   <span className="text-xl font-black text-emerald-600">{(selectedPO.grandTotal ?? selectedPO.totalAmount) != null ? formatCurrency(selectedPO.grandTotal ?? selectedPO.totalAmount, projectCurrency(project as any)) : '—'}</span>
+                  <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">{tr("Total Amount")}</span>
+                   <span className="text-xl font-bold text-emerald-600">{(selectedPO.grandTotal ?? selectedPO.totalAmount) != null ? formatCurrency(selectedPO.grandTotal ?? selectedPO.totalAmount, projectCurrency(project as any)) : '—'}</span>
                 </div>
                 {selectedPO.expectedDelivery && (
                   <div className="flex items-center space-x-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
                     <Truck className="w-4 h-4 text-slate-400" />
                     <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{tr("Expected Delivery")}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr("Expected Delivery")}</p>
                       <p className="text-sm font-bold text-gray-900">{new Date(selectedPO.expectedDelivery).toLocaleDateString()}</p>
                     </div>
                   </div>
@@ -1585,7 +1585,7 @@ export const MaterialsTab: React.FC<MaterialsTabProps> = ({ projectId }) => {
                               {new Date(log.createdAt).toLocaleDateString()} · {tr(log.usedByName)}
                             </p>
                           </div>
-                          <span className="text-sm font-black text-purple-600">
+                          <span className="text-sm font-bold text-purple-600">
                             -{item?.quantity} {tr(item?.unit)}
                           </span>
                         </div>

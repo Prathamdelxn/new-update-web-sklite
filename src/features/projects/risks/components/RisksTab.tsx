@@ -324,7 +324,7 @@ export const RisksTab: React.FC<RisksTabProps> = ({ projectId }) => {
                   <div className="space-y-2 mb-4 border-t border-slate-100 pt-4">
                     <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
                       <span>{tr("Mitigation Progress")}</span>
-                      <span className="text-slate-900 font-extrabold">{tr(risk.mitigationProgress)}%</span>
+                      <span className="text-slate-900 font-bold">{tr(risk.mitigationProgress)}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                       <div

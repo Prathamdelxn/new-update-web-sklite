@@ -126,15 +126,15 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-xl font-black text-gray-900">{tr(project.name)}</h2>
+                <h2 className="text-xl font-bold text-gray-900">{tr(project.name)}</h2>
                 <span className={cn(
-                  'px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border',
+                  'px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border',
                   statusBadgeColor[project.status] || 'bg-blue-100 text-blue-700 border-blue-200'
                 )}>
                   {tr(project.status)}
                 </span>
                 {project.projectType && (
-                  <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border bg-gray-100 text-slate-600 border-gray-200">
+                  <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border bg-gray-100 text-slate-600 border-gray-200">
                     {tr(project.projectType)}
                   </span>
                 )}
@@ -145,7 +145,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
             </div>
           </div>
           <div className="text-end shrink-0">
-            <p className="text-2xl font-black text-gray-900">{formatCurrency(currentBudget, projectCurrency(project))}</p>
+            <p className="text-2xl font-bold text-gray-900">{formatCurrency(currentBudget, projectCurrency(project))}</p>
           </div>
         </div>
 
@@ -187,7 +187,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 </span>
               )}
             </div>
-            <p className="text-2xl font-black text-gray-900">
+            <p className="text-2xl font-bold text-gray-900">
               {stats.loading ? <BoneInline className="h-6 w-12" /> : `${stats.milestones.total === 0 ? 0 : Math.round((stats.milestones.completed / stats.milestones.total) * 100)}%`}
             </p>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Milestones Done")}</p>
@@ -208,7 +208,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <span className="text-xs font-bold text-amber-600">{tr(stats.issues.open)}{tr(" open")}</span>
               )}
             </div>
-            <p className="text-2xl font-black text-gray-900">{stats.loading ? <BoneInline className="h-6 w-12" /> : stats.issues.total}</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.loading ? <BoneInline className="h-6 w-12" /> : stats.issues.total}</p>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Issues & Snags")}</p>
           </GlassCard>
         </button>
@@ -227,7 +227,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <span className="text-xs font-bold text-rose-600">{tr(stats.risks.active)}{tr(" active")}</span>
               )}
             </div>
-            <p className="text-2xl font-black text-gray-900">{stats.loading ? <BoneInline className="h-6 w-12" /> : stats.risks.total}</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.loading ? <BoneInline className="h-6 w-12" /> : stats.risks.total}</p>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Risks Logged")}</p>
           </GlassCard>
         </button>
@@ -243,7 +243,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
                 <Users className="w-5 h-5 text-purple-600" />
               </div>
             </div>
-            <p className="text-2xl font-black text-gray-900">{project.members?.length || 0}</p>
+            <p className="text-2xl font-bold text-gray-900">{project.members?.length || 0}</p>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">{tr("Team Members")}</p>
           </GlassCard>
         </button>
@@ -441,7 +441,7 @@ export const ProjectDashboardTab: React.FC<ProjectDashboardTabProps> = ({ projec
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-3xl font-black text-gray-900">{formatCurrency(currentBudget, projectCurrency(project))}</p>
+                  <p className="text-3xl font-bold text-gray-900">{formatCurrency(currentBudget, projectCurrency(project))}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {project.budgetHistory?.length || 0}{tr(" revision")}{(project.budgetHistory?.length || 0) !== 1 ? 's' : ''}{tr(" recorded")}
                   </p>

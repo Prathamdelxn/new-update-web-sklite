@@ -407,7 +407,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               className="w-full max-w-sm relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-black text-gray-900 text-base">{editingId ? tr("Edit Labourer") : tr("Add New Labourer")}</h3>
+                <h3 className="font-bold text-gray-900 text-base">{editingId ? tr("Edit Labourer") : tr("Add New Labourer")}</h3>
                 <div className="flex items-center gap-1">
                   {editingId && (
                     <button onClick={handleDeleteLabour} disabled={deleting} className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
@@ -490,7 +490,7 @@ export const LabourManagementTab: React.FC<LabourManagementTabProps> = ({ projec
               className="w-full max-w-sm relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-black text-gray-900 text-base">{tr("Export Payroll")}</h3>
+                <h3 className="font-bold text-gray-900 text-base">{tr("Export Payroll")}</h3>
                 <button onClick={() => setExportOpen(false)} className="p-1.5 text-slate-400 hover:text-gray-900 bg-gray-50 rounded-lg transition-colors">
                   <X className="w-4 h-4" />
                 </button>

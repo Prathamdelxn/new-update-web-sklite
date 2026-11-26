@@ -99,7 +99,7 @@ export const XERImportModal: React.FC<XERImportModalProps> = ({
                     <FileText className="w-4 h-4 text-violet-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-violet-600 uppercase tracking-widest">{tr("Primavera P6")}</p>
+                    <p className="text-[10px] font-bold text-violet-600 uppercase tracking-widest">{tr("Primavera P6")}</p>
                     <h2 className="text-base font-bold text-gray-900">{tr("Import XER File")}</h2>
                   </div>
                 </div>
@@ -178,7 +178,7 @@ export const XERImportModal: React.FC<XERImportModalProps> = ({
                       <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                     </div>
                     <div>
-                      <p className="text-lg font-black text-gray-900">{tr("Import Complete")}</p>
+                      <p className="text-lg font-bold text-gray-900">{tr("Import Complete")}</p>
                       <p className="text-sm text-slate-500 mt-1">
                         <span className="font-bold text-emerald-600">{tr(importedCount)}</span>{tr(" milestone")}{importedCount !== 1 ? 's' : ''}{tr(" created from ")}<span className="font-semibold">{tr(file?.name)}</span>
                       </p>

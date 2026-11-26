@@ -341,7 +341,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                     <select
                       value={milestone.status || 'Pending'}
                       onChange={e => handleStatusChange(e.target.value as MilestoneStatus)}
-                      className={cn('px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border cursor-pointer focus:outline-none appearance-none', getStatusStyle(milestone.status || 'Pending'))}
+                      className={cn('px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border cursor-pointer focus:outline-none appearance-none', getStatusStyle(milestone.status || 'Pending'))}
                     >
                       {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -363,7 +363,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                 <div className="mt-4 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-500">{completedCount}/{tasks.length} tasks done</span>
-                    <span className="font-black text-gray-900">{progress}%</span>
+                    <span className="font-bold text-gray-900">{progress}%</span>
                   </div>
                   <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200">
                     <motion.div
@@ -551,7 +551,7 @@ export const MilestoneDetailModal: React.FC<Props> = ({
                         {!task.isCompleted && form.open && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                             <div className="px-4 pb-4 border-t border-blue-100 bg-blue-50/30 space-y-4 pt-4">
-                              <p className="text-xs font-black text-blue-700 uppercase tracking-wider">Submit Task Completion</p>
+                              <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Submit Task Completion</p>
 
                               {/* Completion Note */}
                               <div className="space-y-1.5">

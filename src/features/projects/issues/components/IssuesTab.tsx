@@ -494,7 +494,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
             ].map((stat, i) => (
               <div key={i} className="p-4 rounded-2xl bg-white border border-slate-200">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{tr(stat.label)}</p>
-                <p className={cn('text-2xl font-extrabold', stat.color)}>{tr(stat.value)}</p>
+                <p className={cn('text-2xl font-bold', stat.color)}>{tr(stat.value)}</p>
               </div>
             ))}
           </div>
@@ -508,7 +508,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                     <GitBranch className="w-4 h-4 text-orange-600 animate-pulse" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{tr("Escalation Pathway")}</h4>
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{tr("Escalation Pathway")}</h4>
                     <p className="text-[10px] text-slate-500">{tr("Configured sequential progression for resolving critical issues.")}</p>
                   </div>
                 </div>
@@ -523,7 +523,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                           <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
                         )}
                         <div className="flex items-center space-x-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shrink-0">
-                          <span className="flex items-center justify-center w-5 h-5 rounded-lg bg-orange-100 text-orange-700 text-[10px] font-black">
+                          <span className="flex items-center justify-center w-5 h-5 rounded-lg bg-orange-100 text-orange-700 text-[10px] font-bold">
                             L{tr(lvl.level)}
                           </span>
                           <div className="min-w-0">
@@ -590,7 +590,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
             {loading ? (
               <SkeletonLoader loading={true} preset="list"><div /></SkeletonLoader>
             ) : filteredIssues.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+              <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
                 <CheckCircle2 className="w-16 h-16 text-slate-300 mb-4" />
                 <h4 className="text-base font-bold text-slate-800">{tr("No ")}{activeType.toLowerCase()}{tr("s found")}</h4>
                 <p className="text-xs text-slate-400 max-w-xs mt-1.5">
@@ -609,7 +609,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                     <div
                       key={item._id}
                       onClick={() => setSelectedIssue(item)}
-                      className="bg-white border border-slate-200 rounded-3xl p-5 hover:border-slate-300 transition-all flex flex-col justify-between cursor-pointer"
+                      className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-slate-300 transition-all flex flex-col justify-between cursor-pointer"
                     >
                       <div>
                         {/* Header */}
@@ -624,7 +624,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
 
                         {/* Status Badge */}
                         <div className="mb-3">
-                          <span className={cn('px-2.5 py-0.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider', getSnagStatusBadgeClass(item.status))}>
+                          <span className={cn('px-2.5 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider', getSnagStatusBadgeClass(item.status))}>
                             {tr(item.status)}
                           </span>
                         </div>
@@ -731,7 +731,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                       </div>
                       <div>
                         <div className="flex items-center space-x-3 mb-1">
-                          <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border', getPriorityColor(issue.priority))}>
+                          <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border', getPriorityColor(issue.priority))}>
                             {tr(issue.priority)}
                           </span>
                           {issue.category && (
@@ -740,7 +740,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                             </span>
                           )}
                           {issue.status === 'Escalated' && issue.escalationLevel > 0 && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border bg-purple-100 border-purple-200 text-purple-700">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border bg-purple-100 border-purple-200 text-purple-700">
                               {tr("Level ")}{tr(issue.escalationLevel)}
                             </span>
                           )}
@@ -760,7 +760,7 @@ export const IssuesTab: React.FC<IssuesTabProps> = ({ projectId, initialType = '
                     </div>
 
                     <div className="flex items-center justify-between md:justify-end space-x-2 border-t md:border-t-0 border-gray-100 pt-4 md:pt-0">
-                      <span className={cn('px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border', getStatusColor(issue.status))}>
+                      <span className={cn('px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest border', getStatusColor(issue.status))}>
                         {tr(issue.status)}
                       </span>
                       <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>

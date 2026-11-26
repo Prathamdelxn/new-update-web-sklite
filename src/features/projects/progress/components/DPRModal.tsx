@@ -179,7 +179,7 @@ export const DPRModal: React.FC<DPRModalProps> = ({
                   <div className="space-y-2">
                     <div className="flex justify-between items-center ms-1">
                       <label className="text-sm font-medium text-slate-600">{tr("Progress achieved")}</label>
-                      <span className="text-lg font-black text-blue-600">{tr(formData.progressPercent)}%</span>
+                      <span className="text-lg font-bold text-blue-600">{tr(formData.progressPercent)}%</span>
                     </div>
                     <input
                       type="range"

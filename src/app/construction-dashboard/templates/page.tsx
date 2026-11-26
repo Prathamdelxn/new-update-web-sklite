@@ -30,11 +30,11 @@ export default function TemplatesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               {tr("Templates Management")}
             </h1>
           </div>
-          <p className="text-xs font-semibold text-slate-500 mt-0.5">
+          <p className="text-sm text-slate-500 mt-0.5">
             {tr("Standardize site delivery and workflows with reusable project templates and categorized specifications.")}
           </p>
         </div>

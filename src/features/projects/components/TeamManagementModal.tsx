@@ -136,7 +136,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="w-full max-w-xl relative z-10"
           >
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
               {/* Header */}
               <div className="p-5 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
                 <div className="flex items-center space-x-3">
@@ -239,7 +239,7 @@ export const TeamManagementModal: React.FC<TeamManagementModalProps> = ({
                       <div className="space-y-4 pb-20">
                         <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-wider block">{tr("Selected Role")}</span>
+                            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">{tr("Selected Role")}</span>
                             <span className="text-sm font-bold text-blue-900 block mt-0.5">
                               {availableRoles.find(r => r._id === selectedRoleId)?.name || tr("Role")}
                             </span>

@@ -171,7 +171,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                       {formData.items.map((item, index) => (
                         <div key={index} className="grid grid-cols-12 gap-3 items-end bg-gray-50 p-3 rounded-xl border border-gray-200">
                           <div className="col-span-6 space-y-1">
-                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
+                            <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
                             <select
                               required
                               value={item.materialId}
@@ -185,7 +185,7 @@ export const MaterialUsageModal: React.FC<MaterialUsageModalProps> = ({
                             </select>
                           </div>
                           <div className="col-span-4 space-y-1">
-                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ms-1">{tr("Quantity")}</label>
+                            <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Quantity")}</label>
                             <div className="flex items-center bg-white border border-gray-200 rounded-lg pe-2">
                               <input
                                 type="number"

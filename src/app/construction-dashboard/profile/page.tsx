@@ -81,8 +81,8 @@ export default function ProfilePage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{tr("Profile & Settings")}</h1>
-          <p className="text-sm text-slate-500 mt-1">{tr("Manage your personal information and account security.")}</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{tr("Profile & Settings")}</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{tr("Manage your personal information and account security.")}</p>
         </div>
 
         {/* Profile Card */}
@@ -103,7 +103,7 @@ export default function ProfilePage() {
               {avatar ? (
                 <img src={avatar} alt={tr("Avatar")} className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-200" />
               ) : (
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-3xl font-extrabold border-2 border-blue-200">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-3xl font-bold border-2 border-blue-200">
                   {user?.name?.[0]?.toUpperCase() || 'U'}
                 </div>
               )}

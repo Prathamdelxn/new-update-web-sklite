@@ -651,7 +651,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             {/* Monthly History filtering */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <div>
-                <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">{tr("Monthly Records History")}</h4>
+                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">{tr("Monthly Records History")}</h4>
               </div>
 
               <div className="flex items-center gap-3">
@@ -768,7 +768,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative z-10 max-w-lg w-full bg-white rounded-3xl overflow-hidden border border-gray-800 shadow-2xl p-2"
+              className="relative z-10 max-w-lg w-full bg-white rounded-2xl overflow-hidden border border-gray-800 shadow-2xl p-2"
             >
               <button
                 onClick={() => setLightboxPhoto(null)}
@@ -799,7 +799,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <h3 className="font-black text-gray-900 text-base">{tr("Check-In Verification")}</h3>
+                  <h3 className="font-bold text-gray-900 text-base">{tr("Check-In Verification")}</h3>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Location & Photo Verification Required")}</p>
                 </div>
                 <button
@@ -977,7 +977,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
               </div>
 
               <div className="space-y-1">
-                <h3 className="font-black text-gray-900 text-lg">{tr("Check Out of Site")}</h3>
+                <h3 className="font-bold text-gray-900 text-lg">{tr("Check Out of Site")}</h3>
                 <p className="text-xs text-slate-500">
                   {tr("Are you ready to submit your work hours and checkout of the project site?")}
                 </p>
@@ -1041,7 +1041,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
                 <div>
-                  <h3 className="font-black text-gray-900 text-base">{tr("Export Attendance Report")}</h3>
+                  <h3 className="font-bold text-gray-900 text-base">{tr("Export Attendance Report")}</h3>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Excel / XLSX Format")}</p>
                 </div>
                 <button
@@ -1139,7 +1139,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ projectId }) => {
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
                 <div>
-                  <h3 className="font-black text-gray-900 text-base">{tr("Mark Attendance Manually")}</h3>
+                  <h3 className="font-bold text-gray-900 text-base">{tr("Mark Attendance Manually")}</h3>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{tr("Admin Override")}</p>
                 </div>
                 <button

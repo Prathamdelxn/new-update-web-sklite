@@ -117,7 +117,7 @@ export const RiskMitigationModal: React.FC<RiskMitigationModalProps> = ({
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                       {tr("Mitigation Progress")}
                     </label>
-                    <span className="text-sm font-black text-gray-900">{tr(progress)}%</span>
+                    <span className="text-sm font-bold text-gray-900">{tr(progress)}%</span>
                   </div>
                   <div className="relative mt-2">
                     <input

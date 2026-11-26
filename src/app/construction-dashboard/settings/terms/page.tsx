@@ -21,12 +21,12 @@ export default function TermsPage() {
 
           <button
             onClick={() => router.back()}
-            className="w-12 h-12 rounded-full border border-gray-200 hover:bg-gray-100 flex items-center justify-center"
+            className="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
           </button>
 
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             {tr("Terms & Conditions")}
           </h1>
 
@@ -36,13 +36,13 @@ export default function TermsPage() {
 
         <GlassCard className="rounded-2xl border border-slate-200 p-14 text-center">
 
-          <div className="mx-auto w-24 h-8 rounded-3xl bg-blue-50 flex items-center justify-center mb-8">
+          <div className="mx-auto w-24 h-8 rounded-2xl bg-blue-50 flex items-center justify-center mb-8">
 
             <FileText className="w-12 h-12 text-blue-600" />
 
           </div>
 
-          <h2 className="text-5xl font-extrabold text-slate-900">
+          <h2 className="text-5xl font-bold text-slate-900">
 
             {tr("Legal Agreement")}
 
@@ -58,7 +58,7 @@ export default function TermsPage() {
 
         {/* Content */}
 
-        <GlassCard className="rounded-3xl border border-slate-200 p-10">
+        <GlassCard className="rounded-2xl border border-slate-200 p-10">
 
           <div className="prose prose-slate max-w-none">
 

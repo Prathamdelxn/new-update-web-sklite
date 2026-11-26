@@ -106,7 +106,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                   </div>
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: statusColor }}>
+                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: statusColor }}>
                         {tr(risk.category)}
                       </span>
                       <span className="w-1 h-1 rounded-full bg-gray-300" />
@@ -163,7 +163,7 @@ export const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       {tr("Mitigation Progress")}
                     </span>
-                    <span className="text-sm font-black text-gray-900">{tr(risk.mitigationProgress)}%</span>
+                    <span className="text-sm font-bold text-gray-900">{tr(risk.mitigationProgress)}%</span>
                   </div>
                   <div className="h-2 w-full bg-slate-100 border border-slate-200/55 rounded-full overflow-hidden">
                     <div 

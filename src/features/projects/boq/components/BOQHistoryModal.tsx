@@ -82,11 +82,11 @@ export const BOQHistoryModal: React.FC<BOQHistoryModalProps> = ({ isOpen, onClos
                 {/* Current item header */}
                 <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Status</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Status</p>
                     <p className="text-sm font-bold text-gray-900">{item.itemNumber || '-'} — {item.groupName}</p>
                   </div>
                   {(() => { const s = getStatusStyle(item.status); return (
-                    <span className={cn('px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border', s.bg, s.color)}>
+                    <span className={cn('px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border', s.bg, s.color)}>
                       {item.status}
                     </span>
                   );})()}
@@ -108,7 +108,7 @@ export const BOQHistoryModal: React.FC<BOQHistoryModalProps> = ({ isOpen, onClos
                           <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-100">
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-center gap-2">
-                                <span className={cn('text-xs font-black uppercase tracking-widest', s.color)}>{ver.status}</span>
+                                <span className={cn('text-xs font-bold uppercase tracking-widest', s.color)}>{ver.status}</span>
                                 <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                                   v{ver.version || 1}{isLatest ? ' (latest)' : ''}
                                 </span>

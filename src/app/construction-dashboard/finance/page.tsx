@@ -142,8 +142,8 @@ export default function FinancePage() {
       <div className="space-y-8">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">{tr("Organisation Finance")}</h1>
-          <p className="text-slate-500 mt-1">{tr("Consolidated financial summary across all ")}{projects.length > 0 ? `${projects.length} ` : ''}{tr("organisation projects.")}</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{tr("Organisation Finance")}</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{tr("Consolidated financial summary across all ")}{projects.length > 0 ? `${projects.length} ` : ''}{tr("organisation projects.")}</p>
         </div>
 
         {/* Top-level KPIs */}
@@ -161,7 +161,7 @@ export default function FinancePage() {
                 </div>
               </div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{tr(stat.label)}</p>
-              <p className={cn('text-2xl font-extrabold', stat.color)}>
+              <p className={cn('text-2xl font-bold', stat.color)}>
                 {stat.prefix} {Math.abs(stat.value).toLocaleString()}
               </p>
               {otherCurrencies.map(([cur, t]) => (

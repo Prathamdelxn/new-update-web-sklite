@@ -625,7 +625,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                     <div key={i} className="p-4 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tr(s.label)}</p>
-                        <p className={cn('text-2xl font-black mt-1 tracking-tight', s.color)}>{tr(s.value)}</p>
+                        <p className={cn('text-2xl font-bold mt-1 tracking-tight', s.color)}>{tr(s.value)}</p>
                         <p className="text-[10px] text-slate-400 font-medium mt-0.5">{tr(s.desc)}</p>
                       </div>
                       <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center shrink-0", s.bg, s.color)}>
@@ -679,7 +679,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({ projectId }) => {
                     >
                       <span>{tr(status)}</span>
                       <span className={cn(
-                        'px-1.5 py-0.2 rounded-md text-[10px] font-black',
+                        'px-1.5 py-0.2 rounded-md text-[10px] font-bold',
                         isActive ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-600'
                       )}>
                         {count}

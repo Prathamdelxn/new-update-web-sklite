@@ -174,7 +174,7 @@ export const EscalationMatrixModal: React.FC<EscalationMatrixModalProps> = ({ is
                         className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
                       >
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-xs font-black uppercase tracking-widest text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                          <span className="text-xs font-bold uppercase tracking-widest text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
                             {tr("Escalation Level ")}{tr(rule.level)}
                           </span>
                           {!isLocked && (

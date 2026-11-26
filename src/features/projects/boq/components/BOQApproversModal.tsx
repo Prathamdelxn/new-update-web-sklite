@@ -195,7 +195,7 @@ export const BOQApproversModal: React.FC<BOQApproversModalProps> = ({
                           )}
                         >
                           <div className={cn(
-                            'w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0',
+                            'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0',
                             isSelected ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'
                           )}>
                             {isSelected ? <Check className="w-4 h-4" /> : displayName?.[0]?.toUpperCase() || 'U'}

@@ -344,10 +344,10 @@ export const OverviewDashboard = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             {tr("Good ")}{getGreeting()}, {tr(userFirstName)}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-sm text-slate-500 mt-0.5">
             {tr("Here's the live status of your construction portfolio today.")}
           </p>
         </div>
@@ -414,7 +414,7 @@ export const OverviewDashboard = () => {
                 </div>
               </div>
               <div className="mt-1 flex items-baseline gap-1.5">
-                <span className={cn('text-xl font-extrabold tabular-nums', kpi.valueColor)}>
+                <span className={cn('text-xl font-bold tabular-nums', kpi.valueColor)}>
                   {tr(kpi.value)}
                 </span>
                 <span

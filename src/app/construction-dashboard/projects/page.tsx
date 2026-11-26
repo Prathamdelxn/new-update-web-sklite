@@ -181,11 +181,11 @@ export default function ProjectsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               {tr("Projects Management")}
             </h1>
           </div>
-          <p className="text-xs font-semibold text-slate-500 mt-0.5">
+          <p className="text-sm text-slate-500 mt-0.5">
             {tr("Real-time monitoring, site tracking, and performance analytics across all construction sites.")}
           </p>
         </div>
@@ -223,7 +223,7 @@ export default function ProjectsPage() {
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-xl font-extrabold text-slate-900 tabular-nums">{kpiStats.total}</span>
+            <span className="text-xl font-bold text-slate-900 tabular-nums">{kpiStats.total}</span>
             <span className="text-[10px] font-semibold text-slate-400">{tr("portfolios")}</span>
           </div>
         </div>
@@ -236,7 +236,7 @@ export default function ProjectsPage() {
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-xl font-extrabold text-emerald-600 tabular-nums">{tr(kpiStats.ongoing)}</span>
+            <span className="text-xl font-bold text-emerald-600 tabular-nums">{tr(kpiStats.ongoing)}</span>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">{tr("Live")}</span>
           </div>
         </div>
@@ -249,7 +249,7 @@ export default function ProjectsPage() {
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-xl font-extrabold text-blue-600 tabular-nums">{tr(kpiStats.planningOrSurvey)}</span>
+            <span className="text-xl font-bold text-blue-600 tabular-nums">{tr(kpiStats.planningOrSurvey)}</span>
             <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded">{tr("Pre-con")}</span>
           </div>
         </div>
@@ -262,7 +262,7 @@ export default function ProjectsPage() {
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-xl font-extrabold text-teal-600 tabular-nums">{tr(kpiStats.completed)}</span>
+            <span className="text-xl font-bold text-teal-600 tabular-nums">{tr(kpiStats.completed)}</span>
             <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded">{tr("Delivered")}</span>
           </div>
         </div>
@@ -309,7 +309,7 @@ export default function ProjectsPage() {
                 <Filter className={cn("w-3.5 h-3.5", statusFilter !== 'All' ? "text-blue-600" : "text-slate-500")} />
                 <span>{statusFilter === 'All' ? tr("Filter Status") : statusFilter}</span>
                 {statusFilter !== 'All' && statusCounts[statusFilter] !== undefined && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-blue-200/80 text-blue-800 tabular-nums">
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-200/80 text-blue-800 tabular-nums">
                     {tr(statusCounts[statusFilter])}
                   </span>
                 )}
@@ -426,7 +426,7 @@ export default function ProjectsPage() {
         {filteredProjects.length > 0 && !loading ? (
           viewMode === 'grid' ? (
             /* Grid View (4 in a row on desktop) */
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {filteredProjects.map((project) => (
                 <ProjectCard
                   key={project._id}
@@ -474,7 +474,7 @@ export default function ProjectsPage() {
                           {/* Project Name & Code */}
                           <td className="py-3.5 px-5">
                             <Link href={`/construction-dashboard/projects/${project._id}`} className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-slate-300 flex items-center justify-center text-indigo-700 font-extrabold shrink-0 ">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-slate-300 flex items-center justify-center text-indigo-700 font-bold shrink-0 ">
                                 {tr(initial)}
                               </div>
                               <div className="min-w-0">
@@ -560,7 +560,7 @@ export default function ProjectsPage() {
           )
         ) : lacksProjectView && projects.length === 0 ? (
           /* No project access — explain which permission is missing */
-          <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-dashed border-amber-300 rounded-3xl p-8">
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-dashed border-amber-300 rounded-2xl p-8">
             <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-4">
               <ShieldAlert className="w-8 h-8" />
             </div>
@@ -574,7 +574,7 @@ export default function ProjectsPage() {
           </div>
         ) : (
           /* Empty State */
-          <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-dashed border-slate-300 rounded-3xl p-8 ">
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white border border-dashed border-slate-300 rounded-2xl p-8 ">
             <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-4 ">
               <FolderOpen className="w-8 h-8" />
             </div>

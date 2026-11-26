@@ -201,7 +201,7 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                           <div key={index} className="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2">
                             <div className="grid grid-cols-12 gap-3 items-end">
                               <div className="col-span-5 space-y-1">
-                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
+                                <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Material")}</label>
                                 <select
                                   required
                                   value={item.materialId}
@@ -215,7 +215,7 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                                 </select>
                               </div>
                               <div className="col-span-3 space-y-1">
-                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ms-1">{tr("Quantity")}</label>
+                                <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Quantity")}</label>
                                 <div className="flex items-center bg-white border border-gray-200 rounded-lg pe-2">
                                   <input
                                     type="number"
@@ -231,7 +231,7 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                                 </div>
                               </div>
                               <div className="col-span-3 space-y-1">
-                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ms-1">{tr("Rate ({{currency}})", { currency: projectCurrency(project) })}</label>
+                                <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ms-1">{tr("Rate ({{currency}})", { currency: projectCurrency(project) })}</label>
                                 <input
                                   type="number"
                                   required
@@ -255,8 +255,8 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                             </div>
                             {/* Subtotal row */}
                             <div className="flex items-center justify-between gap-2 px-1 pt-1 border-t border-gray-200">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0">{tr("Subtotal")}</span>
-                              <span className="text-xs font-black text-emerald-600 break-all text-end min-w-0">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">{tr("Subtotal")}</span>
+                              <span className="text-xs font-bold text-emerald-600 break-all text-end min-w-0">
                                {subtotal > 0 ? formatCurrency(subtotal, projectCurrency(project)) : '—'}
                               </span>
                             </div>
@@ -268,8 +268,8 @@ export const MaterialPurchaseModal: React.FC<MaterialPurchaseModalProps> = ({
                     {/* Grand total */}
                     {formData.items.length > 0 && (
                       <div className="flex items-center justify-between gap-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl mt-2">
-                        <span className="text-sm font-black text-slate-600 uppercase tracking-wider shrink-0">{tr("Grand Total")}</span>
-                        <span className="text-lg font-black text-emerald-600 break-all text-end min-w-0">
+                        <span className="text-sm font-bold text-slate-600 uppercase tracking-wider shrink-0">{tr("Grand Total")}</span>
+                        <span className="text-lg font-bold text-emerald-600 break-all text-end min-w-0">
                           {formatCurrency(formData.items.reduce((sum, it) => sum + it.quantity * it.unitPrice, 0), projectCurrency(project))}
                         </span>
                       </div>
